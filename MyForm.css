@@ -19,8 +19,9 @@
   font-family: 'custom-sans-serif', sans-serif;
 }
 
-.web-view {
-  font-size: 36px; /* 網頁字體大小 */
+
+.webView {
+  font-size: 30px; /* 網頁字體大小 */
   font-family: 'custom-sans-serif', sans-serif;
 }
 
@@ -30,24 +31,24 @@
 }
 
 .web-view input {
-    font-size: 36px;
+    font-size: 30px;
     font-family: 'custom-sans-serif', sans-serif;
 }
 
 .web-view .input-small {
-    width: 50px;
-    height: 35px;
+    width: 35px;
+    height: 30px;
 }
 
 /* 中框框 */
 .web-view .input-medium {
-    width: 90px;
-    height:35px;
+    width: 70px;
+    height:30px;
 }
 
 .web-view .input-large {
-    width: 200px;
-    height: 35px;
+    width: 230px;
+    height: 30px;
 }
 
 .pdf-view input {
@@ -70,6 +71,11 @@
     height: 20px;
 }
 
+label{
+   color:black;
+
+}
+
 
 .container {
     display: flex;
@@ -82,8 +88,12 @@
     text-align: center;
 }
 
-.class1{
-    text-align:center;
+
+
+.class1 {
+    display: flex; /* 使外層容器也是flex */
+    flex-direction: column; /* 如果需要上下排列 */
+    align-items: center; /* 垂直居中 */
     font-weight: bold;
 }
 
@@ -92,7 +102,7 @@
 }
 
 .class4{
-    text-align:left;
+    text-align:center;
 }
 .class5{
 
@@ -109,10 +119,18 @@
 }
 
 .class8{
-    text-align:right;
+
+    display: flex; /* 使外層容器也是flex */
+    flex-direction: column; /* 如果需要上下排列 */
+    align-items: flex-end; /* 垂直居中 */
+    font-weight: bold;
 }
 .class9{
     text-align:left;
+}
+.class10{
+    background-color: #FEF2CC;
+
 }
 
 .textarea-box {
@@ -134,115 +152,3 @@
     margin: 0 auto; /* 使按鈕居中 */
     text-align: center; /* 文字居中 */
 }
-
-/*
-
-
-.centered {
-    text-align: center;
-    margin: 20px 0;
-}
-
-.item {
-    padding: 10px;
-    border: 1px solid #ccc;
-}
-
-@media screen and (max-width: 1200px) {
-    .container {
-        flex-direction: column;
-    }
-}
-
-body {
-  font-family: 'custom-sans-serif', sans-serif;
-  background-color: #FFC78E	;
-  margin: 0;
-  padding: 20px;
-}
-
-form {
-  display: flex;
-  flex-direction: column;
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-
-
-.container {
-
-    justify-content: left;
-    align-items: left;
-    height: 100vh;
-    font-size: 29px;
-}
-
-.centered {
-  font-family: 'custom-sans-serif', sans-serif;
-  text-align: center;
-  margin: 20px 0;
-}
-
-
-.textcontent{
-  text-align: left;
-}
-
-label {
-  font-family: 'custom-sans-serif', sans-serif;
-  margin-right: 19px;
-
-
-}
-
-input {
-  font-family: 'custom-sans-serif', sans-serif;
-  border: None;
-  font-size: 19px;
-  line-height: 1;
-
-
-}
-
-button {
-  padding: 10px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-button:hover {
-  background-color: #0056b3;
-}
-
-
-*/
-
-/*
-label {
-  font-family: 'custom-sans-serif', sans-serif;
-  margin-bottom: 5px;
-  font-weight: bold;
-  margin-right: 19px;
-  font-weight: 400;
-
-}
-
-input {
-  font-family: 'custom-sans-serif', sans-serif;
-  margin-bottom: 15px;
-  padding: 8px;
-  border: None;
-  font-size: 19px;
-  font-weight: 400;
-
-}
-*/
