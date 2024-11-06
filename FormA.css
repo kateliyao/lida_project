@@ -1,4 +1,4 @@
-/* MyForm.css */
+/* FormA.css */
 @font-face {
   font-family: 'custom-sans-serif';
   src: local('標楷體') , local('Microsoft JhengHei');
@@ -20,8 +20,8 @@
 }
 
 
-.webView {
-  font-size: 30px; /* 網頁字體大小 */
+.FormA .web-view {
+  font-size: 28px; /* 網頁字體大小 */
   font-family: 'custom-sans-serif', sans-serif;
 }
 
@@ -30,25 +30,34 @@
   font-family: 'custom-sans-serif', sans-serif;
 }
 
-.web-view input {
+.FormA .web-view input {
     font-size: 30px;
-    font-family: 'custom-sans-serif', sans-serif;
+    font-family: 'custom-sans-serif', sans-serif;d
+    height: 80px; /* 設置足夠的高度 */
+    line-height: 80px; /* 行高設置為與高度一致 */
+    padding: 0; /* 取消內邊距，確保文字完全可見 */
+    margin: 10px 0; /* 添加上下邊距 */
+    border: 2px solid white; /* 設置邊框顏色為白色 */
+    background-color: #122331; /* 設置背景顏色為白色 */
+    color: white; /* 設置文字顏色 */
 }
 
-.web-view .input-small {
-    width: 35px;
-    height: 30px;
+.FormA .web-view .input-small {
+    width: 40px;
+    height: 40px;
+    text-align:center;
 }
 
 /* 中框框 */
-.web-view .input-medium {
-    width: 70px;
-    height:30px;
+.FormA .web-view .input-medium {
+    width: 60px;
+    height:40px;
+    text-align:center;
 }
 
-.web-view .input-large {
+.FormA .web-view .input-large {
     width: 230px;
-    height: 30px;
+    height: 40px;
 }
 
 .pdf-view input {
@@ -71,9 +80,8 @@
     height: 20px;
 }
 
-label{
-   color:black;
-
+.FormA .mainpage-label{
+    color: #FFFFFF;
 }
 
 
@@ -90,12 +98,13 @@ label{
 
 
 
-.class1 {
+.FormA .class1 {
     display: flex; /* 使外層容器也是flex */
-    flex-direction: column; /* 如果需要上下排列 */
+    flex-direction: column;  /* 如果需要上下排列 */
     align-items: center; /* 垂直居中 */
     font-weight: bold;
 }
+
 
 .class3{
     text-align:left
@@ -105,7 +114,7 @@ label{
     text-align:center;
 }
 .class5{
-
+    color: #FFFFFF;
     text-align:left;
 }
 
@@ -125,11 +134,11 @@ label{
     align-items: flex-end; /* 垂直居中 */
     font-weight: bold;
 }
-.class9{
+.FormA .class9{
     text-align:left;
 }
-.class10{
-    background-color: #FEF2CC;
+.FormA .class10{
+    background-color: #EBC857;
 
 }
 
@@ -152,3 +161,30 @@ label{
     margin: 0 auto; /* 使按鈕居中 */
     text-align: center; /* 文字居中 */
 }
+
+
+.search_button{
+    background-color: #EBC857;
+    margin-Left: 10px;
+    padding: 1px 10px;
+    color: #424242; /* 設置文字顏色 */
+    cursor: pointer; /* 鼠標指針樣式 */
+}
+
+.submit_button {
+    background-color: #EBC857;
+    margin: 0;
+
+    padding: 10px 20px; /* 增加內邊距以適應橢圓形 */
+    border-radius: 50px; /* 設置邊框半徑，形成橢圓形 */
+    color: #424242; /* 設置文字顏色 */
+    cursor: pointer; /* 鼠標指針樣式 */
+    font-size: 30px; /* 調整字體大小 */
+    transition: background-color 0.3s; /* 加入過渡效果 */
+}
+
+.search_button:hover,
+.submit_button:hover {
+    background-color: #D3B03D; /* 鼠标悬停时的背景颜色 */
+}
+
