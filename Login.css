@@ -23,15 +23,19 @@ body {
     justify-content: center; /* 水平居中 */
     align-items: center;     /* 垂直居中 */
     height: 100vh;          /* 使容器占满整个视口高度 */
+
+}
+
+.logo-login {
+    margin-bottom: 120px;      /* 为 logo 和输入框之间添加间距 */
 }
 
 .logo-login img {
     position: absolute;
-    top: 30%;               /* 仍然保持距离顶部的距离 */
-    left: 50%;               /* 将元素的左边距设置为 50% */
     transform: translateX(-50%); /* 向左平移自身宽度的一半，达到居中效果 */
-    width: 500px;           /* 设置具体宽度 */
-    height: auto;
+    width: 495px;           /* 设置具体宽度 */
+    height: 51px;
+
 }
 
 .label-login{
@@ -62,4 +66,9 @@ input {
 
 button:hover {
     background-color: yellow; /* 鼠标悬停时的背景色 */
+}
+
+.error-message {
+  color: red;
+  margin-top: 100px; /* 错误信息的上边距 */
 }

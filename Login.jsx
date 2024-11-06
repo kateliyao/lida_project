@@ -1,68 +1,42 @@
-import React, { useState,useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import './Login.css';
 import logo from './assets/logo.png';
 
-//帳號密碼登入功能
-const validUsers = [
-  { username: 'user1', password: '2wsx#EDC' },
-  { username: 'user2', password: 'pass2' },
-  { username: 'user3', password: 'pass3' },
-  { username: 'user4', password: 'pass4' },
-  { username: 'user5', password: 'pass5' },
-];
-
 function Login ({ onLogin }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const navigate = useNavigate();
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    // 檢查用戶名和密碼是否匹配
-    const user = validUsers.find(
-      (user) => user.username === username && user.password === password
-    );
+    try {
+        const response = await fetch('http://localhost:5000/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
 
-    if (user) {
-      //setIsLoggedIn(true);
-      onLogin(username); // 呼叫父組件的登入方法
-      navigate('/MainPage'); // 進行頁面跳轉
-      setErrorMessage('');
-    } else {
-      setErrorMessage('錯誤的帳號或密碼。 請重新輸入.');
-    }
-  };
+        const data = await response.json();
 
-//   const handleSubmit = (e) => {
-//     e.preventDefault();
-//     if (username) {
-//         onLogin(username); // 呼叫父組件的登入方法
-//     }
-//   };
+        if (response.ok && data.success) {
+          // If login is successful, call the parent component's onLogin
+          onLogin(username);
+        } else {
+          setErrorMessage(data.message || '錯誤的帳號或密碼，請重新輸入。');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        setErrorMessage('無法連接伺服器，請稍後再試。');
+      }
+    };
 
-//   useEffect(() => {
-//     if (isLoggedIn) {
-//       navigate('/MainPage'); // 進行頁面跳轉
-//     }
-//   }, [isLoggedIn, navigate]);
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-    
-  //   const formData = {
-  //     username, // 包含 username
-  //     // 其他表单字段
-  //   };
-
-  //   onLogin(formData); // 调用 onLogin 并传递 formData
-  // };
 
   return (
-    <div className="login">
-      <div className="logo-login">  
+    <div className="login" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div className="logo-login">
             <img src={logo} alt="Logo" />
       </div>
       <form onSubmit={handleLogin}>
@@ -84,9 +58,11 @@ function Login ({ onLogin }) {
               required />
         </div>
         <button className="login_button" type="submit">登入</button>
-      </form>
-      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+        </form>
+      {errorMessage && <p style={{ color: 'red', marginTop: '10px' }}>{errorMessage}</p>}
+
     </div>
+
   );
 }
 
