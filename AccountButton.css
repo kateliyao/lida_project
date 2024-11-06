@@ -1,0 +1,52 @@
+.account-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.account-icon {
+  position: absolute;
+  top: -10px; /* 根據需要調整垂直位置 */
+  right: 30px; /* 距離右側邊緣 20px */
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.account-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.account-menu {
+  position: absolute;
+  top: 80px; /* 距離帳戶圖示的垂直距離 */
+  right: 20px;
+  background-color: #535B64;
+
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+  padding: 10px 0;
+  z-index: 10;
+}
+
+.menu-item {
+  display: block;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  color: #FFFFFF;
+
+}
+
+.menu-item:hover {
+  background-color: #f0f0f0;
+}
