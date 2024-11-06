@@ -1,40 +1,52 @@
 import React, { useState } from 'react';
 
-const NumberFormat = ({onValueChange,isGeneratingPDF  }) => {
-    const [formattedNumber, setFormattedNumber] = useState('');
+const NumberFormat = ({ onValueChange, isGeneratingPDF }) => {
+    const [inputValue, setInputValue] = useState('');
 
     const formatNumber = (num) => {
         return num.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     };
 
     const handleInputChange = (event) => {
-        let inputValue = event.target.value.replace(/,/g, ''); // 去除已存在的逗號
+        const value = event.target.value.replace(/,/g, ''); // 去除已存在的逗號
+        setInputValue(value);
+    };
 
-        // 如果輸入是以 0 開頭且長度大於 1，則去除前面的 0
-        if (inputValue.length > 1 && inputValue.startsWith('0')) {
-            inputValue = inputValue.replace(/^0+/, '');
+    const handleInputBlur = () => {
+        let valueToDisplay = inputValue;
+
+        // 处理负数，记录负号并去掉负号
+        const isNegative = valueToDisplay.startsWith('-');
+        if (isNegative) {
+            valueToDisplay = valueToDisplay.slice(1); // 去掉負號
         }
 
-        if (!isNaN(inputValue) && inputValue !== '') {
-            setFormattedNumber(formatNumber(inputValue));
-            onValueChange(inputValue); // 傳遞數值給父組件
+        // 格式化数字
+        if (!isNaN(valueToDisplay) && valueToDisplay !== '') {
+            const formatted = formatNumber(valueToDisplay);
+            if (isNegative) {
+                setInputValue(`(${formatted})`); // 負數顯示為括號形式
+                onValueChange(`-${valueToDisplay}`); // 傳遞原始負數值
+            } else {
+                setInputValue(formatted);
+                onValueChange(valueToDisplay); // 傳遞格式化後的正數值
+            }
         } else {
-            setFormattedNumber('');
+            setInputValue('');
             onValueChange(''); // 傳遞空值給父組件
         }
-    };
+};
 
     return (
         <div>
             <input
                 type="text"
-                //id={id}
-                value={formattedNumber}
+                value={formatNumber(inputValue)}
                 onChange={handleInputChange}
+                onBlur={handleInputBlur}
                 placeholder="輸入數字"
-                //className="input-large"
-                className={isGeneratingPDF ? 'pdf-view input-large' : 'web-view input-large'} // 根據 isGeneratingPDF 設定 className
-                //style={{ width: '200px', height: '35px', marginRight: '5px', fontSize: '25px' }}
+                className={isGeneratingPDF ? 'pdf-view input-large' : 'web-view input-large'}
+
             />
         </div>
     );
