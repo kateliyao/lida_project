@@ -1,0 +1,21 @@
+.td1{
+    text-align:left;
+    width:30%;
+    padding:5px;
+    line-height: 1;
+}
+
+.td2{
+    text-align:center;
+    width:40%;
+    padding:5px;
+    line-height: 1;
+}
+
+.td3{
+    text-align:right;
+    width:40%;
+    padding:5px;
+    line-height: 1;
+}
+

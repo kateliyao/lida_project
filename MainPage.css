@@ -1,0 +1,86 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%; /* 确保 body 占满宽度 */
+  font-family: 'custom-login', sans-serif;
+}
+
+.mainpage {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* 占满整个视窗高度 */
+  width: 100%; /* 占满整个宽度 */
+}
+
+
+.top {
+  background-color: #294761;
+  flex: 0 0 100px; /* 固定高度 */
+  position: relative;
+  text-align: center;
+  line-height: 130px; /* 垂直居中 */
+}
+
+.logo-mainpage img {
+    position:absolute;
+    top:25px;
+    left:20px;
+    width: 495px; /* 寬度放大35% */
+    height: 51px /* 保持比例 */
+
+}
+
+.stagingarea-icon {
+  position: absolute;
+  top: 15px; /* 根據需要調整垂直位置 */
+  right: 170px; /* 距離右側邊緣 20px */
+
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+.stagingarea-icon img {
+  width: 100%;
+  height: 100%;
+
+}
+
+.side-container {
+  display: flex;
+  flex: 1; /* 剩余空间 */
+}
+
+.sidebar {
+  background-color: #192F42;
+  width: 300px; /* 固定宽度 */
+  height: calc(100% - 0px); /* 垂直居中 */
+
+}
+
+.sidebar li {
+    padding: 8px 0; /* 设置合适的行间距 */
+    padding-left: 30px;
+    text-align: left;
+    cursor: pointer; /* 鼠标指针样式 */
+    color : #FFFFFF;
+}
+
+.sidebar li:hover {
+  background-color: #EBC857;
+  color: #1F4C72;
+}
+
+.form-area {
+  background-color: #122331;
+  color: #FFFFFF;
+  flex: 1; /* 占据剩余宽度 */
+  padding: 20px; /* 添加内边距 */
+  text-align: center;
+  height: calc(100% - 40px); /* 垂直居中 */
+  overflow: auto;
+}
+
+
