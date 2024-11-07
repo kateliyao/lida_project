@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import FinancialNumberFormat from './FinancialNumberFormat';
 import './FinancialForm.css';
 
-const FinancialForm = ({ onNetIncomeChange  }) => {
+const FinancialForm = ({onRevenueChange,onCostChange,onExpenseChange,onProfitChange,onNonrevenueChange,onNoncostChange,onIncomeChange}) => {
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
     // 经营相关的状态
@@ -12,23 +12,22 @@ const FinancialForm = ({ onNetIncomeChange  }) => {
     const [nonrevenue, setNonrevenue] = useState('');
     const [noncost, setNoncost] = useState('');
 
-    
-
     // 计算净利
     const profit = (Number(revenue) || 0) - (Number(cost) || 0) - (Number(expense) || 0);
 
     // 计算本期损益
     const income = (Number(revenue) || 0) - (Number(cost) || 0) - (Number(expense) || 0) + (Number(nonrevenue) || 0) - (Number(noncost) || 0);
 
-    // 每次 income 更新时调用 onIncomeChange
-//     useEffect(() => {
-//         onIncomeChange(income);
-//     }, [income, onIncomeChange]);
-
-
     useEffect(() => {
-        onNetIncomeChange(income); // 傳遞收入變更
-    }, [income, onNetIncomeChange]);
+        onRevenueChange(revenue);
+        onCostChange(cost);
+        onExpenseChange(expense);
+        onProfitChange(profit);
+        onNonrevenueChange(nonrevenue);
+        onNoncostChange(noncost);
+        onIncomeChange(income); // 傳遞收入變更
+    }, [revenue,cost,expense,profit,nonrevenue,noncost,income
+        ,onRevenueChange,onCostChange,onExpenseChange,onProfitChange,onNonrevenueChange,onNoncostChange,onIncomeChange]);
 
 
     const formatNumber = (number) => {
