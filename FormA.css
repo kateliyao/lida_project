@@ -188,3 +188,17 @@
     background-color: #D3B03D; /* 鼠标悬停时的背景颜色 */
 }
 
+.custom-select {
+    background-color: transparent;  /* 无背景色 */
+    border: 2px solid white;        /* 白色边框 */
+    font-family: 'custom-sans-serif', sans-serif;
+    font-size: 28px;                 /* 增大字体 */
+    color: white;                   /* 字体颜色为白色 */
+    padding: 10px;                  /* 增加内边距 */
+}
+
+.custom-select option {
+    background-color: #192F42;
+    font-family: 'custom-sans-serif', sans-serif;
+}
+

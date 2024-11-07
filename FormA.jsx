@@ -11,17 +11,25 @@ const FormA = ({ onSave }) => {
 	//是否套用pdf版面設定
 	const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-    //勾選確認鍵
+    //是否勾選
 	const [isChecked, setIsChecked] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [companyName, setCompanyName] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
-    const [newId, setNewId] = useState('無');  // 存储生成的编号，默认为 '無'
+    const [formId, setFormId] = useState('無');  // 表單編號，默認為無
+    const [note, setNote] = useState('');  // 用來儲存textarea的內容
+    const [staffList, setStaffList] = useState([]);
+    const [selectedStaff, setSelectedStaff] = useState('');
 
+    //是否勾選
     const handleCheckboxChange = (event) => {
         setIsChecked(event.target.checked);
     };
     const buttonRef = useRef();
+
+    const handleInputChange = (event) => {
+        setNote(event.target.value);
+    };
 
     //匯出成pdf
     const handleGeneratePDF = async () => {
@@ -55,13 +63,39 @@ const FormA = ({ onSave }) => {
     //引入系統日期
     const { year, month, date ,handleYearChange, handleMonthChange ,handleDateChange,year1, month1 ,handleYear1Change, handleMonth1Change } = SystemDate();
 
+    const [revenue, setRevenue] = useState(0);
+    const [cost, setCost] = useState(0);
+    const [expense, setExpense] = useState(0);
+    const [profit, setProfit] = useState(0);
+    const [nonrevenue, setNonrevenue] = useState(0);
+    const [noncost, setNoncost] = useState(0);
     //引入本期損益
     const [income, setIncome] = useState(0);
-    const [netincome, setNetIncome] = useState('');
+    const [netincome, setNetIncome] = useState(0);
+    const [extracost, setExtraCost] = useState(0);
+    const [extraexpense, setExtraExpense] = useState(0);
 
-    const handleIncomeChange = (newIncome) => {
-        setIncome(newIncome);
-        console.log('Updated Income:', newIncome);
+
+    const handleRevenueChange = (newValue) => {
+        setRevenue(newValue);
+    };
+    const handleCostChange = (newValue) => {
+        setCost(newValue);
+    };
+    const handleExpenseChange = (newValue) => {
+        setExpense(newValue);
+    };
+    const handleProfitChange = (newValue) => {
+        setProfit(newValue);
+    };
+    const handleNonrevenueChange = (newValue) => {
+        setNonrevenue(newValue);
+    };
+    const handleNoncostChange = (newValue) => {
+        setNoncost(newValue);
+    };
+    const handleIncomeChange = (newValue) => {
+        setIncome(newValue);
     };
     const VoucherNumber = (Number(income) || 0) - (Number(netincome) || 0)
 
@@ -69,41 +103,69 @@ const FormA = ({ onSave }) => {
         return new Intl.NumberFormat().format(number);
     };
 
-    const [formId, setFormId] = useState('');
+    const [companyId, setCompanyId] = useState('');
     const [currentCart, setCurrentCart] = useState([]);
     const formRef = useRef();
 
     const handleChange = (e) => {
-        setFormId(e.target.value);
+        setCompanyId(e.target.value);
     };
 
     const handleSearch = async (e) => {
         e.preventDefault();
-        if (formId) {
+        if (companyId) {
           try {
             // 發送請求到後端
-            const response = await fetch(`http://localhost:5000/api/getCompanyName?formId=${formId}`);
+            const response = await fetch(`http://localhost:5000/api/getCompanyName?companyId=${companyId}`);
             const data = await response.json();
 
             if (response.ok && data.companyName) {
               setCompanyName(data.companyName); // 成功返回公司名稱
-              setNewId(formId + '_A');  // 生成新的編號，格式：公司編碼 + '_A'
+              setFormId(companyId + '_A');  // 生成新的編號，格式：公司編碼 + '_A'
               setErrorMessage(''); // 清空錯誤訊息
             } else {
               setCompanyName('');
               setErrorMessage('找不到對應的公司名稱');
-              setNewId('無');
+              setFormId('無');
             }
           } catch (err) {
             setErrorMessage('查詢失敗，請稍後重試');
-            setNewId('無');
+            setFormId('無');
           }
         } else {
           setErrorMessage('請輸入公司編碼');
-          setNewId('無');
+          setFormId('無');
         }
-        setFormId('');
+        //setCompanyId(''); //提交後清空查詢，先暫停使用
       };
+
+    useEffect(() => {
+        const fetchStaffData = async () => {
+            try {
+                // Sending request to backend to get staff information
+                const response = await fetch('http://localhost:5000/api/getStaffInfo');
+                const data = await response.json();
+
+                if (response.ok && Array.isArray(data) && data.length > 0) {
+                    setStaffList(data);  // Populate staff list if data is valid
+                    setErrorMessage('');  // Clear error message
+                } else {
+                    setStaffList([]);  // Clear staff list if no staff found
+                    setErrorMessage('没有找到工作人员');
+                }
+            } catch (err) {
+                setStaffList([]);
+                setErrorMessage('查詢失敗，請稍後重試');
+            }
+        };
+
+        fetchStaffData();  // Call the fetch function
+    }, []);
+
+    const handleStaffChange = (e) => {
+        setSelectedStaff(e.target.value);
+    };
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -131,15 +193,69 @@ const FormA = ({ onSave }) => {
             }
         }
 
+
+        // 計算比例給後端使用
+        const costPercent = revenue ? (cost / revenue) * 100 : 0;
+        const expensePercent = revenue ? (expense / revenue) * 100 : 0;
+        const profitPercent = revenue ? (profit / revenue) * 100 : 0;
+        const nonrevenuePercent = revenue ? (nonrevenue / revenue) * 100 : 0;
+        const noncostPercent = revenue ? (noncost / revenue) * 100 : 0;
+        const incomePercent = revenue ? (income / revenue) * 100 : 0;
+
         const formData = {
             formId,
+            companyId,
+            companyName,
             year1,
             month1,
-            html,
-            css
+            revenue,
+            cost,
+            expense,
+            profit,
+            nonrevenue,
+            noncost,
+            income,
+            costPercent,
+            expensePercent,
+            profitPercent,
+            nonrevenuePercent,
+            noncostPercent,
+            incomePercent,
+            isChecked: isChecked ? 'Y':'N', //是否勾選轉為Y或N
+            netincome,
+            extracost,
+            extraexpense,
+            note,
+            selectedStaff,
+            year,
+            month,
+            date
+            //html,
+            //css
         };
         console.log('CSS:', css); // 確認 CSS 被正確設置
         console.log('提交的表單數據:', formData); // 確認提交的數據
+
+        try {
+            const response = await fetch('http://localhost:5000/api/submitForm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                console.log('Form submitted successfully:', result);
+            } else {
+                console.error('Error submitting form:', result.message);
+            }
+        } catch (error) {
+            console.error('Error submitting form:', error);
+        }
+
         onSave(formData); // 傳遞到 MainPage 的 onSave 函數
         setFormId('');
 
@@ -160,11 +276,12 @@ const FormA = ({ onSave }) => {
 		<form onSubmit={handleSubmit}>
             <div ref={formRef} className="FormA">
                 <div id="form-container" className={isGeneratingPDF ? 'pdf-view' : 'web-view'}>
-                      <div style={{textAlign: 'left'}}>憑證統計表 編號:{newId}</div>
+                      <div style={{textAlign: 'left'}}>憑證統計表</div>
+                      <div style={{textAlign: 'left'}}>編號:{formId}</div>
                       <div style={{ display: 'flex', alignItems: 'center' }}>
                       <input
                         className="input-large"
-                        value={formId}
+                        value={companyId}
                         onChange={handleChange}
                         placeholder="輸入公司編碼"
                         required
@@ -214,7 +331,14 @@ const FormA = ({ onSave }) => {
                     </div>
 
                     <div className="class4" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column'}}>
-                        <FinancialForm onNetIncomeChange={handleIncomeChange} />
+                        <FinancialForm onRevenueChange={handleRevenueChange}
+                                       onCostChange={handleCostChange}
+                                       onExpenseChange={handleExpenseChange}
+                                       onProfitChange={handleProfitChange}
+                                       onNonrevenueChange={handleNonrevenueChange}
+                                       onNoncostChange={handleNoncostChange}
+                                       onIncomeChange={handleIncomeChange}  />
+
                     </div><br />
 
                     <div className="class5">
@@ -243,11 +367,11 @@ const FormA = ({ onSave }) => {
                                     <div style={{ display: 'flex', alignItems: 'center' , flexWrap: 'wrap'}}>
                                     <label className="mainpage-label">建議補成本 &nbsp;</label>
                                         <div style={{ display: 'inline-block', marginRight: '10px' }}>
-                                            <NumberFormat />
+                                            <NumberFormat onValueChange={setExtraCost} />
                                             <div style={{ borderBottom: '1px solid black', marginTop: '-2px' }} />
                                         </div>元及費用 &nbsp;
                                         <div style={{ display: 'inline-block', marginRight: '10px' }}>
-                                            <NumberFormat />
+                                            <NumberFormat onValueChange={setExtraExpense} />
                                             <div style={{ borderBottom: '1px solid black', marginTop: '-2px' }} />
                                         </div>元。
                                     </div>
@@ -274,6 +398,8 @@ const FormA = ({ onSave }) => {
                                 id="textarea-input"
                                 className="textarea-box"
                                 placeholder="請在此輸入您的內容..."
+                                value={note}  // 綁定textarea的值到state
+                                onChange={handleInputChange}  // 設定事件處理函數
                             />
                         </div>
                     </div><br />
@@ -281,7 +407,29 @@ const FormA = ({ onSave }) => {
                     <div className="class8" >
                         敬祝 商棋 力達稅務記帳士事務所&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         <div style={{ display: 'flex', alignItems: 'center' , flexWrap: 'wrap' }}>
-                            服務人員:<input className="input-large"/>&nbsp;&nbsp;
+{/*                             服務人員:<input className="input-large"/>&nbsp;&nbsp; */}
+                            <label htmlFor="staff" style={{ color: 'white' }}>服務人員：</label>
+                            <div>
+                                {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+                                {staffList.length > 0 && (
+                                    <div>
+
+                                        <select
+                                            id="staff"
+                                            value={selectedStaff}
+                                            onChange={handleStaffChange}
+                                            className="custom-select"
+                                        >
+                                            <option value="">選擇服務人員</option>
+                                            {staffList.map((staff) => (
+                                                <option key={staff.staffId} value={staff.staffMenu}>
+                                                    {staff.staffMenu}  {/* Display staffName and staffMenu */}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                            </div>&nbsp;&nbsp;
                             <input
                                     type="text"
                                     id="year"
