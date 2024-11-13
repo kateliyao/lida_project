@@ -7,23 +7,16 @@ import RequestWhiteIcon from './assets/requestForm_white_icon.png';
 import RequestBlueIcon from './assets/requestForm_blue_icon.png';
 import QuotationWhiteIcon from './assets/quotation_white_icon.png';
 import QuotationBlueIcon from './assets/quotation_blue_icon.png';
-import StagingArea from './assets/stagingArea_icon.png';
+import StagingAreaIcon from './assets/stagingArea_icon.png';
 import AccountButton from './AccountButton';
 import FormA from './FormA';
-import CartPage from './CartPage'; // 引入 CartPage
+//import StagingArea from './StagingArea';
 import './MainPage.css';
 
-const MainPage = ({ cart, onSave,onLogout,user }) => {
+const MainPage = ({ onLogout,user }) => {
   console.log("MainPage 收到的 user:", user);  // 打印傳遞來的 user
-  //const [cart, setCart] = useState(initialCart || []);
   const [activeForm, setActiveForm] = useState(null);
-  //const [cart, setCart] = useState([]); // 在 MainPage 中管理購物車
   const navigate = useNavigate();
-
-
-  useEffect(() => {
-    console.log('購物車更新:', cart); // 監聽 cart 的變化
-  }, [cart]);
 
   const handleGoBack = () => {
     window.history.back();
@@ -41,22 +34,7 @@ const MainPage = ({ cart, onSave,onLogout,user }) => {
         //navigate('/'); // 導航回 Login 頁面
         window.location.href = '/'; // 強制導航到 Login 頁面
       };
-  // const handleSaveToCart = (formData) => {
-  //   setCart((prevCart) => [...prevCart, formData]); // 更新購物車
-  //   console.log('購物車更新:', cart);
-  // };
-  const handleSaveToCart = (formData) => {
-//     console.log('handleSaveToCart 被調用:', formData);
-//     setCart((prevCart) => {
-//         const updatedCart = [...prevCart, formData];
-//         console.log('購物車更新:', updatedCart); // 確認更新後的狀態
-//         return updatedCart; // 返回新的狀態
-//     });
-    console.log('handleSaveToCart 被調用:', formData);
-    onSave(formData);
-   };
 
-  console.log('當前購物車內容:', cart);
   return (
     <div className="mainpage">
       <div className="top">
@@ -66,12 +44,12 @@ const MainPage = ({ cart, onSave,onLogout,user }) => {
         <div className="stagingarea-icon">
           <button onClick={() => {
               //setActiveForm('C'); // 當點擊購物車時設置 activeForm 為 C
-              console.log('當前購物車內容:', cart);
+              //console.log('當前購物車內容:', cart);
               navigate('/StagingArea'); // 如果需要導航到單獨的路由
           }}
             style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}  // 隱藏按鈕邊框並設定為可點擊
           >
-          <img src={StagingArea} alt="StagingArea" style={{ width: '40px', height: '40px' }} />  {/* 根據需要調整圖片大小 */}
+          <img src={StagingAreaIcon} alt="StagingAreaIcon" style={{ width: '40px', height: '40px' }} />  {/* 根據需要調整圖片大小 */}
 
           </button>
       </div>
@@ -115,15 +93,7 @@ const MainPage = ({ cart, onSave,onLogout,user }) => {
           </nav>
 
           <div className="form-area">
-            {activeForm === 'A' && <FormA onSave={handleSaveToCart} />}
-            {activeForm === 'Cart' && <CartPage cart={cart} setCart={setCart} />} {/* 顯示購物車 */}
-            {/* {activeForm === 'C' && <CartPage cart={cart} />} 顯示購物車 */}
-            {/* {activeForm === 'C' && (
-              <>
-                <CartPage cart={cart} />
-                <div>當前購物車內容: {JSON.stringify(cart)}</div>
-              </>
-            )} */}
+            {activeForm === 'A' && <FormA user={user}/>}
           </div>
       </div>
 

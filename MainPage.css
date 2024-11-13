@@ -83,4 +83,53 @@ body, html {
   overflow: auto;
 }
 
+.form-area li {
+  padding: 10px;
+  margin-bottom: 5px; /* 每一行之间有间距 */
+  display: flex;
+  align-items: center;
+}
+
+.form-area .dark-bg {
+  background-color: #1D374E;
+  color: white;
+}
+
+.form-area .light-bg {
+  background-color: #455664;
+  color: white;
+}
+
+.form-area button{
+  background-color: #71777F;
+  color: white;
+}
+
+input[type="checkbox"] {
+  appearance: none; /* 移除默认样式 */
+  width: 40px;
+  height: 40px;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  margin-left: 10px;
+  margin-right: 30px;
+}
+
+/* 勾选符号 */
+input[type="checkbox"]:checked::before {
+  content: '\2713'; /* Unicode for checkmark (✓) */
+  font-size: 34px;
+  color: #1F4C72;
+  position: absolute;
+  top: -5px;
+  left: 5px; /* 使勾选符号稍微偏离中心 */
+
+}
+
+/* 当复选框被选中时，改变背景色 */
+input[type="checkbox"]:checked {
+  background-color: red; /* 改变背景色 */
+  border-color: #0056b3;
+}
+
 
