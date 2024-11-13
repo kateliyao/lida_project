@@ -6,8 +6,10 @@ import SystemDate from './SystemDate';
 //import NumberFormat from 'react-number-format';
 import NumberFormat from './NumberFormat';
 import FinancialForm from './FinancialForm';
+//import axios from 'axios';
 
-const FormA = ({ onSave }) => {
+const FormA = ({ user }) => {
+	console.log("FormA 收到的 user:", user);  // 打印傳遞來的 user
 	//是否套用pdf版面設定
 	const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
@@ -120,24 +122,44 @@ const FormA = ({ onSave }) => {
             const data = await response.json();
 
             if (response.ok && data.companyName) {
-              setCompanyName(data.companyName); // 成功返回公司名稱
-              setFormId(companyId + '_A');  // 生成新的編號，格式：公司編碼 + '_A'
-              setErrorMessage(''); // 清空錯誤訊息
+                setCompanyName(data.companyName); // 成功返回公司名稱
+
+              // 獲取當前日期（YYYYMMDD）
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = (today.getMonth() + 1).toString().padStart(2, '0'); // 月份從0開始，因此+1
+                const day = today.getDate().toString().padStart(2, '0');
+                const dateStr = `${year}${month}${day}`; // 格式化为 YYYYMMDD
+
+                // 获取当前序号
+                const sequenceResponse = await fetch(`http://localhost:5000/api/getSequence?companyId=${companyId}`);
+                const sequenceData = await sequenceResponse.json();
+
+                if (sequenceData.success) {
+                    // 序号递增
+                    //const newSequence = (sequenceData.formId + 1).toString().padStart(3, '0'); // 生成新的序号，确保三位数
+                    const formId = `${companyId}_A_${dateStr}_${sequenceData.formId}`;
+                    setFormId(formId); // 生成新的編號，格式：公司編碼_A_系統日期_序號
+                    setErrorMessage(''); // 清空錯誤訊息
+                } else {
+                    setErrorMessage('獲取序號失敗');
+                    setFormId('無');
+                }
             } else {
-              setCompanyName('');
-              setErrorMessage('找不到對應的公司名稱');
-              setFormId('無');
+                setCompanyName('');
+                setErrorMessage('找不到對應的公司名稱');
+                setFormId('無');
             }
-          } catch (err) {
+        } catch (err) {
             setErrorMessage('查詢失敗，請稍後重試');
             setFormId('無');
-          }
-        } else {
-          setErrorMessage('請輸入公司編碼');
-          setFormId('無');
         }
-        //setCompanyId(''); //提交後清空查詢，先暫停使用
-      };
+    } else {
+        setErrorMessage('請輸入公司編碼');
+        setFormId('無');
+    }
+    // setCompanyId(''); // 提交後清空查詢，先暫停使用
+};
 
     useEffect(() => {
         const fetchStaffData = async () => {
@@ -171,9 +193,11 @@ const FormA = ({ onSave }) => {
         e.preventDefault();
         console.log("handleSubmit 被調用"); // 檢查是否多次調用
 
-        // 新增延遲，匯出成pdf
-        //await new Promise(resolve => setTimeout(resolve, 100)); // 100 毫秒延迟
-        //await handleGeneratePDF();
+        // 在這裡檢查 formId 是否為 "無"
+        if (formId === '無' || !formId) {
+            alert('無效的表單編號！請檢查表單編號');
+            return; // 阻止表單提交
+        }
 
 
         const html = formRef.current.innerHTML;
@@ -229,7 +253,8 @@ const FormA = ({ onSave }) => {
             selectedStaff,
             year,
             month,
-            date
+            date,
+            user
             //html,
             //css
         };
@@ -245,18 +270,33 @@ const FormA = ({ onSave }) => {
                 body: JSON.stringify(formData),
             });
 
-            const result = await response.json();
+            //const result = await response.json();
 
             if (response.ok) {
-                console.log('Form submitted successfully:', result);
+                // 判断响应的类型是否为 PDF
+                const contentType = response.headers.get('Content-Type');
+                if (contentType && contentType.includes('application/pdf')) {
+                    // 如果是 PDF，获取 PDF 文件的 blob 数据
+                    const blob = await response.blob();
+                    // 创建一个临时链接来触发文件下载
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob); // 创建 blob 对象 URL
+                    link.download = '憑證統計表.pdf'; // 设置下载文件的名称
+                    link.click(); // 自动触发下载
+                } else {
+                    // 如果不是 PDF，尝试读取 JSON 错误信息
+                    const result = await response.json();
+                    console.error('Error submitting form:', result.message);
+                }
             } else {
-                console.error('Error submitting form:', result.message);
+                // 如果返回的 HTTP 状态码不是 2xx，读取错误信息
+                const error = await response.json();
+                console.error('Error submitting form:', error.message);
             }
         } catch (error) {
             console.error('Error submitting form:', error);
         }
 
-        onSave(formData); // 傳遞到 MainPage 的 onSave 函數
         setFormId('');
 
         // 檢查新表單的 formId 是否已經存在於購物車中
