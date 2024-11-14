@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify,send_from_directory
 from flask_mysqldb import MySQL
 from flask_cors import CORS
 import os
@@ -23,6 +23,14 @@ mysql = MySQL(app)
 now = datetime.now()
 # 格式化日期為 YYYYMMDD 格式
 date_str = now.strftime("%Y%m%d")
+
+PDF_DIRECTORY = './pdfs/'
+# 確保 'pdfs' 目錄存在，若不存在則創建
+merged_pdf_folder = os.path.join(PDF_DIRECTORY, 'merge')  # 當前pdfs目錄下的 merge 資料夾
+upload_pdf_folder = os.path.join(PDF_DIRECTORY, 'upload')  # 當前pdfs目錄下的 merge 資料夾
+# 如果 目錄不存在，則創建它
+os.makedirs(merged_pdf_folder, exist_ok=True)
+os.makedirs(upload_pdf_folder, exist_ok=True)
 
 # 封装数据库连接函数
 def get_db_connection():
@@ -216,8 +224,8 @@ def submit_form():
 
 
         # 根據isChecked選擇不同的模板
-        # template_name = 'pdf_template1.html' if isChecked == 'Y' else 'pdf_template2.html'
-        html_content = render_template('pdf_template.html', formId=formId,companyName=companyName,year1=year1,month1=month1
+        template_name = 'formA_template_checked.html' if isChecked == 'Y' else 'formA_template_unchecked.html'
+        html_content = render_template(template_name, formId=formId,companyName=companyName,year1=year1,month1=month1
         ,revenue=revenue,formatted_revenue=formatted_revenue,cost=cost,formatted_cost=formatted_cost,expense=expense,formatted_expense=formatted_expense
         ,profit=profit,formatted_profit=formatted_profit,nonrevenue=nonrevenue,formatted_nonrevenue=formatted_nonrevenue,noncost=noncost
         ,formatted_noncost=formatted_noncost,income=income,formatted_income=formatted_income,costPercent=costPercent,expensePercent=expensePercent
@@ -323,9 +331,10 @@ def delete_form():
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-# 存储 PDF 文件的目录
-PDF_DIRECTORY = './pdfs/'
-
+# 配置静态文件夹，让 Flask 能处理 /pdfs/merge/ 下的请求，不設定這個的話，儘管網址對，pdf預覽會跳出404
+@app.route('/pdfs/merge/<filename>')
+def download_pdf(filename):
+    return send_from_directory(merged_pdf_folder, filename)
 
 @app.route('/api/mergePdf', methods=['POST'])
 def merge_pdf():
@@ -341,6 +350,44 @@ def merge_pdf():
         # 创建 PdfMerger 对象
         merger = PdfMerger()
 
+        # 使用第一个 PDF 名称来提取文件信息
+        first_pdf_name = pdf_names[0]
+        # 拆解文件名
+        parts = first_pdf_name.split('_')
+
+        company_name = parts[0]  # 公司名称
+        system_date = parts[2]  # 系统日期
+
+        cursor = get_db_connection()
+
+        # 查询该公司和日期的合并文件，获取最大的序号
+        cursor.execute("""
+                    SELECT merge_pdf_name FROM pdf_merge_history 
+                    WHERE company_name = %s AND system_date = %s 
+                    ORDER BY merge_pdf_name DESC LIMIT 1
+                """, (company_name, system_date))
+
+        result = cursor.fetchone()
+
+        # 如果存在合併檔案，提取最大的序號并加1
+        if result:
+            last_merge_pdf_name = result[0]
+            print(f"Last merge PDF name: {last_merge_pdf_name}")
+            try:
+                # 提取檔案名稱中的序號部分，例如 "_001", "_002" 等
+                sequence_number = int(
+                    last_merge_pdf_name.split('_')[-1].replace('.pdf', ''))  # 假设格式是 "{company_name}_合併檔案_{system_date}_001"
+                new_sequence = sequence_number + 1
+            except ValueError:
+                # 如果解析序号出错，从 001 开始
+                new_sequence = 1
+        else:
+            # 如果没有记录，序号从 001 开始
+            new_sequence = 1
+
+        # 确保序号是 3 位数
+        new_sequence_str = str(new_sequence).zfill(3)  # 例如 1 变成 "001", 2 变成 "002"
+
         # 循环合并所有 PDF
         for pdf_name in pdf_names:
             pdf_path = os.path.join(PDF_DIRECTORY, pdf_name)
@@ -349,17 +396,48 @@ def merge_pdf():
             else:
                 return jsonify({"success": False, "message": f"文件 {pdf_name} 不存在"}), 400
 
+
         # 输出合并后的文件
-        merged_pdf_path = os.path.join(PDF_DIRECTORY, 'merged_output.pdf')
+        merged_pdf = f'{company_name}_合併檔案_{system_date}_{new_sequence_str}.pdf'
+        merged_pdf_path = os.path.join(merged_pdf_folder, merged_pdf)
         merger.write(merged_pdf_path)
         merger.close()
+        merged_pdf_url = f'http://localhost:5000/pdfs/merge/{merged_pdf}'
 
-        # 返回合并后的 PDF URL
-        merged_pdf = f'merged_output.pdf'
-        return jsonify({"success": True, "mergedPdf": merged_pdf})
+        # 存储合并记录到数据库
+        cursor.execute("""
+                    INSERT INTO pdf_merge_history (company_name, system_date, merge_pdf_name)
+                    VALUES (%s, %s, %s)
+                """, (company_name, system_date, merged_pdf))
+        cursor.connection.commit()
+
+        # 返回合并后的 PDF檔名
+        return jsonify({"success": True, "mergedPdf": merged_pdf,"mergedPdfUrl": merged_pdf_url})
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+
+app.config['upload_pdf_folder'] = upload_pdf_folder
+# 用於處理文件上傳的 API
+@app.route('/api/uploadPdf', methods=['POST'])
+def upload_pdf():
+    if 'files' not in request.files:
+        return jsonify({"success": False, "message": "No files part"}), 400
+
+    files = request.files.getlist('files')
+    if not files:
+        return jsonify({"success": False, "message": "No file selected"}), 400
+
+    for file in files:
+        if file and file.filename.endswith('.pdf'):
+            filename = os.path.join(app.config['upload_pdf_folder'], file.filename)
+            file.save(filename)
+        else:
+            return jsonify({"success": False, "message": "Only PDF files are allowed"}), 400
+
+    return jsonify({"success": True, "message": "Files uploaded successfully"}), 200
 
 
 if __name__ == '__main__':
