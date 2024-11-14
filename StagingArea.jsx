@@ -19,6 +19,8 @@ const StagingArea = ({ onLogout, user }) => {
   const [isLoading, setIsLoading] = useState(false);  // 用来控制是否显示 "正在加載資料..."
   const navigate = useNavigate();
   const [selectedForms, setSelectedForms] = useState([]); // 存储已选中的表单ID
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState([]);  // 用于存储已上传的文件名
 
   // 确保在登录后，如果 activeForm 为 null 或 undefined，则设置为 'STAGE'
   useEffect(() => {
@@ -79,8 +81,13 @@ const StagingArea = ({ onLogout, user }) => {
       window.open(pdfUrl, '_blank');  // 预览PDF
     };
 
+    const handlePreviewMerge = (pdfName) => {
+          const pdfUrl = `http://localhost:5000/pdfs/merge/${pdfName}`;  // 使用绝对路径
+          window.open(pdfUrl, '_blank');  // 预览PDF
+        };
+
   // 删除表单
-  const handleDelete = (formId) => {
+  const handleDelete = (formId,pdfName) => {
     fetch('http://localhost:5000/api/deleteForm', {  // 后端删除请求的URL
       method: 'POST',  // 使用 POST 请求删除表单
       headers: {
@@ -92,6 +99,8 @@ const StagingArea = ({ onLogout, user }) => {
       .then(data => {
         if (data.success) {
           setForms(prevForms => prevForms.filter(form => form.form_id !== formId));  // 更新表单列表
+          // 同时更新 selectedForms 状态，移除已删除的表单的 pdf_name
+        setSelectedForms(prevSelected => prevSelected.filter(form => form !== pdfName));
         } else {
           console.error('删除失败');
         }
@@ -155,7 +164,7 @@ const handleBulkPreview = async () => {
       // 处理返回的数据
       if (data.success) {
         // 后端返回合并后的文件 URL
-        handlePreview(data.mergedPdf);  // 显示合并后的预览
+        handlePreviewMerge(data.mergedPdf);  // 显示合并后的预览
       } else {
         alert('合併失敗');
       }
@@ -165,6 +174,83 @@ const handleBulkPreview = async () => {
     }
   }
 };
+
+// 處理外部文件選擇
+  const handleFileSelect = (event) => {
+    const files = Array.from(event.target.files);  // 獲取選中的文件
+    setSelectedFiles((prevFiles) => [...prevFiles, ...files]);  // 更新文件列表
+  };
+
+  // 处理文件拖拽
+  const handleDrop = (event) => {
+    event.preventDefault();  // 防止浏览器默认行为，阻止文件打开
+    const files = Array.from(event.dataTransfer.files);  // 获取拖拽的文件
+    setSelectedFiles((prevFiles) => [...prevFiles, ...files]);  // 更新文件列表
+  };
+  const handleDragOver = (event) => {
+    event.preventDefault();  // 防止浏览器默认行为
+  };
+  // 删除文件
+  const handleFileDelete = (fileIndex) => {
+    setSelectedFiles((prevFiles) => prevFiles.filter((_, index) => index !== fileIndex));  // 根据索引删除文件
+  };
+
+// 确认上传文件
+  const handleConfirmUpload = async () => {
+    // 1. 檢查文件是否都是 PDF
+    const isAllPdf = selectedFiles.every(file => file.type === 'application/pdf');
+    if (!isAllPdf) {
+      alert('請確認所有文件都是 PDF 格式');
+      return;
+    }
+
+    // 2. 呼叫後端上傳文件
+    try {
+      const formData = new FormData();
+      selectedFiles.forEach(file => {
+        formData.append('files', file);  // 将文件添加到 FormData 对象
+      });
+
+      const response = await fetch('http://localhost:5000/api/uploadPdf', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('文件上傳失敗');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('文件上傳成功！');
+
+        // 在文件上传成功后，打印文件名称并更新到页面
+      console.log('Uploaded files:', selectedFiles.map(file => file.name));
+      // 更新页面上的文件列表
+      setUploadedFiles(prevFiles => [...prevFiles, ...selectedFiles.map(file => file.name)]);
+
+        // 3. 更新 select form，保存上傳的文件名
+        setSelectedForms((prevForms) => [
+          ...prevForms,
+          ...selectedFiles.map(file => file.name),
+        ]);
+        setSelectedFiles([]);  // 清空選擇的文件
+      } else {
+        alert('文件上傳失敗');
+      }
+    } catch (error) {
+      console.error('文件上傳失敗:', error);
+      alert('文件上傳失敗');
+    }
+  };
+
+  // 清空所有文件信息
+  const handleClear = () => {
+    setSelectedFiles([]);   // 清空選擇的文件
+    setUploadedFiles([]);   // 清空已上傳的文件列表
+    setSelectedForms([]);   // 清空checkbox
+  };
 
   return (
     <div className="mainpage">
@@ -209,6 +295,7 @@ const handleBulkPreview = async () => {
             </li>
           </ul>
         </nav>
+
 
         <div className="form-area">
           {activeForm === 'A' && <FormA user={user} />}  {/* 显示FormA */}
@@ -256,7 +343,7 @@ const handleBulkPreview = async () => {
                           預覽
                         </button>
                         <button
-                          onClick={() => handleDelete(form.form_id)}
+                          onClick={() => handleDelete(form.form_id,form.pdf_name)}
                           style={{
                             padding: '5px 30px',
                             borderRadius: '20px',
@@ -273,6 +360,112 @@ const handleBulkPreview = async () => {
                   <div>暫無資料</div>
                 )}
               </ul>
+              {/* 文件上傳功能放在底部 */}
+      <div className="upload-section">
+      <h3>選擇要上傳的 PDF 文件</h3>
+
+      {/* 文件拖拽区域 */}
+      <div
+        className="file-input-container"
+        onDrop={handleDrop}  // 处理拖放
+        onDragOver={handleDragOver}  // 允许拖拽
+        style={{
+          border: '2px dashed #ddd',
+          borderRadius: '10px',
+          padding: '20px',
+          textAlign: 'center',
+          cursor: 'pointer',
+        }}
+      >
+        <input
+          type="file"
+          id="fileInput"
+          accept=".pdf"
+          multiple  // 允许批量选择
+          onChange={handleFileSelect}
+          style={{ display: 'none' }}  // 隐藏原生的文件选择框
+        />
+        <p>拖放文件到此處，或點擊下方選擇PDF文件</p>
+        {/* 自定义的文件选择按钮 */}
+        <button
+          onClick={() => document.getElementById('fileInput').click()}
+          style={{
+            padding: '10px 20px',
+            fontSize: '16px',
+            backgroundColor: '#4CAF50',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+          }}
+        >
+          選擇PDF文件
+        </button>
+      </div>
+
+      {/* 显示选择的文件列表 */}
+      <ul>
+        {selectedFiles.map((file, index) => (
+          <li key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}>
+            <span>{file.name}</span>
+            {/* 叉叉按钮，用于删除对应的文件 */}
+            <button
+              onClick={() => handleFileDelete(index)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'red',
+                fontSize: '18px',
+                fontWeight: 'bold',
+              }}
+            >
+              &times; {/* 叉叉符号 */}
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {/* 确认按钮 */}
+      <div style={{ marginTop: '20px', textAlign: 'center' }}>
+        <button
+          onClick={handleConfirmUpload}
+          disabled={selectedFiles.length === 0}  // 如果没有选择文件，禁用按钮
+          style={{
+            padding: '10px 40px',
+            borderRadius: '20px',
+            fontSize: '24px',
+            cursor: selectedFiles.length > 0 ? 'pointer' : 'not-allowed',
+            backgroundColor: selectedFiles.length > 0 ? '#4CAF50' : '#e0e0e0', // 有选择时为绿色，未选择时为灰色
+            color: '#fff',
+          }}
+        >
+          確認上傳
+        </button>
+      </div>
+
+      {/* 显示已上传的文件列表 */}
+    <div>
+      <h3>已上傳的文件：</h3>
+      <ul>
+        {uploadedFiles.length > 0 ? (
+          uploadedFiles.map((fileName, index) => (
+            <li key={index}>{fileName}</li>
+          ))
+        ) : (
+          <li>尚未有文件上傳</li>
+        )}
+      </ul>
+    </div>
+    {/* 清空按钮 */}
+      <div>
+        <button onClick={handleClear}>
+          清空所有
+        </button>
+      </div>
+    </div>
+
+
               {/* 預覽按鈕區域 */}
                 <div style={{ marginTop: '20px', textAlign: 'center' }}>
                   <button
