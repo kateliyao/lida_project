@@ -22,6 +22,8 @@ const FormA = ({ user }) => {
     const [note, setNote] = useState('');  // 用來儲存textarea的內容
     const [staffList, setStaffList] = useState([]);
     const [selectedStaff, setSelectedStaff] = useState('');
+    const maxLines = 7; // 限制最大行数
+    const maxLength = 245; // 限制最大字数
 
     //是否勾選
     const handleCheckboxChange = (event) => {
@@ -30,8 +32,26 @@ const FormA = ({ user }) => {
     const buttonRef = useRef();
 
     const handleInputChange = (event) => {
-        setNote(event.target.value);
-    };
+        const value = event.target.value;
+
+    // 計算當前行數
+    const lines = value.split('\n').length;
+    // 計算當前字數
+    const charCount = value.length;
+
+    if (lines > maxLines) {
+      alert('您已超過最大行數限制！');
+      return;
+    }
+
+    if (charCount > maxLength) {
+      alert('您已超過最大字數限制！');
+      return;
+    }
+
+    // 如果沒有超過限制，更新state
+    setNote(value);
+  };
 
     //匯出成pdf
     const handleGeneratePDF = async () => {
@@ -431,7 +451,7 @@ const FormA = ({ user }) => {
 
                     <br />
                     <div className="class6">
-                        <div>● 其他：</div>
+                        <div>● 其他：(當前字數:{note.length}/{maxLength} 當前行數:{note.split('\n').length}/{maxLines}) </div>
                         <div>
                             <textarea
                                 rows="4"
@@ -445,15 +465,12 @@ const FormA = ({ user }) => {
                     </div><br />
 
                     <div className="class8" >
-                        敬祝 商棋 力達稅務記帳士事務所&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        <div style={{ display: 'flex', alignItems: 'center' , flexWrap: 'wrap' }}>
-{/*                             服務人員:<input className="input-large"/>&nbsp;&nbsp; */}
+                        敬祝 商棋 力達稅務記帳士事務所
+                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap'  }}>
                             <label htmlFor="staff" style={{ color: 'white' }}>服務人員：</label>
-                            <div>
                                 {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
                                 {staffList.length > 0 && (
                                     <div>
-
                                         <select
                                             id="staff"
                                             value={selectedStaff}
@@ -469,7 +486,8 @@ const FormA = ({ user }) => {
                                         </select>
                                     </div>
                                 )}
-                            </div>&nbsp;&nbsp;
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap'  }}>
                             <input
                                     type="text"
                                     id="year"

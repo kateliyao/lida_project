@@ -149,7 +149,7 @@
     border: 1px solid #ccc; /* 邊框樣式 */
     border-radius: 5px;    /* 圓角 */
     font-family: 'custom-sans-serif', sans-serif; /* 設定字體 */
-    font-size: 19px;       /* 設定字體大小 */
+    font-size: 28px;       /* 設定字體大小 */
     line-height: 1.5;      /* 設定行高 */
     resize: none;          /* 禁止用戶調整大小 */
     white-space: pre-wrap; /* 確保空白符號和換行符號能夠被尊重 */
