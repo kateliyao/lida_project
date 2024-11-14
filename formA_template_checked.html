@@ -1,0 +1,195 @@
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>力達表單</title>
+	<style>
+		@font-face {
+		  font-family: 'chinese-sans-serif';
+		  src: url('file:///C:/Windows/Fonts/kaiu.ttf'), local('Microsoft JhengHei');
+		  unicode-range: U+4E00-9FFF; /* 這表示中文字符範圍 */
+		}
+		
+		@font-face {
+		  font-family: 'english-sans-serif';
+		  src: url('file:///C:/Windows/Fonts/BKANT.ttf'), local('Segoe UI');
+		  unicode-range: U+00-024F;
+		}
+		
+		.pdf-logo {
+            position: absolute;
+            top: 20px;   /* 距离页面顶部 20px */
+            left: 20px;  /* 距离页面左边 20px */
+            width: 231px;  /* 图片宽度 */
+            height: 24px;  /* 自动保持图片纵横比 */
+        }
+		
+		body {
+		  font-size: 23px; /* 網頁字體大小 */
+		  font-family: 'chinese-sans-serif', sans-serif;
+		}
+		
+		/* 特定样式：设置 formId 使用 Arial 字体 */
+        .form-id {
+            font-family: 'english-sans-serif', sans-serif;
+        }
+		td.td1{
+			text-align:left;
+			width:200px;
+			padding:5px;
+			line-height: 1;
+		}
+
+		td.td2{
+			text-align:center;
+			width:170px;
+			padding:5px;
+			line-height: 1;
+		}
+
+		td.td3{
+			text-align:right;
+			width:180px;
+			padding:5px;
+			line-height: 1;
+			position: relative;
+		}
+		/* 當數字是負數時，設定字體顏色為紅色 */
+        .negative {
+            color: red;
+        }
+
+
+        /* $符號 */
+        .dollar-sign {
+            position: absolute;
+            left: 0;
+            text-align: left;
+        }
+
+        /* 金額數字 */
+        .dollar-value {
+            padding-left: 16px; /* 為數字留出空間，避免與$符號重疊 */
+        }
+	</style>
+</head>
+<body>
+	<img src="C:\Users\Kate\PycharmProjects\lida_project\python\assets\logo.png" alt="Logo" class="pdf-logo">
+	<div class="FormA">
+		<div style="text-align: center; font-weight: bold; font-size: 30px;"><br />{{companyName}}</div>
+		<div style="text-align: center; font-weight: bold; font-size: 30px;"><br />憑證統計表-
+			<span class="form-id">{{year1}}</span>年<span class="form-id">{{month1}}</span>月
+		</div><br />
+		<div style="text-align: left;">●截至<span class="form-id">{{year1}}</span>年<span class="form-id">{{month1}}</span>月貴公司損益資料下<span class="form-id">(</span>詳如後附損益表<span class="form-id">)</span><span class="form-id">(</span>薪資部分已照去年同期估計<span class="form-id">)</span>:
+		</div>
+			
+		<table style="width: 550px; padding: 20px; border-collapse: separate; font-size: 22px; margin: 0 auto; ">
+			<thead>
+				<tr>
+					<th class="td1"></th>
+					<th class="td2" style="background-color: #D9E2F3;">金額</th>
+					<th class="td2" style="background-color: #D9E2F3;">%</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="td1">銷貨收入</td>
+					<td class="td3">
+						<span class="form-id dollar-sign">$</span>
+						<span class="form-id dollar-value">{{ formatted_revenue }}</span>
+					</td>
+					<td class="td2"><span class="form-id">100%</span></td>
+				</tr>
+				<tr>
+					<td class="td1">銷貨成本</td>
+					<td class="td3"><span class="form-id {% if expense < 0 %}negative{% endif %}">{{ formatted_expense }}</span></td>
+					<td class="td2"><span class="form-id">{{costPercent}}%</span></td>
+				</tr>
+				<tr>
+					<td class="td1">營業費用</td>
+					<td class="td3"><span class="form-id {% if expense < 0 %}negative{% endif %}">{{ formatted_expense }}</span></td>
+					<td class="td2"><span class="form-id">{{expensePercent}}%</span></td>
+				</tr>
+				<tr>
+					<td colspan="3" style="text-align: right; padding: 0;">
+						<div style="border-top: 1px solid black; width: 70%; margin-left: auto;"></div>
+					</td>
+				</tr>
+				<tr>
+					<td class="td1">營業淨利</td>
+					<td class="td3">
+						<span class="form-id dollar-sign">$</span>
+						<span class="form-id dollar-value currency-value {% if profit < 0 %}negative{% endif %}">{{ formatted_profit }}</span>
+					</td>
+					<td class="td2"><span class="form-id">{{profitPercent}}%</span></td>
+				</tr>
+				<tr>
+					<td class="td1">非營業收入</td>
+					<td class="td3"><span class="form-id {% if nonrevenue < 0 %}negative{% endif %}">{{ formatted_nonrevenue }}</span></td>
+					<td class="td2"><span class="form-id">{{nonrevenuePercent}}%</span></td>
+				</tr>
+				<tr>
+					<td class="td1">非營業支出</td>
+					<td class="td3"><span class="form-id {% if noncost < 0 %}negative{% endif %}">{{ formatted_noncost }}</span></td>
+					<td class="td2"><span class="form-id">{{noncostPercent}}%</span></td>
+				</tr>
+				<tr>
+					<td colspan="3" style="text-align: right; padding: 0;">
+						<div style="border-top: 1px solid black; width: 70%; margin-left: auto;"></div>
+					</td>
+				</tr>
+				<tr>
+					<td class="td1">本期損益(A)</td>
+					<td class="td3">
+						<span class="form-id dollar-sign">$</span>
+						<span class="form-id dollar-value currency-value {% if income < 0 %}negative{% endif %}">{{ formatted_income }}</span>
+					</td>
+					<td class="td2"><span class="form-id">{{incomePercent}}%</span></td>
+				</tr>
+				<tr>
+					<td colspan="3" style="text-align: right; padding: 0;">
+						<div style="border-top: 1px solid black; width: 70%; margin-left: auto;"></div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<div style="text-align: left;">●若年底結算申報採
+			<span style="border: 1px solid black; padding: 2px 5px; margin-left: 5px;">書審/所得額/查帳</span> 
+			<span style="border: 1px solid black; padding: 2px 5px; margin-left: 5px;">淨利%</span>申報淨利為(B)：
+			<span class="form-id {% if netincome < 0 %}negative{% endif %}" style="border-bottom: 1px solid black; padding-bottom: 2px;">
+				{{ formatted_netincome }}
+			</span>。
+		</div>
+		
+		<div style="text-align: center; background-color: #FFF2CC; border: 2px solid #FFD453;"><br />綜上所述，尚缺憑證金額(A-B)：
+			<span class="form-id {% if voucherNumber < 0 %}negative{% endif %}" style="border-bottom: 1px solid black; padding-bottom: 2px;">
+				{{ formatted_voucherNumber }}
+			</span>，<br /><br />
+			建議補成本
+			<span class="form-id {% if extracost < 0 %}negative{% endif %}" style="border-bottom: 1px solid black; padding-bottom: 2px;">
+				{{ formatted_extracost }}
+			</span>元及費用
+			<span class="form-id {% if extraexpense < 0 %}negative{% endif %}" style="border-bottom: 1px solid black; padding-bottom: 2px;">
+				{{ formatted_extraexpense }}
+			</span>元。<br /><br />
+		</div>
+		<div style="text-align: left; color: red;">※成本、費用如有不足情形請儘量補足，避免造成日後國稅局調閱時無法提示帳證，以同業利潤標準遭國稅局逕決！</div><br />
+		
+		<div>●其他：</div>
+		<div style="border: 1px solid #000; padding: 10px; width: 97%; height: 200px; white-space: pre-wrap; word-wrap: break-word;">{{ note }}</div>
+		
+		
+		<div style="text-align: right;">敬祝 商棋 力達稅務記帳士事務所</div><br />
+		<div style="text-align: right;">服務人員：{{selectedStaff}}</div>
+		<div style="text-align: right;">
+			<span class="form-id">{{year}}.
+			<span class="form-id">{{month}}.
+			<span class="form-id">{{date}}
+		</div>
+		<div style="width:100%; height: 1px; background-color:black; margin-top:5px;"></div>
+		<div style="text-align: left;">茲收到貴所提供
+			<span class="form-id">{{year1}}</span>年
+			<span class="form-id">{{month1}}</span>月憑證通知書，並以瞭解本公司目前帳務情況，
+		</div><br /><br /><br />
+		<div style="text-align: left;">簽收：<span style="border-bottom: 1px solid black; display: inline-block; width: 200px; margin-right: 5px; vertical-align: bottom;"></span>（可撕下簽回聯或PDF電子簽章回傳事務所)</div>
+	</div>
+</body>
+</html>
