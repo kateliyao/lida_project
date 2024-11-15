@@ -21,6 +21,9 @@ const StagingArea = ({ onLogout, user }) => {
   const [selectedForms, setSelectedForms] = useState([]); // 存储已选中的表单ID
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState([]);  // 用于存储已上传的文件名
+  const [isPreviewing, setIsPreviewing] = useState(false);  // 状态，判断是否在预览中，防止重复点击
+  const [pdfInfo, setPdfInfo] = useState([]);  // 用來儲存 PDF 名稱和路徑的狀態
+  const [recipient, setRecipient] = useState('');  // 儲存收件者
 
   // 确保在登录后，如果 activeForm 为 null 或 undefined，则设置为 'STAGE'
   useEffect(() => {
@@ -46,7 +49,7 @@ const StagingArea = ({ onLogout, user }) => {
   };
 
   // 获取数据
-  useEffect(() => {
+
     const fetchForms = async () => {
       if (activeForm === 'STAGE') {
         setIsLoading(true);  // 开始加载数据
@@ -70,10 +73,6 @@ const StagingArea = ({ onLogout, user }) => {
       }
     };
 
-    if (activeForm === 'STAGE') {
-      fetchForms();  // 在 activeForm 为 'STAGE' 时加载数据
-    }
-  }, [activeForm]);  // activeForm 变化时触发数据加载
 
   // 预览PDF
   const handlePreview = (pdfName) => {
@@ -81,6 +80,7 @@ const StagingArea = ({ onLogout, user }) => {
       window.open(pdfUrl, '_blank');  // 预览PDF
     };
 
+  // 預覽合併過的PDF
     const handlePreviewMerge = (pdfName) => {
           const pdfUrl = `http://localhost:5000/pdfs/merge/${pdfName}`;  // 使用绝对路径
           window.open(pdfUrl, '_blank');  // 预览PDF
@@ -110,15 +110,6 @@ const StagingArea = ({ onLogout, user }) => {
       });
   };
 
-//   const handleCheckboxChange = (event, pdf_name) => {
-//       if (event.target.checked) {
-//         // 选中时，加入数组
-//         setSelectedForms((prevSelected) => [...prevSelected, pdf_name]);
-//       } else {
-//         // 取消选中时，从数组中移除
-//         setSelectedForms((prevSelected) => prevSelected.filter((id) => id !== pdf_name));
-//       }
-//     };
 
 const handleCheckboxChange = (event, pdf_name) => {
   if (event.target.checked) {
@@ -141,10 +132,37 @@ const handleCheckboxChange = (event, pdf_name) => {
 const handleBulkPreview = async () => {
   if (selectedForms.length === 1) {
     // 直接预览单个文件
-    handlePreview(selectedForms[0]);
+    const sendMailPdfName = selectedForms[0]; // 直接使用 pdf_name
+
+    try {
+      const response = await fetch('http://localhost:5000/api/updateMailPdfName', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pdfNames: [sendMailPdfName]  // 傳遞 pdf_name
+        }),
+      });
+
+      if (response.ok) {
+        console.log('PDF 名稱更新成功');
+      } else {
+        console.error('PDF 名稱更新失敗');
+      }
+    } catch (error) {
+      console.error('更新郵件 PDF 名稱時發生錯誤:', error);
+    }
+
+    // 預覽單個 PDF
+    handlePreview(sendMailPdfName);
+    setPdfInfo([{ name: sendMailPdfName, path: `http://localhost:5000/pdfs/${sendMailPdfName}` }]);
+    //setPdfInfo([{ name: sendMailPdfName, path: `C:/Users/Kate/PycharmProjects/lida_project/python/pdfs/${sendMailPdfName}` }]);
+
+    // 觸發清空，讓使用者不會重複點擊預覽
+    handleClear();
+
   } else if (selectedForms.length > 1) {
-     console.log("Selected PDFs to merge:", selectedForms);
-    // 向后端发送合并请求
     try {
       const response = await fetch('http://localhost:5000/api/mergePdf', {
         method: 'POST',
@@ -161,18 +179,55 @@ const handleBulkPreview = async () => {
 
       const data = await response.json();  // 直接解析 JSON 响应
 
-      // 处理返回的数据
-      if (data.success) {
-        // 后端返回合并后的文件 URL
-        handlePreviewMerge(data.mergedPdf);  // 显示合并后的预览
+    // 处理返回的数据
+    if (data.success) {
+      // 后端返回合并后的文件 URL（合并后的 PDF 文件名）
+      const mergedPdf = data.mergedPdf;
+
+      // 更新数据库中的 send_mail_pdf_name 字段
+      const updateResponse = await fetch('http://localhost:5000/api/updateMailPdfName', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+
+          pdfNames: selectedForms,  // 所有選中的 pdf_name
+          mergedPdf: mergedPdf,     // 合併後的 PDF 名稱
+        }),
+      });
+
+      if (updateResponse.ok) {
+        console.log('合併 PDF 名稱更新成功');
       } else {
-        alert('合併失敗');
+        console.error('合併 PDF 名稱更新失敗');
       }
-    } catch (error) {
-      console.error('合併過程中出現錯誤:', error);
-      alert(`合併過程中出現錯誤: ${error.message}`);
+
+      // 合併後的預覽
+      handlePreviewMerge(mergedPdf);
+      setPdfInfo([{ name: mergedPdf, path: `http://localhost:5000/pdfs/merge/${mergedPdf}` }]);
+
+//       // 更新狀態以顯示所有選擇的 PDF 名稱和路徑，包括合併後的 PDF
+//         const pdfDetails = selectedForms.map(pdfName => ({
+//           name: pdfName,
+//           path: `C:/Users/Kate/PycharmProjects/lida_project/python/pdfs/${pdfName}`
+//         }));
+//         pdfDetails.push({
+//           name: mergedPdf,
+//           path: `C:/Users/Kate/PycharmProjects/lida_project/python/pdfs/merge/${mergedPdf}`
+//         });
+//         setPdfInfo(pdfDetails);  // 更新狀態
+
+        // 觸發清空，讓使用者不會重複點擊預覽(序號會追加)
+        handleClear();
+
+    } else {
+      alert('合併失敗');
     }
+  } catch (error) {
+    console.error('合併 PDF 時發生錯誤:', error);
   }
+}
 };
 
 // 處理外部文件選擇
@@ -251,6 +306,55 @@ const handleBulkPreview = async () => {
     setUploadedFiles([]);   // 清空已上傳的文件列表
     setSelectedForms([]);   // 清空checkbox
   };
+
+  // 提交表單的處理函數
+  const handleSubmit = async () => {
+    // 檢查是否包含 "@" 符號
+      if (!recipient || !recipient.includes('@')) {
+        alert('請輸入有效的電子郵件地址');
+        return;
+      }
+
+      if (pdfInfo.length === 0) {
+        alert('請選擇要寄出的PDF清單');
+        return;
+      }
+
+
+    try {
+      const response = await fetch('http://localhost:5000/api/sendEmail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipient,
+          pdfInfo,  // 傳遞 PDF 名稱和路徑
+        }),
+      });
+
+      if (response.ok) {
+        alert('郵件發送成功');
+        setRecipient('');   // 清空收件者
+        setPdfInfo([]);     // 清空 PDF 資料
+
+        fetchForms();
+
+
+
+      } else {
+        alert('郵件發送失敗');
+      }
+    } catch (error) {
+      console.error('發送郵件時發生錯誤:', error);
+    }
+  };
+
+    useEffect(() => {
+    if (activeForm === 'STAGE') {
+      fetchForms();  // 在 activeForm 为 'STAGE' 时加载数据
+    }
+  }, [activeForm]);  // activeForm 变化时触发数据加载
 
   return (
     <div className="mainpage">
@@ -470,7 +574,7 @@ const handleBulkPreview = async () => {
                 <div style={{ marginTop: '20px', textAlign: 'center' }}>
                   <button
                     onClick={handleBulkPreview}
-                    disabled={selectedForms.length === 0}  // 若未選擇任何文件，按鈕禁用
+                    disabled={selectedForms.length === 0 || isPreviewing}  // 若未選擇任何文件，按鈕禁用
                     style={{
                       padding: '10px 40px',
                       borderRadius: '20px',
@@ -483,6 +587,49 @@ const handleBulkPreview = async () => {
                     預覽
                   </button>
                 </div>
+
+              <div>
+                  {pdfInfo.map((pdf, index) => (
+                    <div key={index}>
+                      <a href={pdf.path} target="_blank" rel="noopener noreferrer">
+                        {pdf.name}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+
+                <div>
+                    <label>
+                      收件者:
+                      <input
+                        type="email"
+                        value={recipient}
+                        onChange={(e) => setRecipient(e.target.value)}
+                        placeholder="輸入收件者的電子郵件"
+                      />
+                    </label>
+                  </div>
+
+
+                {/* 發送郵件按鈕區域 */}
+      <div style={{ marginTop: '20px', textAlign: 'center' }}>
+        <button
+          onClick={handleSubmit}
+          disabled={!recipient || !recipient.includes('@') || pdfInfo.length === 0}  // 如果收件者或 PDF 信息不存在，禁用按鈕
+
+          style={{
+            padding: '10px 40px',
+            borderRadius: '20px',
+            fontSize: '24px',
+            cursor: recipient && recipient.includes('@') && pdfInfo.length > 0 ? 'pointer' : 'not-allowed',
+            backgroundColor: recipient && recipient.includes('@') && pdfInfo.length > 0 ? '#4CAF50' : '#e0e0e0', // 兩者都存在時為綠色，否則為灰色
+            color: '#fff',
+          }}
+        >
+          發送郵件
+        </button>
+      </div>
+
             </div>
           )}
         </div>
