@@ -132,4 +132,33 @@ input[type="checkbox"]:checked {
   border-color: #0056b3;
 }
 
+.upload-section {
+  margin-bottom: 20px;
+}
+
+.file-input-container {
+  position: relative;  /* 使按鈕可以相對於 input 進行定位 */
+  display: inline-block;  /* 保持在同一行 */
+}
+
+.upload-section input[type="file"] {
+  padding-right: 30px;  /* 給 input 一些右側的空間，留出位置給叉叉 */
+}
+
+.clear-button {
+  position: absolute;  /* 絕對定位 */
+  right: 10px;  /* 從右邊距離 10px */
+  top: 50%;  /* 垂直居中 */
+  transform: translateY(-50%);  /* 精確垂直居中 */
+  background: transparent;
+  border: none;
+  color: red;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.clear-button:hover {
+  color: darkred;
+}
+
 
