@@ -7,6 +7,10 @@ from flask import send_file
 from flask import Flask, render_template
 from datetime import datetime
 from PyPDF2 import PdfMerger
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:5173"])
@@ -438,6 +442,143 @@ def upload_pdf():
             return jsonify({"success": False, "message": "Only PDF files are allowed"}), 400
 
     return jsonify({"success": True, "message": "Files uploaded successfully"}), 200
+
+@app.route('/api/updateMailPdfName', methods=['POST'])
+def update_mail_pdf_name():
+    # 从请求中获取数据
+    data = request.get_json()
+    pdf_names = data.get('pdfNames')  # 所有的 PDF 文件名稱
+
+    # if not pdf_names or not form_ids:
+    #     return jsonify({'success': False, 'message': 'pdfNames 和 formIds 必須提供'}), 400
+
+    # if len(pdf_names) != len(form_ids):
+    #     return jsonify({'success': False, 'message': 'pdfNames 和 formIds 長度不匹配'}), 400
+
+    try:
+        cursor = get_db_connection()
+
+        # 如果只有一個pdf，更新對應表單的send_mail_pdf_name
+        if len(pdf_names) == 1:
+            cursor.execute(
+                "UPDATE formA SET send_mail_pdf_name = %s WHERE pdf_name = %s",
+                (pdf_names[0], pdf_names[0])  # 對應的pdf_name和form_id
+            )
+        else:
+            # 如果有多個pdf，處理為合併pdf
+            merged_pdf_name = data.get('mergedPdf')  # 合併後的文件名稱
+            placeholders = ', '.join(['%s'] * len(pdf_names))  # 生成占位符
+            cursor.execute(
+                f"UPDATE formA SET send_mail_pdf_name = %s WHERE pdf_name IN ({placeholders})",
+                [merged_pdf_name] + pdf_names  # 合併數據，將 merged_pdf_name 和 pdf_names 傳遞進去
+            )
+            # cursor.execute(
+            #     "UPDATE formA SET send_mail_pdf_name = %s WHERE pdf_name IN (%s)", 
+            #     (merged_pdf_name, ','.join([str(pdf_name) for pdf_name in pdf_names]))
+            # )
+
+        mysql.connection.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'message': '更新成功'}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# 发送邮件的函数
+def send_email(file_path, recipient_email):
+    sender_email = "kate1sync@gmail.com"  # 发件人电子邮件地址
+    sender_password = "nyprqzhhdvjtmcyl"  # 发件人应用密码
+
+    try:
+        # 设置邮件内容
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        msg['Subject'] = "PDF 文件"
+
+        body = "请查看附件中的 PDF 文件。"
+        msg.attach(MIMEText(body, 'plain'))
+
+        # 附加 PDF 文件
+        with open(file_path, 'rb') as file:
+            part = MIMEApplication(file.read(), Name=os.path.basename(file_path))
+        part['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+        msg.attach(part)
+
+        # 发送邮件
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+
+        print(f"邮件成功发送至: {recipient_email}")
+
+    except smtplib.SMTPException as e:
+            print(f"SMTP 错误: {e}")
+            raise  # 重新抛出异常，让调用者处理
+
+    except Exception as e:
+        print(f"发送邮件时发生错误: {e}")
+        raise  # 重新抛出异常，让调用者处理
+
+def update_form_status(file_name):
+    try:
+        # 获取数据库连接
+        cursor = get_db_connection()
+
+        # 根据pdf_name更新form_status
+        update_query = "UPDATE formA SET form_status = 1 WHERE send_mail_pdf_name = %s"
+        cursor.execute(update_query, (file_name,))
+
+        # 提交事务
+        mysql.connection.commit()
+        cursor.close()
+
+    except Exception as e:
+        print(f"更新数据库时发生错误: {e}")
+
+# 后端 API 接口
+@app.route('/api/sendEmail', methods=['POST'])
+def send_email_request():
+    try:
+        # 获取前端传来的 JSON 数据
+        data = request.get_json()
+
+        # 获取收件人邮箱地址和 PDF 信息
+        recipient_email = data.get('recipient')
+        pdf_info = data.get('pdfInfo')
+
+        # 确保有有效的收件人邮箱和 PDF 信息
+        if not recipient_email or not pdf_info:
+            return jsonify({"error": "缺少收件人或PDF文件信息"}), 400
+
+        # 对每个 PDF 文件执行邮件发送操作
+        for pdf in pdf_info:
+            file_name = pdf['name']
+
+            if "合併檔案" in file_name:
+                file_path = "C:/Users/Kate/PycharmProjects/lida_project/python/pdfs/merge"
+            else:
+                file_path = "C:/Users/Kate/PycharmProjects/lida_project/python/pdfs"
+
+            file_path_name = rf'{file_path}/{file_name}'
+            # 发送邮件
+            #email_sent = send_email(file_path, recipient_email)
+            #if not email_sent:
+            #    return jsonify({"error": "邮件发送失败"}), 500
+            send_email(file_path_name, recipient_email)
+            print(file_name)
+
+            # 邮件发送成功后，更新数据库
+            update_form_status(file_name)
+
+            return jsonify({"message": "邮件发送成功"}), 200
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": "邮件发送失败"}), 500
+
+
 
 
 if __name__ == '__main__':
