@@ -7,9 +7,12 @@ import RequestWhiteIcon from './assets/requestForm_white_icon.png';
 import RequestBlueIcon from './assets/requestForm_blue_icon.png';
 import QuotationWhiteIcon from './assets/quotation_white_icon.png';
 import QuotationBlueIcon from './assets/quotation_blue_icon.png';
+import HistoryWhiteIcon from './assets/history_white_icon.png';
+import HistoryBlueIcon from './assets/history_blue_icon.png';
 import StagingAreaIcon from './assets/stagingArea_icon.png';
 import AccountButton from './AccountButton';
 import FormA from './FormA';
+import HistoryForm from './HistoryForm';
 //import StagingArea from './StagingArea';
 import './MainPage.css';
 
@@ -85,15 +88,21 @@ const MainPage = ({ onLogout,user }) => {
                         <img src={QuotationWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
                         報價單
                     </li>
-{/*                   <li onClick={() => handleFormClick('A')}>憑證統計表</li> */}
-{/*                   <li onClick={() => handleFormClick('B')}>請款單</li> */}
-{/*                   <li onClick={() => handleFormClick('C')}>報價單</li> */}
+                    <li
+                        onClick={() => handleFormClick('HISTORY')}
+                        onMouseEnter={(e) => e.target.firstChild.src = HistoryBlueIcon}
+                        onMouseLeave={(e) => e.target.firstChild.src = HistoryWhiteIcon} >
+                        <img src={HistoryWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
+                        歷史資料
+                    </li>
+
                 </ul>
             </div>
           </nav>
 
           <div className="form-area">
             {activeForm === 'A' && <FormA user={user}/>}
+            {activeForm === 'HISTORY' && <HistoryForm user={user}/>}
           </div>
       </div>
 
