@@ -7,9 +7,12 @@ import RequestWhiteIcon from './assets/requestForm_white_icon.png';
 import RequestBlueIcon from './assets/requestForm_blue_icon.png';
 import QuotationWhiteIcon from './assets/quotation_white_icon.png';
 import QuotationBlueIcon from './assets/quotation_blue_icon.png';
+import HistoryWhiteIcon from './assets/history_white_icon.png';
+import HistoryBlueIcon from './assets/history_blue_icon.png';
 import StagingAreaIcon from './assets/stagingArea_icon.png';
 import AccountButton from './AccountButton';
 import FormA from './FormA';
+import HistoryForm from './HistoryForm';
 import './MainPage.css';
 
 const StagingArea = ({ onLogout, user }) => {
@@ -48,13 +51,13 @@ const StagingArea = ({ onLogout, user }) => {
     window.location.href = '/'; // 强制导航到 Login 页面
   };
 
-  // 获取数据
 
+  //獲取表單資料
     const fetchForms = async () => {
       if (activeForm === 'STAGE') {
         setIsLoading(true);  // 开始加载数据
         try {
-          const response = await fetch('http://localhost:5000/api/stagingArea');  // 更新为您的API路径
+          const response = await fetch(`http://localhost:5000/api/stagingArea?user=${user}`);  // 更新为您的API路径
           if (!response.ok) {
             throw new Error('网络响应失败');
           }
@@ -72,7 +75,6 @@ const StagingArea = ({ onLogout, user }) => {
         }
       }
     };
-
 
   // 预览PDF
   const handlePreview = (pdfName) => {
@@ -397,12 +399,20 @@ const handleBulkPreview = async () => {
               <img src={QuotationWhiteIcon} alt="Quotation" style={{ width: '25px', marginRight: '10px' }} />
               報價單
             </li>
+            <li
+              onClick={() => handleFormClick('HISTORY')}
+              onMouseEnter={(e) => e.target.firstChild.src = HistoryBlueIcon}
+              onMouseLeave={(e) => e.target.firstChild.src = HistoryWhiteIcon} >
+              <img src={HistoryWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
+              歷史資料
+            </li>
           </ul>
         </nav>
 
 
         <div className="form-area">
-          {activeForm === 'A' && <FormA user={user} />}  {/* 显示FormA */}
+          {activeForm === 'A' && <FormA user={user} />}
+          {activeForm === 'HISTORY' && <HistoryForm user={user}/>}
           {activeForm === 'STAGE' && (
             <div>
               <h2 style={{ textAlign: 'left' }}>檔案暫存區</h2>
@@ -431,10 +441,15 @@ const handleBulkPreview = async () => {
                                     }} // 放大复选框
                         />
                         <span>{form.pdf_name}</span>
+
                       </div>
 
                       {/* 按钮部分右对齐并且做圆角 */}
                       <div style={{ display: 'flex', gap: '10px' }}>
+{/*                     限定帳號開頭是lda，才能看到每一份表單的建立者屬於哪一個帳號 */}
+                        {user.startsWith('lda') && (
+                            <span>{form.user_name}</span>
+                        )}
                         <button
                           onClick={() => handlePreview(form.pdf_name)}
                           style={{
