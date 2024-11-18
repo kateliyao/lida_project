@@ -13,6 +13,8 @@ from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 
 app = Flask(__name__)
+# 設置一個密鑰來保護 session 資料
+app.secret_key = os.urandom(24)  # 或者設定固定的密鑰
 CORS(app, origins=["http://localhost:5173"])
 
 # 配置 MySQL 数据库连接
@@ -61,7 +63,6 @@ def login():
         return jsonify({'success': True, 'message': '登入成功'})
     else:
         return jsonify({'success': False, 'message': '錯誤的帳號或密碼'}), 401
-
 
 # 獲取公司名稱
 @app.route('/api/getCompanyName', methods=['GET'])
@@ -278,11 +279,26 @@ def submit_form():
 @app.route('/api/stagingArea', methods=['GET'])
 def staging_area():
     try:
+        user = request.args.get('user')  # 獲取前端傳遞來的帳戶資訊
+
         cursor = get_db_connection()
 
-        # 查询所有的表单
-        query = "SELECT form_id, pdf_name, form_status FROM formA WHERE form_status = 0"  # 可以根据需求调整 form_status 的条件
-        cursor.execute(query)
+        # 查询用户的角色
+        role_query = "SELECT role FROM users_info WHERE username = %s"
+        cursor.execute(role_query, (user,))
+        user_role = cursor.fetchone()
+
+        # 如果查询不到用户角色，返回错误信息
+        if user_role is None:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        # 根据用户角色设置不同的查询条件
+        if user_role[0] == 'admin':
+            query = "SELECT form_id, pdf_name, form_status,user_name FROM formA WHERE form_status = 0"
+        else:
+            query = "SELECT form_id, pdf_name, form_status,user_name FROM formA WHERE form_status = 0 AND user_name = %s"
+
+        cursor.execute(query, (user,) if user_role[0] != 'admin' else ())
         forms = cursor.fetchall()
 
         # 构建返回的 JSON 数据
@@ -291,7 +307,8 @@ def staging_area():
             form_data = {
                 "form_id": form[0],
                 "pdf_name": form[1],
-                "form_status": form[2]
+                "form_status": form[2],
+                "user_name": form[3]
             }
             form_list.append(form_data)
 
@@ -496,7 +513,7 @@ def send_email(file_path, recipient_email):
         msg['To'] = recipient_email
         msg['Subject'] = "PDF 文件"
 
-        body = "请查看附件中的 PDF 文件。"
+        body = "請查看附件中的 PDF 文件。"
         msg.attach(MIMEText(body, 'plain'))
 
         # 附加 PDF 文件
@@ -578,7 +595,46 @@ def send_email_request():
         print(f"Error: {e}")
         return jsonify({"error": "邮件发送失败"}), 500
 
+@app.route('/api/historyData', methods=['GET'])
+def history_data():
+    try:
+        user = request.args.get('user')  # 獲取前端傳遞來的帳戶資訊
 
+        cursor = get_db_connection()
+
+        # 查询用户的角色
+        role_query = "SELECT role FROM users_info WHERE username = %s"
+        cursor.execute(role_query, (user,))
+        user_role = cursor.fetchone()
+
+        # 如果查询不到用户角色，返回错误信息
+        if user_role is None:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        # 根据用户角色设置不同的查询条件
+        if user_role[0] == 'admin':
+            query = "SELECT form_id, pdf_name, form_status,user_name FROM formA WHERE form_status = 1"
+        else:
+            query = "SELECT form_id, pdf_name, form_status,user_name FROM formA WHERE form_status = 1 AND user_name = %s"
+
+        cursor.execute(query, (user,) if user_role[0] != 'admin' else ())
+        forms = cursor.fetchall()
+
+        # 构建返回的 JSON 数据
+        form_list = []
+        for form in forms:
+            form_data = {
+                "form_id": form[0],
+                "pdf_name": form[1],
+                "form_status": form[2],
+                "user_name": form[3]
+            }
+            form_list.append(form_data)
+
+        return jsonify({'success': True, 'forms': form_list}), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 if __name__ == '__main__':
