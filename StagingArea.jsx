@@ -27,6 +27,7 @@ const StagingArea = ({ onLogout, user }) => {
   const [isPreviewing, setIsPreviewing] = useState(false);  // 状态，判断是否在预览中，防止重复点击
   const [pdfInfo, setPdfInfo] = useState([]);  // 用來儲存 PDF 名稱和路徑的狀態
   const [recipient, setRecipient] = useState('');  // 儲存收件者
+  const [mailContent, setMailContent] = useState('');  // 儲存收件者
 
   // 确保在登录后，如果 activeForm 为 null 或 undefined，则设置为 'STAGE'
   useEffect(() => {
@@ -332,6 +333,7 @@ const handleBulkPreview = async () => {
         body: JSON.stringify({
           recipient,
           pdfInfo,  // 傳遞 PDF 名稱和路徑
+          mailContent,
         }),
       });
 
@@ -339,6 +341,8 @@ const handleBulkPreview = async () => {
         alert('郵件發送成功');
         setRecipient('');   // 清空收件者
         setPdfInfo([]);     // 清空 PDF 資料
+        setMailContent(''); // 清空郵件內容
+
 
         fetchForms();
 
@@ -621,6 +625,18 @@ const handleBulkPreview = async () => {
                         value={recipient}
                         onChange={(e) => setRecipient(e.target.value)}
                         placeholder="輸入收件者的電子郵件"
+                      />
+                    </label>
+                  </div>
+
+                <div>
+                    <label>
+                      郵件內文:
+                      <input
+                        type="text"
+                        value={mailContent}
+                        onChange={(e) => setMailContent(e.target.value)}
+                        placeholder="輸入郵件內文"
                       />
                     </label>
                   </div>
