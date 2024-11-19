@@ -6,7 +6,7 @@ import SystemDate from './SystemDate';
 //import NumberFormat from 'react-number-format';
 import NumberFormat from './NumberFormat';
 import FinancialForm from './FinancialForm';
-//import axios from 'axios';
+
 
 const FormA = ({ user }) => {
 	console.log("FormA 收到的 user:", user);  // 打印傳遞來的 user
@@ -144,21 +144,12 @@ const FormA = ({ user }) => {
             if (response.ok && data.companyName) {
                 setCompanyName(data.companyName); // 成功返回公司名稱
 
-              // 獲取當前日期（YYYYMMDD）
-                const today = new Date();
-                const year = today.getFullYear();
-                const month = (today.getMonth() + 1).toString().padStart(2, '0'); // 月份從0開始，因此+1
-                const day = today.getDate().toString().padStart(2, '0');
-                const dateStr = `${year}${month}${day}`; // 格式化为 YYYYMMDD
-
                 // 获取当前序号
                 const sequenceResponse = await fetch(`http://localhost:5000/api/getSequence?companyId=${companyId}`);
                 const sequenceData = await sequenceResponse.json();
 
                 if (sequenceData.success) {
-                    // 序号递增
-                    //const newSequence = (sequenceData.formId + 1).toString().padStart(3, '0'); // 生成新的序号，确保三位数
-                    const formId = `${companyId}_A_${dateStr}_${sequenceData.formId}`;
+                    const formId = `${sequenceData.formId}`;
                     setFormId(formId); // 生成新的編號，格式：公司編碼_A_系統日期_序號
                     setErrorMessage(''); // 清空錯誤訊息
                 } else {
