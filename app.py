@@ -33,7 +33,8 @@ date_str = now.strftime("%Y%m%d")
 PDF_DIRECTORY = './pdfs/'
 # 確保 'pdfs' 目錄存在，若不存在則創建
 merged_pdf_folder = os.path.join(PDF_DIRECTORY, 'merge')  # 當前pdfs目錄下的 merge 資料夾
-upload_pdf_folder = os.path.join(PDF_DIRECTORY, 'upload')  # 當前pdfs目錄下的 merge 資料夾
+#upload_pdf_folder = os.path.join(PDF_DIRECTORY, 'upload')  # 當前pdfs目錄下的 merge 資料夾
+upload_pdf_folder = PDF_DIRECTORY
 # 如果 目錄不存在，則創建它
 os.makedirs(merged_pdf_folder, exist_ok=True)
 os.makedirs(upload_pdf_folder, exist_ok=True)
@@ -92,9 +93,17 @@ def get_sequence():
     if not company_id:
         return jsonify({'success': False, 'message': '公司編號不能為空'}), 400
 
-    # 查询当前序号
+    # 获取当前日期，格式化为 YYYYMMDD
+    system_date = datetime.today().strftime('%Y%m%d')
+
+    # 查询该公司今天已经生成的最大序号
     cursor = get_db_connection()
-    cursor.execute('SELECT form_id FROM formA WHERE company_id = %s ORDER BY updated_time DESC LIMIT 1;', (company_id,))
+    cursor.execute('''
+            SELECT form_id 
+            FROM formA 
+            WHERE company_id = %s AND form_id LIKE %s
+            ORDER BY updated_time DESC LIMIT 1;
+        ''', (company_id, f"{company_id}_A_{system_date}_%"))
     result = cursor.fetchone()
 
     if result:
@@ -110,10 +119,14 @@ def get_sequence():
 
         # 確保序號是 3 位數
         new_sequence_str = str(new_sequence).zfill(3)  # 例如 1 變成 "001", 2 變成 "002"
-        return jsonify({'success': True, 'formId': new_sequence_str})
+        new_form_id = f"{company_id}_A_{system_date}_{new_sequence_str}"
+        print("Generated form_id:", new_form_id)
+        return jsonify({'success': True, 'formId': new_form_id})
     else:
         # 如果找不到该公司編號，從001開始
-        return jsonify({'success': True, 'formId': '001'})
+        new_form_id = f"{company_id}_A_{system_date}_001"
+        print("Generated form_id:", new_form_id)
+        return jsonify({'success': True, 'formId': new_form_id})
 
 # 獲取員工資訊
 @app.route('/api/getStaffInfo', methods=['GET'])
@@ -253,7 +266,11 @@ def submit_form():
         options = {
             'encoding': 'UTF-8', #可以解決中文亂碼問題
             'no-outline': None,  # 禁用文檔輪廓
-            'quiet': None         # 禁用日志
+            'quiet': None,         # 禁用日志
+            'margin-top': '5mm',  # 可調整pdf邊界問題
+            # 'margin-right': '0mm',
+            # 'margin-bottom': '0mm',
+            # 'margin-left': '0mm',
         }
         # 將 HTML 文件轉換為 PDF
         pdfkit.from_string(html_content, pdf_path, options=options)
@@ -502,7 +519,7 @@ def update_mail_pdf_name():
         return jsonify({'success': False, 'message': str(e)}), 500
 
 # 发送邮件的函数
-def send_email(file_path, recipient_email):
+def send_email(file_path, recipient_email,mail_content,file_name_first_part):
     sender_email = "kate1sync@gmail.com"  # 发件人电子邮件地址
     sender_password = "nyprqzhhdvjtmcyl"  # 发件人应用密码
 
@@ -511,9 +528,9 @@ def send_email(file_path, recipient_email):
         msg = MIMEMultipart()
         msg['From'] = sender_email
         msg['To'] = recipient_email
-        msg['Subject'] = "PDF 文件"
+        msg['Subject'] = f"{file_name_first_part}_憑證統計表"
 
-        body = "請查看附件中的 PDF 文件。"
+        body = mail_content
         msg.attach(MIMEText(body, 'plain'))
 
         # 附加 PDF 文件
@@ -528,14 +545,14 @@ def send_email(file_path, recipient_email):
             server.login(sender_email, sender_password)
             server.send_message(msg)
 
-        print(f"邮件成功发送至: {recipient_email}")
+        print(f"郵件成功發送至: {recipient_email}")
 
     except smtplib.SMTPException as e:
-            print(f"SMTP 错误: {e}")
+            print(f"SMTP 錯誤: {e}")
             raise  # 重新抛出异常，让调用者处理
 
     except Exception as e:
-        print(f"发送邮件时发生错误: {e}")
+        print(f"發送郵件時發生錯誤: {e}")
         raise  # 重新抛出异常，让调用者处理
 
 def update_form_status(file_name):
@@ -554,7 +571,6 @@ def update_form_status(file_name):
     except Exception as e:
         print(f"更新数据库时发生错误: {e}")
 
-# 后端 API 接口
 @app.route('/api/sendEmail', methods=['POST'])
 def send_email_request():
     try:
@@ -564,6 +580,7 @@ def send_email_request():
         # 获取收件人邮箱地址和 PDF 信息
         recipient_email = data.get('recipient')
         pdf_info = data.get('pdfInfo')
+        mail_content = data.get('mailContent')
 
         # 确保有有效的收件人邮箱和 PDF 信息
         if not recipient_email or not pdf_info:
@@ -579,11 +596,13 @@ def send_email_request():
                 file_path = "C:/Users/Kate/PycharmProjects/lida_project/python/pdfs"
 
             file_path_name = rf'{file_path}/{file_name}'
+            # 取出_分割後的第一個字段:公司名稱
+            file_name_first_part = file_name.split('_')[0]
             # 发送邮件
             #email_sent = send_email(file_path, recipient_email)
             #if not email_sent:
             #    return jsonify({"error": "邮件发送失败"}), 500
-            send_email(file_path_name, recipient_email)
+            send_email(file_path_name, recipient_email,mail_content,file_name_first_part)
             print(file_name)
 
             # 邮件发送成功后，更新数据库
