@@ -10,663 +10,722 @@ import QuotationBlueIcon from './assets/quotation_blue_icon.png';
 import HistoryWhiteIcon from './assets/history_white_icon.png';
 import HistoryBlueIcon from './assets/history_blue_icon.png';
 import StagingAreaIcon from './assets/stagingArea_icon.png';
+import UploadIcon from './assets/upload_icon.png';
+import CancelIcon from './assets/cancel_icon.png';
+import TickWhite from './assets/tick_white.png';
+import TickYellow from './assets/tick_yellow.png';
 import AccountButton from './AccountButton';
 import FormA from './FormA';
 import HistoryForm from './HistoryForm';
 import './MainPage.css';
 
 const StagingArea = ({ onLogout, user }) => {
-  console.log("MainPage 收到的 user:", user);  // 打印傳遞來的 user
-  const [activeForm, setActiveForm] = useState(null);
-  const [forms, setForms] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);  // 用来控制是否显示 "正在加載資料..."
-  const navigate = useNavigate();
-  const [selectedForms, setSelectedForms] = useState([]); // 存储已选中的表单ID
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [uploadedFiles, setUploadedFiles] = useState([]);  // 用于存储已上传的文件名
-  const [isPreviewing, setIsPreviewing] = useState(false);  // 状态，判断是否在预览中，防止重复点击
-  const [pdfInfo, setPdfInfo] = useState([]);  // 用來儲存 PDF 名稱和路徑的狀態
-  const [recipient, setRecipient] = useState('');  // 儲存收件者
-  const [mailContent, setMailContent] = useState('');  // 儲存收件者
+    console.log("StagingArea 收到的 user:", user);  // 打印傳遞來的 user
+    const [activeForm, setActiveForm] = useState(null);
+    const [forms, setForms] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);  // 用来控制是否显示 "正在加載資料..."
+    const navigate = useNavigate();
+    const [selectedForms, setSelectedForms] = useState([]); // 存储已选中的表单ID
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [uploadedFiles, setUploadedFiles] = useState([]);  // 用于存储已上传的文件名
+    const [isPreviewing, setIsPreviewing] = useState(false);  // 状态，判断是否在预览中，防止重复点击
+    const [pdfInfo, setPdfInfo] = useState([]);  // 用來儲存 PDF 名稱和路徑的狀態
+    const [recipient, setRecipient] = useState('');  // 儲存收件者
+    const [mailContent, setMailContent] = useState('');  // 儲存收件者
+    const apiUrl = import.meta.env.VITE_API_URL;
 
-  // 确保在登录后，如果 activeForm 为 null 或 undefined，则设置为 'STAGE'
-  useEffect(() => {
-    if (user && !activeForm) {
-      setActiveForm('STAGE');  // 登录后确保设置为 'STAGE'
-    }
-  }, [user]);  // 监听 user 的变化，确保在登录时设置 activeForm
-
-  const handleFormClick = (form) => {
-    console.log(`選擇了 ${form} 表單`);
-    // 如果是 "STAGE"，首先更新 activeForm，然后开始加载数据
-    if (form === 'STAGE') {
-      setActiveForm('STAGE');
-    } else {
-      setActiveForm(form);  // 其他表单直接设置 activeForm
-    }
-  };
-
-  // 登出功能
-  const handleLogout = () => {
-    console.log('登出被觸發'); // 這裡可以確認是否進入此函數
-    window.location.href = '/'; // 强制导航到 Login 页面
-  };
-
-
-  //獲取表單資料
-    const fetchForms = async () => {
-      if (activeForm === 'STAGE') {
-        setIsLoading(true);  // 开始加载数据
-        try {
-          const response = await fetch(`http://localhost:5000/api/stagingArea?user=${user}`);  // 更新为您的API路径
-          if (!response.ok) {
-            throw new Error('网络响应失败');
-          }
-
-          const data = await response.json();
-          if (data.success) {
-            setForms(data.forms);  // 更新表单数据
-          } else {
-            console.error('获取表单失败', data.message);
-          }
-        } catch (error) {
-          console.error('请求失败', error);
-        } finally {
-          setIsLoading(false);  // 数据加载完成或失败后，停止加载状态
+    // 確保登入後，如果 activeForm 為 null 或 undefined，則設置為 'STAGE'
+    useEffect(() => {
+        if (user && !activeForm) {
+          setActiveForm('STAGE');  // 登陸後確保設置微為 'STAGE'
         }
-      }
-    };
+    }, [user]);  // 監聽 user 的變化，確保在登錄時設置 activeForm
 
-  // 预览PDF
-  const handlePreview = (pdfName) => {
-      const pdfUrl = `http://localhost:5000/pdfs/${pdfName}`;  // 使用绝对路径
-      window.open(pdfUrl, '_blank');  // 预览PDF
-    };
-
-  // 預覽合併過的PDF
-    const handlePreviewMerge = (pdfName) => {
-          const pdfUrl = `http://localhost:5000/pdfs/merge/${pdfName}`;  // 使用绝对路径
-          window.open(pdfUrl, '_blank');  // 预览PDF
-        };
-
-  // 删除表单
-  const handleDelete = (formId,pdfName) => {
-    fetch('http://localhost:5000/api/deleteForm', {  // 后端删除请求的URL
-      method: 'POST',  // 使用 POST 请求删除表单
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ formId }),  // 发送表单ID作为请求体
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          setForms(prevForms => prevForms.filter(form => form.form_id !== formId));  // 更新表单列表
-          // 同时更新 selectedForms 状态，移除已删除的表单的 pdf_name
-        setSelectedForms(prevSelected => prevSelected.filter(form => form !== pdfName));
+    const handleFormClick = (form) => {
+        console.log(`選擇了 ${form} 表單`);
+        // 如果是 "STAGE"，首先更新 activeForm，然後開始加載數據
+        if (form === 'STAGE') {
+          setActiveForm('STAGE');
         } else {
-          console.error('删除失败');
+          setActiveForm(form);  // 其他表單直接設置 activeForm
         }
-      })
-      .catch(error => {
-        console.error('请求失败', error);
-      });
-  };
+    };
+
+    // 登出功能
+    const handleLogout = () => {
+    console.log('登出被觸發'); // 這裡可以確認是否進入此函數
+    window.location.href = '/'; // 強制導航到 Login 頁面
+    };
 
 
-const handleCheckboxChange = (event, pdf_name) => {
-  if (event.target.checked) {
-    // 选中时，加入数组
-    setSelectedForms((prevSelected) => {
-      const newSelected = [...prevSelected, pdf_name];
-      console.log("Selected forms after adding:", newSelected); // 打印调试信息
-      return newSelected;
-    });
-  } else {
-    // 取消选中时，从数组中移除
-    setSelectedForms((prevSelected) => {
-      const newSelected = prevSelected.filter((id) => id !== pdf_name);
-      console.log("Selected forms after removing:", newSelected); // 打印调试信息
-      return newSelected;
-    });
-  }
-};
+    //獲取表單資料
+    const fetchForms = async () => {
+        if (activeForm === 'STAGE') {
+            setIsLoading(true);  // 開始加載數據
+            try {
+                const response = await fetch(`${apiUrl}/api/stagingArea?user=${user}`);
+                if (!response.ok) {
+                throw new Error('網路回應失敗');
+            }
 
-const handleBulkPreview = async () => {
-  if (selectedForms.length === 1) {
-    // 直接预览单个文件
-    const sendMailPdfName = selectedForms[0]; // 直接使用 pdf_name
+                const data = await response.json();
+                if (data.success) {
+                    setForms(data.forms);  // 更新表單數據
+                } else {
+                    console.error('獲取表單失敗', data.message);
+                }
+            } catch (error) {
+                console.error('請求失敗', error);
+            } finally {
+                setIsLoading(false);  // 數據加載完成或失敗後，停止加載狀態
+            }
+        }
+    };
 
-    try {
-      const response = await fetch('http://localhost:5000/api/updateMailPdfName', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          pdfNames: [sendMailPdfName]  // 傳遞 pdf_name
-        }),
-      });
+    // 預覽單一PDF
+    const handlePreview = (pdfName) => {
+        const pdfUrl = `${apiUrl}/pdfs/${pdfName}`;  // 使用絕對路徑
+        window.open(pdfUrl, '_blank');
+    };
 
-      if (response.ok) {
-        console.log('PDF 名稱更新成功');
-      } else {
-        console.error('PDF 名稱更新失敗');
-      }
-    } catch (error) {
-      console.error('更新郵件 PDF 名稱時發生錯誤:', error);
-    }
+    // 預覽合併PDF
+    const handlePreviewMerge = (pdfName) => {
+        const pdfUrl = `${apiUrl}/pdfs/merge/${pdfName}`;  // 使用絕對路徑
+        window.open(pdfUrl, '_blank');
+    };
 
-    // 預覽單個 PDF
-    handlePreview(sendMailPdfName);
-    setPdfInfo([{ name: sendMailPdfName, path: `http://localhost:5000/pdfs/${sendMailPdfName}` }]);
-    //setPdfInfo([{ name: sendMailPdfName, path: `C:/Users/Kate/PycharmProjects/lida_project/python/pdfs/${sendMailPdfName}` }]);
+    // 删除表單
+    const handleDelete = (formId,pdfName) => {
+        fetch(`${apiUrl}/api/deleteForm`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ formId }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                setForms(prevForms => prevForms.filter(form => form.form_id !== formId));
+                // 同時更新 selectedForms 狀態，移除已删除的表單的 pdf_name
+                setSelectedForms(prevSelected => prevSelected.filter(form => form !== pdfName));
+            } else {
+                console.error('删除失败');
+            }
+            })
+        .catch(error => {
+            console.error('請求失敗', error);
+        });
+    };
 
-    // 觸發清空，讓使用者不會重複點擊預覽
-    handleClear();
+    const handleCheckboxChange = (event, pdf_name) => {
+        if (event.target.checked) {
+            // 選中時，加入數組
+            setSelectedForms((prevSelected) => {
+                const newSelected = [...prevSelected, pdf_name];
+                console.log("Selected forms after adding:", newSelected);
+                return newSelected;
+            });
+        } else {
+            // 取消時，從數組中移除
+            setSelectedForms((prevSelected) => {
+                const newSelected = prevSelected.filter((id) => id !== pdf_name);
+                console.log("Selected forms after removing:", newSelected);
+                return newSelected;
+            });
+        }
+    };
 
-  } else if (selectedForms.length > 1) {
-    try {
-      const response = await fetch('http://localhost:5000/api/mergePdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ pdfNames: selectedForms }),  // 发送选中的 PDF 名称数组给后端
-      });
+    const handleBulkPreview = async () => {
+        //當只有選中一個PDF，直接更新後端寄件PDF名稱
+        if (selectedForms.length === 1) {
+            const sendMailPdfName = selectedForms[0]; // 直接使用 pdf_name
 
-      // 检查响应状态
-      if (!response.ok) {
-        throw new Error(`API 请求失败: ${response.statusText}`);
-      }
+            try {
+                //更新資料庫中的 send_mail_pdf_name 欄位
+                const response = await fetch(`${apiUrl}/api/updateMailPdfName`, {
+                    method: 'POST',
+                    headers: {
+                    'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                    pdfNames: [sendMailPdfName]  // 傳遞 pdf_name
+                    }),
+                });
 
-      const data = await response.json();  // 直接解析 JSON 响应
+                if (response.ok) {
+                    console.log('PDF 名稱更新成功');
+                } else {
+                    console.error('PDF 名稱更新失敗');
+                }
+            } catch (error) {
+                console.error('更新郵件 PDF 名稱時發生錯誤:', error);
+            }
 
-    // 处理返回的数据
-    if (data.success) {
-      // 后端返回合并后的文件 URL（合并后的 PDF 文件名）
-      const mergedPdf = data.mergedPdf;
+            // 預覽單個 PDF
+            handlePreview(sendMailPdfName);
+            setPdfInfo([{ name: sendMailPdfName, path: `${apiUrl}/pdfs/${sendMailPdfName}` }]);
 
-      // 更新数据库中的 send_mail_pdf_name 字段
-      const updateResponse = await fetch('http://localhost:5000/api/updateMailPdfName', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+            // 觸發清空，讓使用者不會重複點擊預覽(序號會追加)
+            handleClear();
 
-          pdfNames: selectedForms,  // 所有選中的 pdf_name
-          mergedPdf: mergedPdf,     // 合併後的 PDF 名稱
-        }),
-      });
+        //當選中超過一個PDF，必須先合併，才能更新後端寄件PDF名稱
+        } else if (selectedForms.length > 1) {
+            try {
+                const response = await fetch(`${apiUrl}/api/mergePdf`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ pdfNames: selectedForms }),
+                });
 
-      if (updateResponse.ok) {
-        console.log('合併 PDF 名稱更新成功');
-      } else {
-        console.error('合併 PDF 名稱更新失敗');
-      }
+                if (!response.ok) {
+                    throw new Error(`API 請求失敗: ${response.statusText}`);
+                }
 
-      // 合併後的預覽
-      handlePreviewMerge(mergedPdf);
-      setPdfInfo([{ name: mergedPdf, path: `http://localhost:5000/pdfs/merge/${mergedPdf}` }]);
+                const data = await response.json();
 
-//       // 更新狀態以顯示所有選擇的 PDF 名稱和路徑，包括合併後的 PDF
-//         const pdfDetails = selectedForms.map(pdfName => ({
-//           name: pdfName,
-//           path: `C:/Users/Kate/PycharmProjects/lida_project/python/pdfs/${pdfName}`
-//         }));
-//         pdfDetails.push({
-//           name: mergedPdf,
-//           path: `C:/Users/Kate/PycharmProjects/lida_project/python/pdfs/merge/${mergedPdf}`
-//         });
-//         setPdfInfo(pdfDetails);  // 更新狀態
+                // 處理返回的數據
+                if (data.success) {
+                    // 後端回傳合併後的PDF名稱
+                    const mergedPdf = data.mergedPdf;
 
-        // 觸發清空，讓使用者不會重複點擊預覽(序號會追加)
-        handleClear();
+                    // 更新資料庫中的 send_mail_pdf_name 欄位
+                    const updateResponse = await fetch(`${apiUrl}/api/updateMailPdfName`, {
+                        method: 'POST',
+                        headers: {
+                        'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            pdfNames: selectedForms,  // 所有選中的 pdf_name
+                            mergedPdf: mergedPdf,     // 合併後的 PDF 名稱
+                        }),
+                    });
 
-    } else {
-      alert('合併失敗');
-    }
-  } catch (error) {
-    console.error('合併 PDF 時發生錯誤:', error);
-  }
-}
-};
+                    if (updateResponse.ok) {
+                        console.log('合併 PDF 名稱更新成功');
+                    } else {
+                        console.error('合併 PDF 名稱更新失敗');
+                    }
 
-// 處理外部文件選擇
-  const handleFileSelect = (event) => {
-    const files = Array.from(event.target.files);  // 獲取選中的文件
-    setSelectedFiles((prevFiles) => [...prevFiles, ...files]);  // 更新文件列表
-  };
+                    // 合併後的預覽
+                    handlePreviewMerge(mergedPdf);
+                    setPdfInfo([{ name: mergedPdf, path: `${apiUrl}/pdfs/merge/${mergedPdf}` }]);
 
-  // 处理文件拖拽
-  const handleDrop = (event) => {
-    event.preventDefault();  // 防止浏览器默认行为，阻止文件打开
-    const files = Array.from(event.dataTransfer.files);  // 获取拖拽的文件
-    setSelectedFiles((prevFiles) => [...prevFiles, ...files]);  // 更新文件列表
-  };
-  const handleDragOver = (event) => {
-    event.preventDefault();  // 防止浏览器默认行为
-  };
-  // 删除文件
-  const handleFileDelete = (fileIndex) => {
-    setSelectedFiles((prevFiles) => prevFiles.filter((_, index) => index !== fileIndex));  // 根据索引删除文件
-  };
+                    // 觸發清空，讓使用者不會重複點擊預覽(序號會追加)
+                    handleClear();
 
-// 确认上传文件
-  const handleConfirmUpload = async () => {
-    // 1. 檢查文件是否都是 PDF
-    const isAllPdf = selectedFiles.every(file => file.type === 'application/pdf');
-    if (!isAllPdf) {
-      alert('請確認所有文件都是 PDF 格式');
-      return;
-    }
+                } else {
+                alert('合併失敗');
+                }
+            } catch (error) {
+                console.error('合併 PDF 時發生錯誤:', error);
+            }
+        }
+    };
 
-    // 2. 呼叫後端上傳文件
-    try {
-      const formData = new FormData();
-      selectedFiles.forEach(file => {
-        formData.append('files', file);  // 将文件添加到 FormData 对象
-      });
+    // 外部文件選擇
+    const handleFileSelect = (event) => {
+        const files = Array.from(event.target.files);  // 獲取選中的文件
+        setSelectedFiles((prevFiles) => [...prevFiles, ...files]);  // 更新文件列表
+    };
 
-      const response = await fetch('http://localhost:5000/api/uploadPdf', {
-        method: 'POST',
-        body: formData,
-      });
+    // 外部文件拖拽
+    const handleDrop = (event) => {
+        event.preventDefault();  // 防止瀏覽器默認行為，阻止文件打開
+        const files = Array.from(event.dataTransfer.files);  // 獲取拖拽的文件
+        setSelectedFiles((prevFiles) => [...prevFiles, ...files]);  // 更新文件列表
+    };
 
-      if (!response.ok) {
-        throw new Error('文件上傳失敗');
-      }
+    const handleDragOver = (event) => {
+        event.preventDefault();  // 防止瀏覽器默認行為
+    };
 
-      const data = await response.json();
+    // 外部文件删除
+    const handleFileDelete = (fileIndex) => {
+        setSelectedFiles((prevFiles) => prevFiles.filter((_, index) => index !== fileIndex));  // 根據索引删除文件
+    };
 
-      if (data.success) {
-        alert('文件上傳成功！');
+    // 外部文件上傳
+    const handleConfirmUpload = async () => {
+        // 1. 檢查文件是否都是 PDF
+        const isAllPdf = selectedFiles.every(file => file.type === 'application/pdf');
+        if (!isAllPdf) {
+            alert('請確認所有文件都是 PDF 格式');
+            return;
+        }
 
-        // 在文件上传成功后，打印文件名称并更新到页面
-      console.log('Uploaded files:', selectedFiles.map(file => file.name));
-      // 更新页面上的文件列表
-      setUploadedFiles(prevFiles => [...prevFiles, ...selectedFiles.map(file => file.name)]);
+        // 2. 呼叫後端上傳文件
+        try {
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);  // 將文件添加到 FormData 清單
+            });
 
-        // 3. 更新 select form，保存上傳的文件名
-        setSelectedForms((prevForms) => [
-          ...prevForms,
-          ...selectedFiles.map(file => file.name),
-        ]);
-        setSelectedFiles([]);  // 清空選擇的文件
-      } else {
-        alert('文件上傳失敗');
-      }
-    } catch (error) {
-      console.error('文件上傳失敗:', error);
-      alert('文件上傳失敗');
-    }
-  };
+            const response = await fetch(`${apiUrl}/api/uploadPdf`, {
+                method: 'POST',
+                body: formData,
+            });
 
-  // 清空所有文件信息
-  const handleClear = () => {
-    setSelectedFiles([]);   // 清空選擇的文件
-    setUploadedFiles([]);   // 清空已上傳的文件列表
-    setSelectedForms([]);   // 清空checkbox
-  };
+            if (!response.ok) {
+                throw new Error('文件上傳失敗');
+            }
 
-  // 提交表單的處理函數
-  const handleSubmit = async () => {
-    // 檢查是否包含 "@" 符號
-      if (!recipient || !recipient.includes('@')) {
-        alert('請輸入有效的電子郵件地址');
-        return;
-      }
+            const data = await response.json();
 
-      if (pdfInfo.length === 0) {
-        alert('請選擇要寄出的PDF清單');
-        return;
-      }
+            if (data.success) {
+                alert('文件上傳成功！');
 
+                // 在文件上傳成功後，打印文件名稱到頁面
+                console.log('Uploaded files:', selectedFiles.map(file => file.name));
+                // 更新頁面上的文件列表
+                setUploadedFiles(prevFiles => [...prevFiles, ...selectedFiles.map(file => file.name)]);
 
-    try {
-      const response = await fetch('http://localhost:5000/api/sendEmail', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          recipient,
-          pdfInfo,  // 傳遞 PDF 名稱和路徑
-          mailContent,
-        }),
-      });
+                // 3. 更新 select form，保存上傳的文件名
+                setSelectedForms((prevForms) => [
+                ...prevForms,
+                ...selectedFiles.map(file => file.name),
+                ]);
+                setSelectedFiles([]);  // 清空選擇的文件
+            } else {
+                alert('文件上傳失敗');
+            }
+        } catch (error) {
+            console.error('文件上傳失敗:', error);
+            alert('文件上傳失敗');
+        }
+    };
 
-      if (response.ok) {
-        alert('郵件發送成功');
-        setRecipient('');   // 清空收件者
-        setPdfInfo([]);     // 清空 PDF 資料
-        setMailContent(''); // 清空郵件內容
+    // 清空所有文件
+    const handleClear = () => {
+        setSelectedFiles([]);   // 清空選擇的文件
+        setUploadedFiles([]);   // 清空已上傳的文件列表
+        setSelectedForms([]);   // 清空checkbox
+    };
 
+    // 提交表單的處理函數
+    const handleSubmit = async () => {
+        // 檢查是否包含 "@" 符號
+        if (!recipient || !recipient.includes('@')) {
+            alert('請輸入有效的電子郵件地址');
+            return;
+        }
 
-        fetchForms();
+        if (pdfInfo.length === 0) {
+            alert('請選擇要寄出的PDF清單');
+            return;
+        }
 
+        try {
+            const response = await fetch(`${apiUrl}/api/sendEmail`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    recipient,
+                    pdfInfo,  // 傳遞 PDF 名稱和路徑
+                    mailContent,
+                }),
+            });
 
-
-      } else {
-        alert('郵件發送失敗');
-      }
-    } catch (error) {
-      console.error('發送郵件時發生錯誤:', error);
-    }
-  };
+            if (response.ok) {
+                alert('郵件發送成功');
+                setRecipient('');   // 清空收件者
+                setPdfInfo([]);     // 清空 PDF 資料
+                setMailContent(''); // 清空郵件內容
+                fetchForms();
+            } else {
+                alert('郵件發送失敗');
+            }
+        } catch (error) {
+            console.error('發送郵件時發生錯誤:', error);
+        }
+    };
 
     useEffect(() => {
-    if (activeForm === 'STAGE') {
-      fetchForms();  // 在 activeForm 为 'STAGE' 时加载数据
-    }
-  }, [activeForm]);  // activeForm 变化时触发数据加载
+        if (activeForm === 'STAGE') {
+            fetchForms();  // 在 activeForm 為 'STAGE' 時加載數據
+        }
+    }, [activeForm]);  // activeForm 變化時，觸發數據加載
 
-  return (
-    <div className="mainpage">
-      <div className="top">
-        <div className="logo-mainpage">
-          <img src={logo} alt="Logo" />
-        </div>
-        <div className="stagingarea-icon">
-          <button
-            onClick={() => handleFormClick('STAGE')}  // 先更新 activeForm，触发数据加载
-            style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
-          >
-            <img src={StagingAreaIcon} alt="StagingAreaIcon" style={{ width: '40px', height: '40px' }} />
-          </button>
-        </div>
-        <AccountButton onLogout={handleLogout} username={user} />
-      </div>
-
-      <div className="side-container">
-        <nav className="sidebar">
-          <ul style={{ listStyleType: 'none', padding: 0 }}>
-            <li
-              onClick={() => handleFormClick('A')}
-              onMouseEnter={(e) => e.target.firstChild.src = VoucherBlueIcon}
-              onMouseLeave={(e) => e.target.firstChild.src = VoucherWhiteIcon} >
-              <img src={VoucherWhiteIcon} alt="Voucher" style={{ width: '25px', marginRight: '10px' }} />
-              憑證統計表
-            </li>
-            <li
-              onClick={() => handleFormClick('B')}
-              onMouseEnter={(e) => e.target.firstChild.src = RequestBlueIcon}
-              onMouseLeave={(e) => e.target.firstChild.src = RequestWhiteIcon} >
-              <img src={RequestWhiteIcon} alt="Request" style={{ width: '25px', marginRight: '10px' }} />
-              請款單
-            </li>
-            <li
-              onClick={() => handleFormClick('C')}
-              onMouseEnter={(e) => e.target.firstChild.src = QuotationBlueIcon}
-              onMouseLeave={(e) => e.target.firstChild.src = QuotationWhiteIcon} >
-              <img src={QuotationWhiteIcon} alt="Quotation" style={{ width: '25px', marginRight: '10px' }} />
-              報價單
-            </li>
-            <li
-              onClick={() => handleFormClick('HISTORY')}
-              onMouseEnter={(e) => e.target.firstChild.src = HistoryBlueIcon}
-              onMouseLeave={(e) => e.target.firstChild.src = HistoryWhiteIcon} >
-              <img src={HistoryWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
-              歷史資料
-            </li>
-          </ul>
-        </nav>
-
-
-        <div className="form-area">
-          {activeForm === 'A' && <FormA user={user} />}
-          {activeForm === 'HISTORY' && <HistoryForm user={user}/>}
-          {activeForm === 'STAGE' && (
-            <div>
-              <h2 style={{ textAlign: 'left' }}>檔案暫存區</h2>
-              <ul>
-                {isLoading ? (
-                  <li>正在加載資料...</li>  // 显示加载状态
-                ) : forms.length > 0 ? (
-                  forms.map((form,formIndex) => (
-                    <li
-                      key={form.form_id}
-                      className={formIndex % 2 === 0 ? "dark-bg" : "light-bg"} // 根据索引设置背景色
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between', // 让内容分布到两边，按钮右对齐
-                        alignItems: 'center',  // 确保所有项在垂直方向对齐
-                        padding: '10px', // 给 li 添加一些内边距
-                      }}
+    return (
+        <div className="mainpage">
+            <div className="top">
+                <div className="logo-mainpage">
+                    <img src={logo} alt="Logo" />
+                </div>
+                <div className="stagingarea-icon">
+                    <button
+                    onClick={() => handleFormClick('STAGE')}  // 先更新 activeForm，觸發數據加載
+                    style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
                     >
-                      {/* 复选框和文件名靠左对齐 */}
-                      <div style={{ display: 'flex', alignItems: 'center' , whiteSpace: 'nowrap' }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedForms.includes(form.pdf_name)} // 根据选中的 pdf_name 来判断是否勾选
-                          onChange={(event) => handleCheckboxChange(event, form.pdf_name)} // 处理复选框选中状态
-                          style={{ position: 'relative'
-                                    }} // 放大复选框
-                        />
-                        <span>{form.pdf_name}</span>
-
-                      </div>
-
-                      {/* 按钮部分右对齐并且做圆角 */}
-                      <div style={{ display: 'flex', gap: '10px' }}>
-{/*                     限定帳號開頭是lda，才能看到每一份表單的建立者屬於哪一個帳號 */}
-                        {user.startsWith('lda') && (
-                            <span>{form.user_name}</span>
-                        )}
-                        <button
-                          onClick={() => handlePreview(form.pdf_name)}
-                          style={{
-                            padding: '5px 30px',
-                            borderRadius: '20px',
-                            fontSize: '28px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          預覽
-                        </button>
-                        <button
-                          onClick={() => handleDelete(form.form_id,form.pdf_name)}
-                          style={{
-                            padding: '5px 30px',
-                            borderRadius: '20px',
-                            fontSize: '28px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          刪除
-                        </button>
-                      </div>
-                    </li>
-                  ))
-                ) : (
-                  <div>暫無資料</div>
-                )}
-              </ul>
-              {/* 文件上傳功能放在底部 */}
-      <div className="upload-section">
-      <h3>選擇要上傳的 PDF 文件</h3>
-
-      {/* 文件拖拽区域 */}
-      <div
-        className="file-input-container"
-        onDrop={handleDrop}  // 处理拖放
-        onDragOver={handleDragOver}  // 允许拖拽
-        style={{
-          border: '2px dashed #ddd',
-          borderRadius: '10px',
-          padding: '20px',
-          textAlign: 'center',
-          cursor: 'pointer',
-        }}
-      >
-        <input
-          type="file"
-          id="fileInput"
-          accept=".pdf"
-          multiple  // 允许批量选择
-          onChange={handleFileSelect}
-          style={{ display: 'none' }}  // 隐藏原生的文件选择框
-        />
-        <p>拖放文件到此處，或點擊下方選擇PDF文件</p>
-        {/* 自定义的文件选择按钮 */}
-        <button
-          onClick={() => document.getElementById('fileInput').click()}
-          style={{
-            padding: '10px 20px',
-            fontSize: '16px',
-            backgroundColor: '#4CAF50',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-          }}
-        >
-          選擇PDF文件
-        </button>
-      </div>
-
-      {/* 显示选择的文件列表 */}
-      <ul>
-        {selectedFiles.map((file, index) => (
-          <li key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}>
-            <span>{file.name}</span>
-            {/* 叉叉按钮，用于删除对应的文件 */}
-            <button
-              onClick={() => handleFileDelete(index)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'red',
-                fontSize: '18px',
-                fontWeight: 'bold',
-              }}
-            >
-              &times; {/* 叉叉符号 */}
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      {/* 确认按钮 */}
-      <div style={{ marginTop: '20px', textAlign: 'center' }}>
-        <button
-          onClick={handleConfirmUpload}
-          disabled={selectedFiles.length === 0}  // 如果没有选择文件，禁用按钮
-          style={{
-            padding: '10px 40px',
-            borderRadius: '20px',
-            fontSize: '24px',
-            cursor: selectedFiles.length > 0 ? 'pointer' : 'not-allowed',
-            backgroundColor: selectedFiles.length > 0 ? '#4CAF50' : '#e0e0e0', // 有选择时为绿色，未选择时为灰色
-            color: '#fff',
-          }}
-        >
-          確認上傳
-        </button>
-      </div>
-
-      {/* 显示已上传的文件列表 */}
-    <div>
-      <h3>已上傳的文件：</h3>
-      <ul>
-        {uploadedFiles.length > 0 ? (
-          uploadedFiles.map((fileName, index) => (
-            <li key={index}>{fileName}</li>
-          ))
-        ) : (
-          <li>尚未有文件上傳</li>
-        )}
-      </ul>
-    </div>
-    {/* 清空按钮 */}
-      <div>
-        <button onClick={handleClear}>
-          清空所有
-        </button>
-      </div>
-    </div>
-
-
-              {/* 預覽按鈕區域 */}
-                <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                  <button
-                    onClick={handleBulkPreview}
-                    disabled={selectedForms.length === 0 || isPreviewing}  // 若未選擇任何文件，按鈕禁用
-                    style={{
-                      padding: '10px 40px',
-                      borderRadius: '20px',
-                      fontSize: '24px',
-                      cursor: selectedForms.length > 0 ? 'pointer' : 'not-allowed',
-                      backgroundColor: selectedForms.length > 0 ? '#4CAF50' : '#e0e0e0', // 有選擇時為綠色，無選擇時為灰色
-                      color: '#fff',
-                    }}
-                  >
-                    預覽
-                  </button>
+                    <img src={StagingAreaIcon} alt="StagingAreaIcon" />
+                    </button>
                 </div>
-
-              <div>
-                  {pdfInfo.map((pdf, index) => (
-                    <div key={index}>
-                      <a href={pdf.path} target="_blank" rel="noopener noreferrer">
-                        {pdf.name}
-                      </a>
-                    </div>
-                  ))}
-                </div>
-
-                <div>
-                    <label>
-                      收件者:
-                      <input
-                        type="email"
-                        value={recipient}
-                        onChange={(e) => setRecipient(e.target.value)}
-                        placeholder="輸入收件者的電子郵件"
-                      />
-                    </label>
-                  </div>
-
-                <div>
-                    <label>
-                      郵件內文:
-                      <input
-                        type="text"
-                        value={mailContent}
-                        onChange={(e) => setMailContent(e.target.value)}
-                        placeholder="輸入郵件內文"
-                      />
-                    </label>
-                  </div>
-
-
-                {/* 發送郵件按鈕區域 */}
-      <div style={{ marginTop: '20px', textAlign: 'center' }}>
-        <button
-          onClick={handleSubmit}
-          disabled={!recipient || !recipient.includes('@') || pdfInfo.length === 0}  // 如果收件者或 PDF 信息不存在，禁用按鈕
-
-          style={{
-            padding: '10px 40px',
-            borderRadius: '20px',
-            fontSize: '24px',
-            cursor: recipient && recipient.includes('@') && pdfInfo.length > 0 ? 'pointer' : 'not-allowed',
-            backgroundColor: recipient && recipient.includes('@') && pdfInfo.length > 0 ? '#4CAF50' : '#e0e0e0', // 兩者都存在時為綠色，否則為灰色
-            color: '#fff',
-          }}
-        >
-          發送郵件
-        </button>
-      </div>
-
+                <AccountButton onLogout={handleLogout} username={user} />
             </div>
-          )}
+
+            <div className="side-container">
+                <nav className="sidebar">
+                    <ul style={{ listStyleType: 'none', padding: 0 }}>
+                        <li
+                            onClick={() => handleFormClick('A')}
+                            onMouseEnter={(e) => e.target.firstChild.src = VoucherBlueIcon}
+                            onMouseLeave={(e) => e.target.firstChild.src = VoucherWhiteIcon} >
+                            <img src={VoucherWhiteIcon} alt="Voucher" style={{ width: '25px', marginRight: '10px' }} />
+                            憑證統計表
+                        </li>
+                        <li
+                            onClick={() => handleFormClick('B')}
+                            onMouseEnter={(e) => e.target.firstChild.src = RequestBlueIcon}
+                            onMouseLeave={(e) => e.target.firstChild.src = RequestWhiteIcon} >
+                            <img src={RequestWhiteIcon} alt="Request" style={{ width: '25px', marginRight: '10px' }} />
+                            請款單
+                        </li>
+                        <li
+                            onClick={() => handleFormClick('C')}
+                            onMouseEnter={(e) => e.target.firstChild.src = QuotationBlueIcon}
+                            onMouseLeave={(e) => e.target.firstChild.src = QuotationWhiteIcon} >
+                            <img src={QuotationWhiteIcon} alt="Quotation" style={{ width: '25px', marginRight: '10px' }} />
+                            報價單
+                        </li>
+                        <li
+                            onClick={() => handleFormClick('HISTORY')}
+                            onMouseEnter={(e) => e.target.firstChild.src = HistoryBlueIcon}
+                            onMouseLeave={(e) => e.target.firstChild.src = HistoryWhiteIcon} >
+                            <img src={HistoryWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
+                            歷史資料
+                        </li>
+                    </ul>
+                </nav>
+
+
+                <div className="form-area">
+                    {activeForm === 'A' && <FormA user={user} />}
+                    {activeForm === 'HISTORY' && <HistoryForm user={user}/>}
+                    {activeForm === 'STAGE' && (
+                        //確保整個內容不會壓到邊線
+                        <div style={{marginLeft: '30px',marginRight: '30px'}}>
+                            <div className="title">檔案暫存區</div>
+                            <ul style={{
+                                maxHeight: '420px',
+                                overflowY: 'auto', //超出最大高度，產生滾動條
+                            }}>
+                            {isLoading ? (
+                                <li>正在加載資料...</li>
+                            ) : forms.length > 0 ? (
+
+                                forms.map((form,formIndex) => (
+                                <li
+                                key={form.form_id}
+                                className={formIndex % 2 === 0 ? "dark-bg" : "light-bg"} // 根據索引值設定背景顏色
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between', // 讓內容分布到兩邊，按鈕右對齊
+                                    alignItems: 'center',
+                                    padding: '10px',
+                                }}
+                                >
+                                    {/* 複選框和PDF名稱靠左對齊 */}
+                                    <div style={{ display: 'flex', alignItems: 'center' , whiteSpace: 'nowrap' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedForms.includes(form.pdf_name)} // 根據選中的 pdf_name 來判斷是否勾選
+                                            onChange={(event) => handleCheckboxChange(event, form.pdf_name)} // 處理複選框選中狀態
+                                            style={{ width: '20px',
+                                                    height: '20px',
+                                                    marginRight: '10px',
+                                                    appearance: 'none',  // 取消原生的勾選框外觀
+                                                    backgroundImage: `url(${selectedForms.includes(form.pdf_name) ? TickYellow : ''})`, // 使用匯入的圖片
+                                                    backgroundSize: 'cover', // 讓圖片填滿 checkbox
+                                                    backgroundRepeat: 'no-repeat',
+                                                    backgroundColor:'transparent',
+                                                    border: `1px solid ${selectedForms.includes(form.pdf_name) ? '#EBC857' : '#ccc'}`,
+                                                    cursor: 'pointer', // 改變鼠標指標樣式,
+                                                    padding:'15px'
+                                            }}
+                                        />
+                                        <span style={{ color: selectedForms.includes(form.pdf_name) ? '#EBC857' : 'inherit' }}>{form.pdf_name}</span>
+                                    </div>
+
+                                    {/* 按钮部分靠右對齊 */}
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        {/*  限定帳號開頭是lda，才能看到每一份表單的建立者屬於哪一個帳號，其餘ld帳號僅能看到自己的資料 */}
+                                        {user.startsWith('lda') && (
+                                        <span>{form.user_name}</span>
+                                        )}
+                                        <button
+                                            onClick={() => handlePreview(form.pdf_name)}
+                                            className={`previewdelete-button ${selectedForms.includes(form.pdf_name) ? 'selected' : 'default'}`}
+                                        >
+                                        預覽
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(form.form_id,form.pdf_name)}
+                                            className={`previewdelete-button ${selectedForms.includes(form.pdf_name) ? 'selected' : 'default'}`}
+                                        >
+                                        刪除
+                                        </button>
+                                    </div>
+                                </li>
+                                ))
+                                ) : (
+                                <div>暫無資料</div>
+                                )}
+                            </ul>
+
+                            <div className="upload-section"
+                            //若沒有勾選checkbox，不能上傳文件
+                            style={{
+                                pointerEvents: selectedForms.length === 0 ? 'none' : 'auto', // 禁用拖放區域
+                                opacity: selectedForms.length === 0 ? 0.5 : 1, // 禁用時，設置透明度
+                            }}
+                            >
+                                <div
+                                style={{
+                                    display: 'flex',  // 使用flex布局
+                                    justifyContent: 'space-between',  // 子元素（div 和 ul）分開
+                                    height: '350px',  // 保證容器佔據全頁高度
+                                    }}
+                                >
+                                    <div
+                                    className="file-input-container"
+                                    onDrop={handleDrop}  // 處理拖放
+                                    onDragOver={handleDragOver}  // 允许拖拽
+                                    style={{
+                                        border: '2px dashed #ddd',
+                                        borderRadius: '10px',
+                                        padding: '50px',
+                                        textAlign: 'center',
+                                        cursor: 'pointer',
+                                        width: '50%',
+                                    }}
+                                    >
+                                        <input
+                                        type="file"
+                                        id="fileInput"
+                                        accept=".pdf"
+                                        multiple  // 允許批量選擇
+                                        onChange={handleFileSelect}
+                                        style={{ display: 'none' }}  // 隐藏原生的文件選擇框
+                                        />
+                                        <img src={UploadIcon} alt="Upload" style={{width: '100px',height: 'auto',display: 'block',margin: '0 auto 20px'}} />
+                                        <div>點擊新增或拖曳檔案到此區塊</div>
+                                        <button
+                                        onClick={() => document.getElementById('fileInput').click()}
+                                        style={{
+                                            padding: '10px 30px',
+                                            borderRadius: '20px',
+                                            fontSize: '28px',
+                                            backgroundColor: '#71777F',
+                                            color: '#fff',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                        }}
+                                        >
+                                        選擇要上傳的PDF文件
+                                        </button>
+                                    </div>
+
+                                    {/* 顯示欲上傳的文件列表 */}
+                                    <ul style={{
+                                        width: '50%',  // 右側區塊佔50%
+                                        padding: '20px',
+                                        margin: 0,
+                                        listStyleType: 'none',  // 去除預設的列表樣式
+                                        overflowY: 'auto',  // 若文件過多，可以滾動
+                                        backgroundColor: '#455664',  // 灰色背景色
+                                        position: 'relative',  // 使子元素按钮可以相對定位
+                                        display: 'flex',  // 使用 flexbox 布局
+                                        flexDirection: 'column',  // 按列排列子元素
+                                        justifyContent: selectedFiles.length === 0 && uploadedFiles.length === 0 ? 'center' : 'flex-start', // 如果没有文件，居中
+                                        alignItems: 'center',  // 横向居中
+                                    }}>
+
+                                    {/* 如果有上傳成功的文件，則顯示已上傳的文件列表 */}
+                                    {uploadedFiles.length > 0 ? (
+                                        <>
+                                        {uploadedFiles.map((fileName, index) => (
+                                            <li key={index} style={{ padding: '5px 0', borderBottom: '1px solid white', textAlign: 'left' }}>
+                                            <img src={TickYellow} alt="tickyellow" style={{ width: '25px', marginRight: '10px' }} />
+                                            <span>{fileName}</span>
+                                            </li>
+                                        ))}
+                                        </>
+                                    ) : (
+                                        // 否則，顯示待上傳的列表
+                                        <>
+                                        {selectedFiles.length > 0 ? (
+                                            selectedFiles.map((file, index) => (
+                                                <li key={index} style={{ display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    padding: '5px 0',
+                                                    borderBottom: '1px solid white',
+                                                    textAlign: 'left',}}>
+                                                <span>{file.name}</span>
+                                                {/* 叉叉按钮，用於刪除選錯的外部文件 */}
+                                                <button
+                                                onClick={() => handleFileDelete(index)}
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    color: 'red',
+                                                    fontSize: '18px',
+                                                    fontWeight: 'bold',
+                                                }}
+                                                >
+                                                <img src={CancelIcon} alt="Cancel" style={{width: '30px',height: 'auto'}} />
+                                                </button>
+                                                </li>
+                                            ))
+                                        ) : (
+                                        <li style={{
+                                            display: 'flex',
+                                            justifyContent: 'center', // 居中显示
+                                            alignItems: 'center',
+                                            textAlign: 'center',
+                                            flex: '1', // 确保这一项占据父容器剩余空间
+                                        }}>
+                                            <img src={CancelIcon} alt="Cancel" style={{width: '40px',height: 'auto',padding: '10px'}} />
+                                            無文件上傳
+                                        </li>
+                                        )
+                                        }
+                                        </>
+                                    )}
+
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '20px',
+                                        right: '20px',
+                                        width: 'auto',
+                                        textAlign: 'right',
+                                    }}>
+                                    {/* 根據狀態同位置，顯示不同按鈕 */}
+                                    {uploadedFiles.length > 0 ? (
+                                        <button
+                                        onClick={handleClear}
+                                        style={{
+                                            padding: '10px 40px',
+                                            borderRadius: '20px',
+                                            fontSize: '24px',
+                                            backgroundColor: 'transparent',
+                                            color: '#fff',
+                                            cursor: 'pointer',
+                                            border: '2px solid #ddd',  // 邊框樣式
+                                        }}
+                                        >
+                                        清空
+                                        </button>
+                                    ) : (
+                                        <button
+                                        onClick={handleConfirmUpload}
+                                        disabled={selectedFiles.length === 0}
+                                        style={{
+                                            padding: '10px 40px',
+                                            borderRadius: '20px',
+                                            fontSize: '24px',
+                                            cursor: selectedFiles.length > 0 ? 'pointer' : 'not-allowed',
+                                            backgroundColor: selectedFiles.length > 0 ? 'transparent' : '#e0e0e0',
+                                            color: '#fff',
+                                            border: '2px solid #ddd',  // 邊框樣式
+                                        }}
+                                        >
+                                        上傳
+                                        </button>
+                                    )}
+                                    </div>
+                                    </ul>
+                                </div>
+                            </div>
+
+
+                            {/* 預覽按鈕區域 */}
+                            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                                <button
+                                onClick={handleBulkPreview}
+                                disabled={selectedForms.length === 0 || isPreviewing}  // 若未選擇任何文件，按鈕禁用
+                                style={{
+                                    padding: '10px 240px',
+                                    borderRadius: '20px',
+                                    fontSize: '24px',
+                                    cursor: selectedForms.length > 0 ? 'pointer' : 'not-allowed',
+                                    backgroundColor: selectedForms.length > 0 ? '#71777F' : '#e0e0e0',
+                                    color: '#fff',
+                                    marginBottom:'20px'
+                                }}
+                                >
+                                預覽
+                                </button>
+                            </div>
+
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                backgroundColor: '#2C3D4B',
+                                padding: '10px',
+                                marginBottom: '20px'
+                            }}>
+                                <div className="title" style={{padding:'10px'}}>待寄郵件檔</div>
+                                <div style={{ display: 'flex', justifyContent: 'center', flexGrow: 1 }}>
+                                    {pdfInfo.map((pdf, index) => (
+                                        <div key={index} style={{ textAlign: 'center', color: 'white' }}>
+                                            <a href={pdf.path} target="_blank" rel="noopener noreferrer" style={{ color: 'white' }}>
+                                                {pdf.name}
+                                            </a>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="title">撰寫郵件</div>
+                            <div style={{marginRight: '30px'}}>
+                                <input
+                                type="email"
+                                className="mailaccount"
+                                value={recipient}
+                                onChange={(e) => setRecipient(e.target.value)}
+                                placeholder="請輸入收件者信箱"
+                                />
+                            </div>
+
+                            <div style={{marginRight: '30px'}}>
+                                <textarea
+                                className="mailcontent"
+                                value={mailContent}
+                                onChange={(e) => setMailContent(e.target.value)}
+                                placeholder="請輸入內容"
+                                />
+                            </div>
+
+                            {/* 發送郵件按鈕區域 */}
+                            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                                <button
+                                onClick={handleSubmit}
+                                disabled={!recipient || !recipient.includes('@') || pdfInfo.length === 0}  // 如果收件者或 PDF 信息不存在，禁用按鈕
+                                style={{
+                                    padding: '10px 240px',
+                                    borderRadius: '20px',
+                                    fontSize: '24px',
+                                    cursor: recipient && recipient.includes('@') && pdfInfo.length > 0 ? 'pointer' : 'not-allowed',
+                                    backgroundColor: recipient && recipient.includes('@') && pdfInfo.length > 0 ? '#71777F' : '#e0e0e0', // 兩者都存在時為綠色，否則為灰色
+                                    color: '#fff',
+                                }}
+                                >
+                                發送郵件
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default StagingArea;

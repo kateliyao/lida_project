@@ -71,7 +71,7 @@
 	</style>
 </head>
 <body>
-	<img src="C:\Users\Kate\PycharmProjects\lida_project\python\assets\logo.png" alt="Logo" class="pdf-logo"><br />
+	<img src="{{app_dir}}\assets\logo.png" alt="Logo" class="pdf-logo"><br />
 	<div class="FormA">
 		<div style="text-align: center; font-weight: bold; font-size: 30px;"><br />{{companyName}}</div>
 		<div style="text-align: center; font-weight: bold; font-size: 30px;"><br />憑證統計表-
@@ -99,7 +99,7 @@
 				</tr>
 				<tr>
 					<td class="td1">銷貨成本</td>
-					<td class="td3"><span class="form-id {% if expense < 0 %}negative{% endif %}">{{ formatted_expense }}</span></td>
+					<td class="td3"><span class="form-id {% if cost < 0 %}negative{% endif %}">{{ formatted_cost }}</span></td>
 					<td class="td2"><span class="form-id">{{costPercent}}%</span></td>
 				</tr>
 				<tr>
@@ -150,8 +150,7 @@
 				</tr>
 			</tbody>
 		</table>
-		<div style="text-align: left;">●若年底結算申報採
-			<span style="border: 1px solid black; padding: 2px 5px; margin-left: 5px;">書審/所得額/查帳</span> 
+		<div style="text-align: left;">●若年底結算申報採<span style="border: 1px solid black; padding: 2px 5px; margin-left: 5px;">書審/所得額/查帳</span> 
 			<span style="border: 1px solid black; padding: 2px 5px; margin-left: 5px;">淨利%</span>申報淨利為(B)：
 			<span class="form-id {% if netincome < 0 %}negative{% endif %}" style="border-bottom: 1px solid black; padding-bottom: 2px;">
 				{{ formatted_netincome }}

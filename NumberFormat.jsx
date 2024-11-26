@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
-const NumberFormat = ({ onValueChange, isGeneratingPDF }) => {
+const NumberFormat = ({ onValueChange }) => {
     const [inputValue, setInputValue] = useState('');
+    const [isNegative, setIsNegative] = useState(false); // 追蹤是否為負數
 
     const formatNumber = (num) => {
         return num.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -10,6 +11,13 @@ const NumberFormat = ({ onValueChange, isGeneratingPDF }) => {
     const handleInputChange = (event) => {
         const value = event.target.value.replace(/,/g, ''); // 去除已存在的逗號
         setInputValue(value);
+
+        // 判斷數字是否為負數
+        if (value.startsWith('-')) {
+            setIsNegative(true);
+        } else {
+            setIsNegative(false);
+        }
     };
 
     const handleInputBlur = () => {
@@ -35,7 +43,15 @@ const NumberFormat = ({ onValueChange, isGeneratingPDF }) => {
             setInputValue('');
             onValueChange(''); // 傳遞空值給父組件
         }
-};
+    };
+    // 設置數字顯示的樣式
+    const getNumberStyle = (number) => {
+        // 判断是负数则使用红色字体
+        if (isNegative) {
+            return { color: 'red' };
+        }
+        return {}; // 正常情况下無特殊樣式
+    };
 
     return (
         <div>
@@ -45,7 +61,7 @@ const NumberFormat = ({ onValueChange, isGeneratingPDF }) => {
                 onChange={handleInputChange}
                 onBlur={handleInputBlur}
                 placeholder="輸入數字"
-                className={isGeneratingPDF ? 'pdf-view input-large' : 'web-view input-large'}
+                style={{ width:'230px',height: '40px',...getNumberStyle(inputValue),}}
 
             />
         </div>

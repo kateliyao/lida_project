@@ -62,8 +62,10 @@ CREATE TABLE dw.formA (
     form_submityear INT not null,
     form_submitmonth INT not null,
     form_submitdate INT not null,
-    form_path VARCHAR(255) NULL,
+    pdf_name VARCHAR(255) NULL,
     form_status int DEFAULT 0,
+	user_name varchar(20) not NULL,
+	send_mail_pdf_name VARCHAR(255) NULL,
     updated_time datetime DEFAULT NOW()
 );
 
@@ -82,3 +84,32 @@ insert into dw.staff_info(staff_id,staff_name,staff_menu) values(101,'王小明'
 insert into dw.staff_info(staff_id,staff_name,staff_menu) values(102,'陳明月','#102陳小姐');
 
 select * from dw.staff_info
+
+CREATE TABLE dw.pdf_merge_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_name VARCHAR(255) NOT NULL,
+    system_date VARCHAR(255) NOT NULL,
+    merge_pdf_name VARCHAR(255) NOT NULL,
+    updated_time datetime DEFAULT NOW()
+);
+
+
+CREATE TABLE dw.users_info (
+id int primary key,
+username varchar(20) not NULL,
+password varchar(50) not NULL,
+role varchar(20) NULL,
+staff_menu varchar(50) null,
+updated_time datetime DEFAULT NOW()
+)
+
+insert dw.users_info(id,username,password,role,staff_menu) values(1,'lda1','lidadmin1','admin',null);
+insert dw.users_info(id,username,password,role,staff_menu) values(2,'lda2','lidadmin2','admin',null);
+insert dw.users_info(id,username,password,role,staff_menu) values(3,'ld1','ld1','user','蔡小姐#101');
+insert dw.users_info(id,username,password,role,staff_menu) values(4,'ld2','ld2','user','施先生#102');
+insert dw.users_info(id,username,password,role,staff_menu) values(5,'ld3','ld3','user','楊小姐#103');
+insert dw.users_info(id,username,password,role,staff_menu) values(6,'ld4','ld4','user','賴小姐#106');
+insert dw.users_info(id,username,password,role,staff_menu) values(7,'ld5','ld5','user','陳小姐#107');
+insert dw.users_info(id,username,password,role,staff_menu) values(8,'ld6','ld6','user','洪小姐#108');
+insert dw.users_info(id,username,password,role,staff_menu) values(9,'ld7','ld7','user','潘小姐#111');
+insert dw.users_info(id,username,password,role,staff_menu) values(10,'ld8','ld8','user','林小姐#168');

@@ -72,7 +72,7 @@
 	</style>
 </head>
 <body>
-	<img src="C:\Users\Kate\PycharmProjects\lida_project\python\assets\logo.png" alt="Logo" class="pdf-logo"><br />
+	<img src="{{app_dir}}\assets\logo.png" alt="Logo" class="pdf-logo"><br />
 	<div class="FormA">
 		<div style="text-align: center; font-weight: bold; font-size: 30px;"><br />{{companyName}}</div>
 		<div style="text-align: center; font-weight: bold; font-size: 30px;"><br />憑證統計表-
@@ -100,7 +100,7 @@
 				</tr>
 				<tr>
 					<td class="td1">銷貨成本</td>
-					<td class="td3"><span class="form-id {% if expense < 0 %}negative{% endif %}">{{ formatted_expense }}</span></td>
+					<td class="td3"><span class="form-id {% if cost < 0 %}negative{% endif %}">{{ formatted_cost }}</span></td>
 					<td class="td2"><span class="form-id">{{costPercent}}%</span></td>
 				</tr>
 				<tr>

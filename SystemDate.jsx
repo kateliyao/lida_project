@@ -36,8 +36,7 @@ const SystemDate = () => {
     const handleMonth1Change = (event) => {
         setMonth1(Number(event.target.value));
     };
-
-    return { year, month, date ,handleYearChange, handleMonthChange ,handleDateChange,year1, month1 ,handleYear1Change, handleMonth1Change };
+    return {year,month,date,handleYearChange,handleMonthChange,handleDateChange,year1,month1,handleYear1Change,handleMonth1Change};
 };
 
 export default SystemDate;

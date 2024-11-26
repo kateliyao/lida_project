@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 
-const FinancialNumberFormat = ({ onValueChange, isGeneratingPDF }) => {
+const FinancialNumberFormat = ({onValueChange}) => {
     const [inputValue, setInputValue] = useState('');
+    const [inputStyle, setInputStyle] = useState({ textAlign: 'right' });
+
 
     const formatNumber = (num) => {
         return num.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -13,28 +15,31 @@ const FinancialNumberFormat = ({ onValueChange, isGeneratingPDF }) => {
     };
 
     const handleInputBlur = () => {
-    let valueToDisplay = inputValue;
+        let valueToDisplay = inputValue;
 
-    // 处理负数，记录负号并去掉负号
-    const isNegative = valueToDisplay.startsWith('-');
-    if (isNegative) {
-        valueToDisplay = valueToDisplay.slice(1); // 去掉負號
-    }
-
-    // 格式化数字
-    if (!isNaN(valueToDisplay) && valueToDisplay !== '') {
-        const formatted = formatNumber(valueToDisplay);
+        // 處理負數，紀錄負號並去掉負號
+        const isNegative = valueToDisplay.startsWith('-');
         if (isNegative) {
-            setInputValue(`(${formatted})`); // 負數顯示為括號形式
-            onValueChange(`-${valueToDisplay}`); // 傳遞原始負數值
-        } else {
-            setInputValue(formatted);
-            onValueChange(valueToDisplay); // 傳遞格式化後的正數值
+            valueToDisplay = valueToDisplay.slice(1); // 去掉負號
         }
-    } else {
-        setInputValue('');
-        onValueChange(''); // 傳遞空值給父組件
-    }
+
+        // 格式化数字
+        if (!isNaN(valueToDisplay) && valueToDisplay !== '') {
+            const formatted = formatNumber(valueToDisplay);
+            if (isNegative) {
+                setInputValue(`(${formatted})`); // 負數顯示為括號形式
+                onValueChange(`-${valueToDisplay}`); // 傳遞原始負數值
+                setInputStyle({ color: 'red', textAlign: 'right' });
+            } else {
+                setInputValue(formatted);
+                onValueChange(valueToDisplay); // 傳遞格式化後的正數值
+                setInputStyle({textAlign: 'right' });
+            }
+        } else {
+            setInputValue('');
+            onValueChange(''); // 傳遞空值給父組件
+            setInputStyle({textAlign: 'right' });
+        }
 };
 
     return (
@@ -45,11 +50,15 @@ const FinancialNumberFormat = ({ onValueChange, isGeneratingPDF }) => {
                 onChange={handleInputChange}
                 onBlur={handleInputBlur}
                 placeholder="輸入數字"
-                className={isGeneratingPDF ? 'pdf-view input-large' : 'web-view input-large'}
-                style={{ textAlign: 'right' }}
+                style={{
+                    ...inputStyle,  // 動態樣式
+                    width: '230px',
+                    height: '40px'
+                }}
             />
         </div>
     );
 };
+
 
 export default FinancialNumberFormat;

@@ -11,28 +11,21 @@
     unicode-range: U+00-024F;
 }
 
-.chinese-text {
-  font-family: 'custom-sans-serif', sans-serif;
-}
-
-.number-text {
-  font-family: 'custom-sans-serif', sans-serif;
-}
-
-
-.FormA .web-view {
+.FormA .form-container {
   font-size: 28px; /* 網頁字體大小 */
   font-family: 'custom-sans-serif', sans-serif;
 }
 
-.pdf-view {
-  font-size: 19px; /* PDF字體大小 */
-  font-family: 'custom-sans-serif', sans-serif;
+@media (max-width: 1700px) {
+  .FormA .form-container {
+      font-size: 22px; /* 網頁字體大小 */
+      font-family: 'custom-sans-serif', sans-serif;
+    }
 }
 
-.FormA .web-view input {
+.FormA .form-container input {
     font-size: 30px;
-    font-family: 'custom-sans-serif', sans-serif;d
+    font-family: 'custom-sans-serif', sans-serif;
     height: 80px; /* 設置足夠的高度 */
     line-height: 80px; /* 行高設置為與高度一致 */
     padding: 0; /* 取消內邊距，確保文字完全可見 */
@@ -42,109 +35,33 @@
     color: white; /* 設置文字顏色 */
 }
 
-.FormA .web-view .input-small {
+.FormA .form-container .input-small {
     width: 40px;
     height: 40px;
     text-align:center;
 }
 
-/* 中框框 */
-.FormA .web-view .input-medium {
+.FormA .form-container .input-medium {
     width: 60px;
     height:40px;
     text-align:center;
 }
 
-.FormA .web-view .input-large {
+.FormA .form-container .input-large {
     width: 230px;
     height: 40px;
 }
 
-.pdf-view input {
-    font-size: 19px;
-    font-family: 'custom-sans-serif', sans-serif;
-}
-
-.pdf-view .input-small {
-    width: 20px;
-    height: 20px;
-}
-
-.pdf-view .input-medium {
-    width: 45px;
-    height: 20px;
-}
-
-.pdf-view .input-large {
-    width: 180px;
-    height: 20px;
-}
-
-.FormA .mainpage-label{
-    color: #FFFFFF;
-}
-
-
-.container {
-    display: flex;
-    flex-direction: column;
-    font-family: 'custom-sans-serif', sans-serif;
-
-}
-
-.title {
-    text-align: center;
-}
-
-
-
-.FormA .class1 {
+.FormA .title {
     display: flex; /* 使外層容器也是flex */
     flex-direction: column;  /* 如果需要上下排列 */
     align-items: center; /* 垂直居中 */
     font-weight: bold;
 }
 
-
-.class3{
-    text-align:left
-}
-
-.class4{
-    text-align:center;
-}
-.class5{
-    color: #FFFFFF;
-    text-align:left;
-}
-
-.class6{
-
-    text-align:left;
-}
-.class7{
-    text-align:left;
-    color:red;
-}
-
-.class8{
-
-    display: flex; /* 使外層容器也是flex */
-    flex-direction: column; /* 如果需要上下排列 */
-    align-items: flex-end; /* 垂直居中 */
-    font-weight: bold;
-}
-.FormA .class9{
-    text-align:left;
-}
-.FormA .class10{
-    background-color: #EBC857;
-
-}
-
 .textarea-box {
-    width: 710px;          /* 設定寬度 */
-    height: 190px;         /* 設定高度 */
+    width: 990px;          /* 設定寬度 */
+    height: 340px;         /* 設定高度 */
     padding: 10px;         /* 內部邊距 */
     border: 1px solid #ccc; /* 邊框樣式 */
     border-radius: 5px;    /* 圓角 */
@@ -154,14 +71,27 @@
     resize: none;          /* 禁止用戶調整大小 */
     white-space: pre-wrap; /* 確保空白符號和換行符號能夠被尊重 */
     white-space: normal;
+    background-color:transparent;
+    color:white;
 }
 
-#generatePdfButton {
-    display: inline-block; /* 確保按鈕不會變成 block 影響對齊 */
-    margin: 0 auto; /* 使按鈕居中 */
-    text-align: center; /* 文字居中 */
+@media (max-width: 1700px) {
+  .textarea-box {
+    width: 860px;          /* 設定寬度 */
+    height: 290px;         /* 設定高度 */
+    padding: 10px;         /* 內部邊距 */
+    border: 1px solid #ccc; /* 邊框樣式 */
+    border-radius: 5px;    /* 圓角 */
+    font-family: 'custom-sans-serif', sans-serif; /* 設定字體 */
+    font-size: 24px;       /* 設定字體大小 */
+    line-height: 1.5;      /* 設定行高 */
+    resize: none;          /* 禁止用戶調整大小 */
+    white-space: pre-wrap; /* 確保空白符號和換行符號能夠被尊重 */
+    white-space: normal;
+    background-color:transparent;
+    color:white;
 }
-
+}
 
 .search_button{
     background-color: #EBC857;
@@ -169,12 +99,12 @@
     padding: 1px 10px;
     color: #424242; /* 設置文字顏色 */
     cursor: pointer; /* 鼠標指針樣式 */
+    font-size: 25px; /* 調整字體大小 */
 }
 
 .submit_button {
     background-color: #EBC857;
     margin: 0;
-
     padding: 10px 20px; /* 增加內邊距以適應橢圓形 */
     border-radius: 50px; /* 設置邊框半徑，形成橢圓形 */
     color: #424242; /* 設置文字顏色 */
@@ -183,20 +113,18 @@
     transition: background-color 0.3s; /* 加入過渡效果 */
 }
 
-.search_button:hover,
-.submit_button:hover {
-    background-color: #D3B03D; /* 鼠标悬停时的背景颜色 */
+.search_button:hover,.submit_button:hover {
+    background-color: #D3B03D;
 }
 
-.custom-select {
-    background-color: transparent;  /* 无背景色 */
-    border: 2px solid white;        /* 白色边框 */
+select.custom-select {
+    background-color: transparent;
+    border: 2px solid white;
     font-family: 'custom-sans-serif', sans-serif;
-    font-size: 28px;                 /* 增大字体 */
-    color: white;                   /* 字体颜色为白色 */
-    padding: 10px;                  /* 增加内边距 */
+    font-size: 28px;
+    color: white;
+    padding: 10px;
 }
-
 .custom-select option {
     background-color: #192F42;
     font-family: 'custom-sans-serif', sans-serif;

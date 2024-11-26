@@ -10,32 +10,39 @@
     unicode-range: U+00-024F;
 }
 
-
 body {
     background-color: #192F42;
     margin: 0;
     font-family: 'custom-login', sans-serif;
-    font-size:36px;
+    font-size:32px;
+}
+
+@media (max-width: 1700px) {
+  body {
+    background-color: #192F42;
+    margin: 0;
+    font-family: 'custom-login', sans-serif;
+    font-size:24px;
+  }
 }
 
 .login {
     display: flex;
-    justify-content: center; /* 水平居中 */
-    align-items: center;     /* 垂直居中 */
-    height: 100vh;          /* 使容器占满整个视口高度 */
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 
 }
 
 .logo-login {
-    margin-bottom: 120px;      /* 为 logo 和输入框之间添加间距 */
+    margin-bottom: 120px;
 }
 
 .logo-login img {
     position: absolute;
-    transform: translateX(-50%); /* 向左平移自身宽度的一半，达到居中效果 */
-    width: 495px;           /* 设置具体宽度 */
+    transform: translateX(-50%);
+    width: 495px;
     height: 51px;
-
 }
 
 .label-login{
@@ -44,31 +51,33 @@ body {
 }
 
 input {
-    display: block;      /* 使输入框为块级元素 */
-    width: 70%;        /* 宽度为100% */
-    padding: 10px;      /* 内边距 */
-    margin: 10px 0;     /* 上下外边距 */
-    border: 1px solid #ccc; /* 边框 */
-    border-radius: 4px; /* 圆角边框 */
+    display: block;
+    width: 70%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
     font-size:30px;
 }
 
+
 .login_button {
-    width: 100%;        /* 按钮宽度为100% */
-    padding: 10px;      /* 内边距 */
-    background-color: orange; /* 按钮背景色 */
-    color: black;       /* 字体颜色 */
-    border: none;       /* 去掉边框 */
-    border-radius: 4px; /* 圆角 */
-    cursor: pointer;    /* 鼠标指针 */
+    width: 100%;
+    padding: 10px;
+    background-color: orange;
+    color: black;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
     font-family: 'custom-login', sans-serif;
+    font-size:30px;
 }
 
 button:hover {
-    background-color: yellow; /* 鼠标悬停时的背景色 */
+    background-color: yellow;
 }
 
 .error-message {
   color: red;
-  margin-top: 100px; /* 错误信息的上边距 */
+  margin-top: 100px;
 }

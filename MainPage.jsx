@@ -17,54 +17,42 @@ import HistoryForm from './HistoryForm';
 import './MainPage.css';
 
 const MainPage = ({ onLogout,user }) => {
-  console.log("MainPage 收到的 user:", user);  // 打印傳遞來的 user
-  const [activeForm, setActiveForm] = useState(null);
-  const navigate = useNavigate();
+    console.log("MainPage 收到的 user:", user);  // 打印傳遞來的 user
+    console.log(window.innerWidth);
+    const [activeForm, setActiveForm] = useState(null);
+    const navigate = useNavigate();
 
-  const handleGoBack = () => {
-    window.history.back();
-    window.location.reload();
-  };
+    const handleFormClick = (form) => {
+        console.log(`選擇了 ${form} 表單`);
+        setActiveForm(form);
+    };
 
-  const handleFormClick = (form) => {
-    console.log(`選擇了 ${form} 表單`);
-    setActiveForm(form);
-  };
-
-  // 登出功能
     const handleLogout = () => {
         console.log('登出被觸發'); // 這裡可以確認是否進入此函數
         //navigate('/'); // 導航回 Login 頁面
         window.location.href = '/'; // 強制導航到 Login 頁面
-      };
+    };
 
-  return (
+    return (
     <div className="mainpage">
-      <div className="top">
-        <div className="logo-mainpage">
-            <img src={logo} alt="Logo" />
+        <div className="top">
+            <div className="logo-mainpage">
+                <img src={logo} alt="Logo" />
+            </div>
+            <div className="stagingarea-icon">
+                <button onClick={() => {
+                  navigate('/StagingArea'); // 如果需要導航到單獨的路由
+                }}
+                style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}  // 隱藏按鈕邊框並設定為可點擊
+                >
+                <img src={StagingAreaIcon} alt="StagingAreaIcon"  />  {/* 根據需要調整圖片大小 */}
+                </button>
+            </div>
+            <AccountButton onLogout={handleLogout} username={user} />
         </div>
-        <div className="stagingarea-icon">
-          <button onClick={() => {
-              //setActiveForm('C'); // 當點擊購物車時設置 activeForm 為 C
-              //console.log('當前購物車內容:', cart);
-              navigate('/StagingArea'); // 如果需要導航到單獨的路由
-          }}
-            style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}  // 隱藏按鈕邊框並設定為可點擊
-          >
-          <img src={StagingAreaIcon} alt="StagingAreaIcon" style={{ width: '40px', height: '40px' }} />  {/* 根據需要調整圖片大小 */}
 
-          </button>
-      </div>
-          <AccountButton onLogout={handleLogout} username={user} />
-
-
-{/*           <button onClick={onLogout}>登出</button> */}
-
-      </div>
-
-      <div className="side-container">
-          <nav className="sidebar">
+        <div className="side-container">
+            <nav className="sidebar">
             <div>
                 <ul style={{ listStyleType: 'none', padding: 0 }}>
                     <li
@@ -95,20 +83,16 @@ const MainPage = ({ onLogout,user }) => {
                         <img src={HistoryWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
                         歷史資料
                     </li>
-
                 </ul>
             </div>
-          </nav>
+            </nav>
 
-          <div className="form-area">
-            {activeForm === 'A' && <FormA user={user}/>}
-            {activeForm === 'HISTORY' && <HistoryForm user={user}/>}
-          </div>
-      </div>
-
-
-  </div>
-  );
+            <div className="form-area">
+                {activeForm === 'A' && <FormA user={user}/>}
+                {activeForm === 'HISTORY' && <HistoryForm user={user}/>}
+            </div>
+        </div>
+    </div>
+    );
 };
-
 export default MainPage;
