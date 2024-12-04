@@ -130,3 +130,28 @@ select.custom-select {
     font-family: 'custom-sans-serif', sans-serif;
 }
 
+select.option-select {
+    background-color: transparent;
+    border: 2px solid white;
+    font-family: 'custom-sans-serif', sans-serif;
+    font-size: 28px;
+    color: white;
+    padding: 5px;
+}
+
+@media (max-width: 1700px) {
+  select.option-select {
+    background-color: transparent;
+    border: 2px solid white;
+    font-family: 'custom-sans-serif', sans-serif;
+    font-size: 22px;
+    color: white;
+    padding: 5px;
+  }
+}
+
+.option-select option {
+    background-color: #192F42;
+    font-family: 'custom-sans-serif', sans-serif;
+}
+

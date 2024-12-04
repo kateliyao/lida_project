@@ -20,6 +20,7 @@ const FormA = ({ user }) => {
     const maxLength = 245; // 限制最大字数
     const [currentUserStaffMenu, setCurrentUserStaffMenu] = useState(''); // 初始化為空字符串
     const apiUrl = import.meta.env.VITE_API_URL;
+    const [selectedOption, setSelectedOption] = useState('');
 
     const handleCheckboxChange = (event) => {
         setIsChecked(event.target.checked);
@@ -60,6 +61,7 @@ const FormA = ({ user }) => {
     const [netincome, setNetIncome] = useState(0);
     const [extracost, setExtraCost] = useState(0);
     const [extraexpense, setExtraExpense] = useState(0);
+    const [netincomepercent, setNetIncomePercent] = useState('');
 
     const handleRevenueChange = (newValue) => {
         setRevenue(newValue);
@@ -82,6 +84,16 @@ const FormA = ({ user }) => {
     const handleIncomeChange = (newValue) => {
         setIncome(newValue);
     };
+
+    // 處理淨利百分比輸入，僅允許數字
+    const handleNetIncomePercentChange = (e) => {
+        const value = e.target.value;
+        // 檢查輸入的值是否為數字或空字符（可以允許清空輸入框）
+        if (/^\d*\.?\d*$/.test(value)) {
+            setNetIncomePercent(value);
+        }
+    };
+
     const VoucherNumber = (Number(income) || 0) - (Number(netincome) || 0)
 
     const formatNumber = (number) => {
@@ -170,9 +182,14 @@ const FormA = ({ user }) => {
         fetchStaffData();  // 調用函數從後端獲取資料
     }, [user]);  // 依賴於user，每一次用戶變更時，重新加載數據
 
-    // 處理下拉式菜單的選擇變化
+    // 處理服務人員下拉式菜單的選擇變化
     const handleStaffChange = (e) => {
         setSelectedStaff(e.target.value);
+    };
+
+    // 處理申報方式下拉式菜單的選擇變化
+    const handleSelectChange = (e) => {
+        setSelectedOption(e.target.value);
     };
 
     // 處理表單提交後送資料庫以及轉印成PDF
@@ -190,6 +207,53 @@ const FormA = ({ user }) => {
         if (selectedStaff === '' || selectedStaff === '選擇負責人員') {
             alert('請選擇負責人員！');
             return; // 阻止表單提交
+        }
+
+        // 檢查金額欄位是否為空
+        if (!revenue || revenue.trim() === '') {
+            alert('請填寫銷貨收入！');
+            return;
+        }
+        if (!cost || cost.trim() === '') {
+            alert('請填寫銷貨成本！');
+            return;
+        }
+        if (!expense || expense.trim() === '') {
+            alert('請填寫營業費用金額！');
+            return;
+        }
+        if (!nonrevenue || nonrevenue.trim() === '') {
+            alert('請填寫非營業收入！');
+            return;
+        }
+        if (!noncost || noncost.trim() === '') {
+            alert('請填寫非營業支出成本！');
+            return;
+        }
+
+        // 當 isChecked 為 "Y" 時，檢查額外欄位是否為空
+        if (isChecked) {
+            if (!selectedOption || selectedOption.trim() === '') {
+                alert('請選擇申報方式！');
+                return;
+            }
+            if (!netincomepercent || netincomepercent.trim() === '') {
+                alert('請輸入淨利%！');
+                return;
+            }
+            if (!netincome || netincome.trim() === '') {
+                alert('請輸入申報淨利(B)！');
+                return;
+            }
+            if (!extracost || extracost.trim() === '') {
+                alert('請輸入建議補成本金額！');
+                return;
+            }
+            if (!extraexpense || extraexpense.trim() === '') {
+                alert('請輸入建議補費用金額！');
+                return;
+            }
+
         }
 
         // 計算比例給後端使用
@@ -220,6 +284,8 @@ const FormA = ({ user }) => {
             noncostPercent,
             incomePercent,
             isChecked: isChecked ? 'Y':'N', //是否勾選轉為Y或N
+            selectedOption,
+            netincomepercent,
             netincome,
             extracost,
             extraexpense,
@@ -334,7 +400,7 @@ const FormA = ({ user }) => {
                     </div><br />
 
                     <div>
-                        <label className="mainpage-label" style={{ display: 'flex', alignItems: 'center' , flexWrap: 'wrap'}}>
+                        <label style={{ display: 'flex', alignItems: 'center' , flexWrap: 'wrap'}}>
                             <input
                                 type="checkbox"
                                 checked={isChecked}
@@ -356,18 +422,33 @@ const FormA = ({ user }) => {
                         {isChecked ? (
                             <div>
                                 <div style={{ display: 'flex', alignItems: 'center' , flexWrap: 'wrap'}}>
-                                    <div className="mainpage-label">● 若年底結算申報採書審/所得額/查帳 淨利%申報淨利為(B)：&nbsp;</div>
+                                    <div style={{ display: 'flex', alignItems: 'center' , flexWrap: 'nowrap'}}>● 若年底結算申報採
+                                        <select className="option-select" onChange={handleSelectChange} value={selectedOption}>
+                                            <option value="">選擇申報方式</option>
+                                            <option value="書審">書審</option>
+                                            <option value="所得額">所得額</option>
+                                            <option value="查帳">查帳</option>
+                                        </select>
+                                        &nbsp;淨利
+                                        <input
+                                            type="text"
+                                            value={netincomepercent}
+                                            onChange={handleNetIncomePercentChange}
+                                            placeholder="輸入數字"
+                                            style={{width: '130px',height:'40px',textAlian:'left'}} />
+                                        %申報淨利為(B)：&nbsp;
+                                    </div>
                                     <NumberFormat onValueChange={setNetIncome} />。
                                 </div>
 
                                 <div style={{backgroundColor: '#EBC857',padding:'20px'}}>
                                     <div style={{ display: 'flex', justifyContent: 'center',alignItems: 'center' , flexWrap: 'wrap'}}>
-                                        <div className="mainpage-label" >綜上所述，尚缺憑證金額(A-B)：&nbsp;</div>
+                                        <div>綜上所述，尚缺憑證金額(A-B)：&nbsp;</div>
                                         <span style={{ borderBottom: '2px solid white',...getNumberStyle(VoucherNumber)}}>{formatNumber(VoucherNumber)}</span>
                                     </div>
 
                                     <div style={{ display: 'flex', justifyContent: 'center',alignItems: 'center' , flexWrap: 'wrap'}}>
-                                        <div className="mainpage-label">建議補成本 &nbsp;</div>
+                                        <div>建議補成本 &nbsp;</div>
                                         <NumberFormat onValueChange={setExtraCost} />元及費用 &nbsp;
                                         <NumberFormat onValueChange={setExtraExpense} />元。
                                     </div>
@@ -460,7 +541,7 @@ const FormA = ({ user }) => {
                             id="month1"
                             className="input-small"
                             value={month1}
-                            onChange={handleMonth1Change} /> 月憑證通知書，並以瞭解本公司目前帳務情況，
+                            onChange={handleMonth1Change} /> 月憑證通知書，並已瞭解本公司目前帳務情況，
                     </div><br/><br/>
                     <div style={{textAlign:'left'}}>簽收：＿＿＿＿＿＿＿＿＿＿＿＿（可撕下簽回聯或PDF電子簽章回傳事務所)</div>
                 </div><br />
