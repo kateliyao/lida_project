@@ -1,35 +1,9 @@
-CREATE TABLE dw.users_info (
-id int primary key,
-username varchar(20) not NULL,
-password varchar(50) not NULL,
-role varchar(20) not NULL,
-updated_time datetime DEFAULT NOW()
-)
-
-insert dw.users_info(id,username,password,role) values(1,'lda1','lidadmin1','admin');
-insert dw.users_info(id,username,password,role) values(2,'lda2','lidadmin2','admin');
-insert dw.users_info(id,username,password,role) values(3,'ld1','ld1','user');
-insert dw.users_info(id,username,password,role) values(4,'ld2','ld2','user');
-insert dw.users_info(id,username,password,role) values(5,'ld3','ld3','user');
-insert dw.users_info(id,username,password,role) values(6,'ld4','ld4','user');
-insert dw.users_info(id,username,password,role) values(7,'ld5','ld5','user');
-insert dw.users_info(id,username,password,role) values(8,'ld6','ld6','user');
-insert dw.users_info(id,username,password,role) values(9,'ld7','ld7','user');
-insert dw.users_info(id,username,password,role) values(10,'ld8','ld8','user');
-
-select * from dw.users_info
-
-
+drop table dw.company_info
 CREATE TABLE dw.company_info (
 company_id varchar(20) primary key,
 company_name varchar(50) not NULL,
 updated_time datetime DEFAULT NOW()
 )
-
-insert dw.company_info(company_id,company_name) values('liyao','澧曜數據')
-insert dw.company_info(company_id,company_name) values('lida','力達稅務記帳士事務所')
-
-select * from dw.company_info
 
 drop table dw.formA
 CREATE TABLE dw.formA (
@@ -54,6 +28,8 @@ CREATE TABLE dw.formA (
     noncost_percent DECIMAL(15, 2) not null,
     income_percent DECIMAL(15, 2) not null,
     ischecked VARCHAR(1) NULL,
+    selectedoption varchar(20) NULL,
+    netincome_percent DECIMAL(15, 2) NULL,
     netincome DECIMAL(15, 2) NULL,
     extracost DECIMAL(15, 2) NULL,
     extraexpense DECIMAL(15, 2) NULL,
@@ -69,22 +45,7 @@ CREATE TABLE dw.formA (
     updated_time datetime DEFAULT NOW()
 );
 
-select * from dw.formA
-truncate table dw.formA
-
-drop table dw.staff_info
-CREATE TABLE dw.staff_info (
-    staff_id int PRIMARY KEY,
-    staff_name varchar(20) not null,
-    staff_menu varchar(50) not null,
-    updated_time datetime DEFAULT NOW()
-);
-
-insert into dw.staff_info(staff_id,staff_name,staff_menu) values(101,'王小明','#101王先生');
-insert into dw.staff_info(staff_id,staff_name,staff_menu) values(102,'陳明月','#102陳小姐');
-
-select * from dw.staff_info
-
+drop table dw.pdf_merge_history
 CREATE TABLE dw.pdf_merge_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_name VARCHAR(255) NOT NULL,
@@ -93,7 +54,7 @@ CREATE TABLE dw.pdf_merge_history (
     updated_time datetime DEFAULT NOW()
 );
 
-
+drop table dw.users_info
 CREATE TABLE dw.users_info (
 id int primary key,
 username varchar(20) not NULL,
@@ -113,3 +74,11 @@ insert dw.users_info(id,username,password,role,staff_menu) values(7,'ld5','ld5',
 insert dw.users_info(id,username,password,role,staff_menu) values(8,'ld6','ld6','user','洪小姐#108');
 insert dw.users_info(id,username,password,role,staff_menu) values(9,'ld7','ld7','user','潘小姐#111');
 insert dw.users_info(id,username,password,role,staff_menu) values(10,'ld8','ld8','user','林小姐#168');
+
+
+drop table dw.recipient_account
+CREATE TABLE dw.recipient_account (
+    id INT AUTO_INCREMENT PRIMARY KEY,   -- 設置 id 為自動遞增
+    email VARCHAR(50) NOT NULL,          -- 郵件地址
+    updated_time DATETIME DEFAULT NOW()  -- 更新時間，默認為當前時間
+);
