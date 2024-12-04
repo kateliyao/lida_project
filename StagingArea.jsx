@@ -23,14 +23,16 @@ const StagingArea = ({ onLogout, user }) => {
     console.log("StagingArea 收到的 user:", user);  // 打印傳遞來的 user
     const [activeForm, setActiveForm] = useState(null);
     const [forms, setForms] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);  // 用来控制是否显示 "正在加載資料..."
+    const [isLoading, setIsLoading] = useState(false);  // 用來控制是否顯示 "正在加載資料..."
     const navigate = useNavigate();
-    const [selectedForms, setSelectedForms] = useState([]); // 存储已选中的表单ID
+    const [selectedForms, setSelectedForms] = useState([]); // 儲存已將選中的表單
     const [selectedFiles, setSelectedFiles] = useState([]);
-    const [uploadedFiles, setUploadedFiles] = useState([]);  // 用于存储已上传的文件名
-    const [isPreviewing, setIsPreviewing] = useState(false);  // 状态，判断是否在预览中，防止重复点击
+    const [uploadedFiles, setUploadedFiles] = useState([]);  // 儲存已上傳的文件名
+    const [isPreviewing, setIsPreviewing] = useState(false);  // 判斷是否在預覽中，防止重複點擊
     const [pdfInfo, setPdfInfo] = useState([]);  // 用來儲存 PDF 名稱和路徑的狀態
     const [recipient, setRecipient] = useState('');  // 儲存收件者
+    const [suggestions, setSuggestions] = useState([]);
+    const [isSuggestionSelected, setIsSuggestionSelected] = useState(false); // 新增的狀態
     const [mailContent, setMailContent] = useState('');  // 儲存收件者
     const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -318,6 +320,7 @@ const StagingArea = ({ onLogout, user }) => {
         }
 
         try {
+            // 發送郵件請求
             const response = await fetch(`${apiUrl}/api/sendEmail`, {
                 method: 'POST',
                 headers: {
@@ -331,7 +334,29 @@ const StagingArea = ({ onLogout, user }) => {
             });
 
             if (response.ok) {
+                //await  checkInsertEmail(recipient);   // 成功發送郵件後，檢查電子郵件是否存在資料庫中
+                // 成功發送郵件後，直接發送檢查電子郵件是否存在資料庫中的請求
+                const checkInsertResponse = await fetch(`${apiUrl}/api/checkInsert`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ recipient }),
+                });
+                console.log('checkInsert request body:', JSON.stringify({ recipient }));
+
+                if (checkInsertResponse.ok) {
+                    const data = await checkInsertResponse.json();
+                    console.log('checkInsert response data:', data);
+                    if (!data.exists) {
+                        console.log('新郵件地址已插入');
+                    }
+                } else {
+                    console.error('檢查郵件是否已存在時發生錯誤');
+                }
                 alert('郵件發送成功');
+                console.log(recipient)
+
                 setRecipient('');   // 清空收件者
                 setPdfInfo([]);     // 清空 PDF 資料
                 setMailContent(''); // 清空郵件內容
@@ -349,6 +374,45 @@ const StagingArea = ({ onLogout, user }) => {
             fetchForms();  // 在 activeForm 為 'STAGE' 時加載數據
         }
     }, [activeForm]);  // activeForm 變化時，觸發數據加載
+
+    const handleChange = (e) => {
+        setRecipient(e.target.value);  // 更新 recipient 狀態
+        setIsSuggestionSelected(false); // 用戶輸入時，設置為未選擇建議
+    };
+
+    useEffect(() => {
+        // 如果正在選擇建議，就不發送請求
+        if (isSuggestionSelected) {
+            return; // 如果是選擇了建議，就不會再發送請求
+            }
+            const timer = setTimeout(() => {
+            if (recipient && recipient.trim().length > 0) { // 確保輸入非空
+                const fetchSuggestions = async () => {
+                    try {
+                        const response = await fetch(`${apiUrl}/api/recipientSuggest?recipient=${recipient}`);
+                        if (!response.ok) {
+                        throw new Error('網路回應失敗');
+                        }
+                        const data = await response.json(); // 解析 JSON 資料
+                        setSuggestions(data); // 更新建議列表
+                    } catch (error) {
+                        console.error('發生錯誤: ', error);
+                    }
+                };
+                fetchSuggestions(); // 發送請求
+            } else {
+                setSuggestions([]); // 清空建議
+            }
+        }, 300); // 防抖動延遲
+        return () => clearTimeout(timer); // 清理防抖動計時器
+    }, [recipient, isSuggestionSelected]); // 監聽 recipient 和 isSuggestionSelected
+
+    // 點擊建議後更新 recipient 並清空建議框
+    const handleSuggestionClick = (email) => {
+        setRecipient(email); // 更新 recipient 值
+        setSuggestions([]);   // 清空建議框
+        setIsSuggestionSelected(true); // 標記為已選擇建議，避免發送請求
+    };
 
     return (
         <div className="mainpage">
@@ -684,14 +748,26 @@ const StagingArea = ({ onLogout, user }) => {
                             </div>
 
                             <div className="title">撰寫郵件</div>
-                            <div style={{marginRight: '30px'}}>
+                            <div style={{ position: 'relative',marginRight: '30px'}}>
                                 <input
                                 type="email"
                                 className="mailaccount"
                                 value={recipient}
-                                onChange={(e) => setRecipient(e.target.value)}
+                                onChange={handleChange}
                                 placeholder="請輸入收件者信箱"
                                 />
+                                {suggestions.length > 0 && (
+                                    <ul className="suggestion-list">
+                                        {suggestions.map((suggestion) => (
+                                            <li key={`${suggestion.id}`}
+                                                onClick={() => handleSuggestionClick(suggestion.email)} // 點擊後填充 recipient
+                                                className="suggestion-item"
+                                            >
+                                                {suggestion.email}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
 
                             <div style={{marginRight: '30px'}}>
@@ -714,7 +790,7 @@ const StagingArea = ({ onLogout, user }) => {
                                     fontSize: '24px',
                                     cursor: recipient && recipient.includes('@') && pdfInfo.length > 0 ? 'pointer' : 'not-allowed',
                                     backgroundColor: recipient && recipient.includes('@') && pdfInfo.length > 0 ? '#71777F' : '#e0e0e0', // 兩者都存在時為綠色，否則為灰色
-                                    color: '#fff',
+
                                 }}
                                 >
                                 發送郵件

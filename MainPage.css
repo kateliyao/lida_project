@@ -246,7 +246,6 @@ background-color: transparent; /* 移除背景顏色 */
   width: 100%;                    /* 讓輸入框寬度自適應 */
   border-radius: 10px;             /* 邊框圓角效果 */
   margin-bottom:30px;
-
 }
 @media (max-width: 1700px) {
   .mailaccount{
@@ -284,6 +283,28 @@ background-color: transparent; /* 移除背景顏色 */
     text-align: left;
     font-size: 35px;
   }
+}
+
+.suggestion-list {
+    position: absolute;
+    top: 100%;
+    left: 0; /* 確保左邊對齊 */
+    list-style-type: none;
+    background-color: #192F42;
+    border: 1px solid #fff;
+    width: calc(100% + 30px); /* 補償右邊的 30px margin */
+    z-index: 1;          /* 確保顯示在其他元素之上 */
+}
+
+.suggestion-item {
+    cursor: pointer;
+    color: white;
+    border-bottom: 1px solid #ddd; /* 添加每個 <li> 之間的分隔線 */
+}
+
+/* 最後一個項目去掉下邊框 */
+.suggestion-item:last-child {
+    border-bottom: none;
 }
 
 
