@@ -831,7 +831,7 @@ def recipient_suggest():
 
         cursor = get_db_connection()
         # 查詢用户的角色
-        suggest_query = "SELECT id, email FROM recipient_account WHERE email LIKE %s LIMIT 5"
+        suggest_query = "SELECT id, email FROM recipient_account WHERE email LIKE %s"
         cursor.execute(suggest_query, ('%' + recipient + '%',))
         results = cursor.fetchall()
 

@@ -294,6 +294,8 @@ background-color: transparent; /* 移除背景顏色 */
     border: 1px solid #fff;
     width: calc(100% + 30px); /* 補償右邊的 30px margin */
     z-index: 1;          /* 確保顯示在其他元素之上 */
+    max-height: 270px;    /* 限制最大高度 */
+    overflow-y: auto;     /* 當內容超過 max-height 時出現滾動條 */
 }
 
 .suggestion-item {
