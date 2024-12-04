@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify,send_from_directory
+from flask import Flask, request, jsonify, send_from_directory
 from flask_mysqldb import MySQL
 from flask_cors import CORS
 import os
@@ -12,8 +12,9 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 import logging
+import sys
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../react/build')
 # 設置一個密鑰來保護 session 資料
 app.secret_key = os.urandom(24)  # 或者設定固定的密鑰
 # CORS(app, origins=["http://localhost:5173"])
@@ -35,14 +36,21 @@ date_str = now.strftime("%Y%m%d")
 PDF_DIRECTORY = './pdfs/'
 # 確保 'pdfs' 目錄存在，若不存在則創建
 merged_pdf_folder = os.path.join(PDF_DIRECTORY, 'merge')  # 當前pdfs目錄下的 merge 資料夾
-#upload_pdf_folder = os.path.join(PDF_DIRECTORY, 'upload')  # 當前pdfs目錄下的 merge 資料夾
+# upload_pdf_folder = os.path.join(PDF_DIRECTORY, 'upload')  # 當前pdfs目錄下的 merge 資料夾
 upload_pdf_folder = PDF_DIRECTORY
 # 如果 目錄不存在，則創建它
 os.makedirs(merged_pdf_folder, exist_ok=True)
 os.makedirs(upload_pdf_folder, exist_ok=True)
 
 # 獲取當前程式所在目錄
-app_dir = os.path.dirname(os.path.abspath(__file__))
+# app_dir = os.path.dirname(os.path.abspath(__file__))
+# 根據是否在 PyInstaller 打包後運行來調整路徑
+if getattr(sys, 'frozen', False):
+    # 如果是打包後的應用程式，使用 sys._MEIPASS 來獲取臨時解壓目錄
+    app_dir = os.path.dirname(sys.executable)
+else:
+    # 如果是未打包的開發環境，使用當前腳本的絕對路徑
+    app_dir = os.path.dirname(os.path.abspath(__file__))
 
 # log資訊
 log_directory = "logs"
@@ -52,17 +60,23 @@ logging.basicConfig(
     level=logging.INFO,  # 設置日誌等級
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(f"logs/app.log",encoding="utf-8")  # 輸出成log檔
-        #logging.StreamHandler()  # 同時輸出到控制台
+        logging.FileHandler(f"logs/app.log", encoding="utf-8")  # 輸出成log檔
+        # logging.StreamHandler()  # 同時輸出到控制台
     ]
 )
+
+
+# 特別設定 'werkzeug' 的日誌等級為 ERROR，避免它輸出 INFO 和 WARNING 訊息
+# logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
 
 # MySQL連線
 def get_db_connection():
     """创建并返回数据库连接"""
     return mysql.connection.cursor()
 
-#登入驗證
+
+# 登入驗證
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -89,6 +103,7 @@ def login():
     finally:
         if cursor:
             cursor.close()
+
 
 # 獲取公司名稱
 @app.route('/api/getCompanyName', methods=['GET'])
@@ -118,6 +133,7 @@ def get_company_name():
                 cursor.close()
     else:
         return jsonify({'message': '公司編號不能為空'}), 400
+
 
 # 取得表單編號
 @app.route('/api/getSequence', methods=['GET'])
@@ -170,6 +186,7 @@ def get_sequence():
         if cursor:
             cursor.close()
 
+
 @app.route('/api/getStaffInfo', methods=['GET'])
 def get_staff_info():
     user = request.args.get('user')  # 獲取前端傳來的帳號資訊
@@ -214,6 +231,7 @@ def get_staff_info():
         if cursor:
             cursor.close()
 
+
 # 表單資料提交
 @app.route('/api/submitForm', methods=['POST'])
 def submit_form():
@@ -239,6 +257,8 @@ def submit_form():
     noncostPercent = data.get('noncostPercent')
     incomePercent = data.get('incomePercent')
     isChecked = data.get('isChecked')
+    selectedOption = data.get('selectedOption')
+    netincomepercent = data.get('netincomepercent')
     netincome = data.get('netincome')
     extracost = data.get('extracost')
     extraexpense = data.get('extraexpense')
@@ -261,16 +281,17 @@ def submit_form():
         query = """
             INSERT INTO formA(form_id,company_id,company_name,form_titleyear,form_titlemonth,revenue,cost
             ,expense,profit,nonrevenue,noncost,income,cost_percent,expense_percent,profit_percent
-            ,nonrevenue_percent,noncost_percent,income_percent,ischecked,netincome,extracost,extraexpense
-            ,note,staff,form_submityear,form_submitmonth,form_submitdate,user_name)
+            ,nonrevenue_percent,noncost_percent,income_percent,ischecked,selectedoption,netincome_percent
+            ,netincome,extracost,extraexpense,note,staff,form_submityear,form_submitmonth,form_submitdate,user_name)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s, %s)
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (formId,companyId,companyName,year1,month1,revenue,cost,expense,profit
-                               ,nonrevenue,noncost,income,costPercent,expensePercent,profitPercent
-                               ,nonrevenuePercent,noncostPercent,incomePercent,isChecked,netincome
-                               ,extracost,extraexpense,note,selectedStaff,year,month,date,user))
+        cursor.execute(query, (formId, companyId, companyName, year1, month1, revenue, cost, expense, profit,
+                               nonrevenue, noncost, income, costPercent, expensePercent, profitPercent,
+                               nonrevenuePercent, noncostPercent, incomePercent, isChecked, selectedOption,
+                               netincomepercent, netincome, extracost, extraexpense, note, selectedStaff,
+                               year, month, date, user))
 
         # 提交
         mysql.connection.commit()
@@ -302,23 +323,32 @@ def submit_form():
         formatted_extraexpense = f"({abs(extraexpense):,.0f})" if extraexpense < 0 else f"{extraexpense:,.0f}"
 
         # PDF格式化:比例只顯示小數點後兩位
-        costPercent=round(costPercent, 2)
-        expensePercent=round(expensePercent, 2)
-        profitPercent=round(profitPercent, 2)
-        nonrevenuePercent=round(nonrevenuePercent, 2)
-        noncostPercent=round(noncostPercent, 2)
-        incomePercent=round(incomePercent, 2)
+        costPercent = round(costPercent, 2)
+        expensePercent = round(expensePercent, 2)
+        profitPercent = round(profitPercent, 2)
+        nonrevenuePercent = round(nonrevenuePercent, 2)
+        noncostPercent = round(noncostPercent, 2)
+        incomePercent = round(incomePercent, 2)
 
         # 根據isChecked套用不同的HTML模板
         template_name = 'formA_template_checked.html' if isChecked == 'Y' else 'formA_template_unchecked.html'
-        html_content = render_template(template_name,app_dir=app_dir, formId=formId,companyName=companyName,year1=year1,month1=month1
-        ,revenue=revenue,formatted_revenue=formatted_revenue,cost=cost,formatted_cost=formatted_cost,expense=expense,formatted_expense=formatted_expense
-        ,profit=profit,formatted_profit=formatted_profit,nonrevenue=nonrevenue,formatted_nonrevenue=formatted_nonrevenue,noncost=noncost
-        ,formatted_noncost=formatted_noncost,income=income,formatted_income=formatted_income,costPercent=costPercent,expensePercent=expensePercent
-        ,profitPercent=profitPercent,nonrevenuePercent=nonrevenuePercent,noncostPercent=noncostPercent,incomePercent=incomePercent,netincome=netincome
-        ,formatted_netincome=formatted_netincome,voucherNumber=voucherNumber,formatted_voucherNumber=formatted_voucherNumber,extracost=extracost
-        ,formatted_extracost=formatted_extracost,extraexpense=extraexpense,formatted_extraexpense=formatted_extraexpense,note=note,selectedStaff=selectedStaff
-        ,year=year,month=month,date=date)
+        html_content = render_template(template_name, app_dir=app_dir, formId=formId, companyName=companyName,
+                                       year1=year1, month1=month1, revenue=revenue, formatted_revenue=formatted_revenue,
+                                       cost=cost, formatted_cost=formatted_cost, expense=expense,
+                                       formatted_expense=formatted_expense, profit=profit,
+                                       formatted_profit=formatted_profit, nonrevenue=nonrevenue,
+                                       formatted_nonrevenue=formatted_nonrevenue, noncost=noncost,
+                                       formatted_noncost=formatted_noncost, income=income,
+                                       formatted_income=formatted_income, costPercent=costPercent,
+                                       expensePercent=expensePercent, profitPercent=profitPercent,
+                                       nonrevenuePercent=nonrevenuePercent, noncostPercent=noncostPercent,
+                                       incomePercent=incomePercent, selectedOption = selectedOption,
+                                       netincomepercent = netincomepercent, netincome=netincome,
+                                       formatted_netincome=formatted_netincome, voucherNumber=voucherNumber,
+                                       formatted_voucherNumber=formatted_voucherNumber, extracost=extracost,
+                                       formatted_extracost=formatted_extracost, extraexpense=extraexpense,
+                                       formatted_extraexpense=formatted_extraexpense, note=note,
+                                       selectedStaff=selectedStaff, year=year, month=month, date=date)
 
         # 生成 PDF 文件名
         last_12_chars = formId[-12:]
@@ -332,9 +362,9 @@ def submit_form():
         pdf_path = os.path.join(pdf_folder, pdf_filename)
 
         options = {
-            'encoding': 'UTF-8', #可以解決中文亂碼問題
+            'encoding': 'UTF-8',  # 可以解決中文亂碼問題
             'no-outline': None,  # 禁用文檔輪廓
-            'quiet': None,         # 禁用日志
+            'quiet': None,  # 禁用日志
             'margin-top': '5mm',  # 可調整pdf邊界問題
             # 'margin-right': '0mm',
             # 'margin-bottom': '0mm',
@@ -355,7 +385,6 @@ def submit_form():
 
         # 返回 PDF 文件
         return send_file(pdf_path, as_attachment=True, download_name=pdf_filename, mimetype='application/pdf')
-
         return jsonify({'success': True, 'message': '表單資料提交成功'}), 201
 
     except Exception as e:
@@ -364,6 +393,7 @@ def submit_form():
     finally:
         if cursor:
             cursor.close()
+
 
 @app.route('/api/stagingArea', methods=['GET'])
 def staging_area():
@@ -388,7 +418,8 @@ def staging_area():
         if user_role[0] == 'admin':
             query = "SELECT form_id, pdf_name, form_status,user_name FROM formA WHERE form_status = 0"
         else:
-            query = "SELECT form_id, pdf_name, form_status,user_name FROM formA WHERE form_status = 0 AND user_name = %s"
+            query = ("SELECT form_id, pdf_name, form_status,user_name FROM formA WHERE form_status = 0 AND user_name = "
+                     "%s")
 
         cursor.execute(query, (user,) if user_role[0] != 'admin' else ())
         forms = cursor.fetchall()
@@ -413,6 +444,7 @@ def staging_area():
         if cursor:
             cursor.close()
 
+
 @app.route('/pdfs/<pdf_name>')
 def serve_pdf(pdf_name):
     pdf_folder = os.path.join(os.getcwd(), 'pdfs')
@@ -423,6 +455,7 @@ def serve_pdf(pdf_name):
     else:
         logging.warning(f"PDF file not found: {pdf_path}")
         return jsonify({'success': False, 'message': 'PDF 文件未找到'}), 404
+
 
 @app.route('/api/deleteForm', methods=['POST'])
 def delete_form():
@@ -446,7 +479,10 @@ def delete_form():
         return jsonify({'success': True, 'message': '表單刪除成功'}), 200
 
     except Exception as e:
-        logging.error(f"Error deleting form with form_id: {form_id}, error: {str(e)}")
+        if form_id:
+            logging.error(f"Error deleting form with form_id: {form_id}, error: {str(e)}")
+        else:
+            logging.error(f"Error deleting form, form_id is not provided, error: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
         if cursor:
@@ -454,9 +490,22 @@ def delete_form():
 
 
 # 配置靜態文件夾，讓 Flask 能處理 /pdfs/merge/ 下的請求，不設定這個的話，儘管網址對，pdf預覽會跳出404
+# @app.route('/pdfs/merge/<filename>')
+# def download_pdf(filename):
+#     return send_from_directory(merged_pdf_folder, filename)
+
 @app.route('/pdfs/merge/<filename>')
 def download_pdf(filename):
-    return send_from_directory(merged_pdf_folder, filename)
+    # 構造完整的檔案路徑
+    merged_pdf_folder = os.path.join(os.getcwd(), 'pdfs', 'merge')
+    pdf_path = os.path.join(merged_pdf_folder, filename)
+
+    if os.path.exists(pdf_path):
+        return send_from_directory(merged_pdf_folder, filename)
+    else:
+        logging.warning(f"PDF file not found: {pdf_path}")
+        return jsonify({'success': False, 'message': 'PDF 文件未找到'}), 404
+
 
 @app.route('/api/mergePdf', methods=['POST'])
 def merge_pdf():
@@ -496,11 +545,11 @@ def merge_pdf():
         # 如果存在合併檔案，提取最大的序號並追加1
         if result:
             last_merge_pdf_name = result[0]
-            print(f"Last merge PDF name: {last_merge_pdf_name}")
             try:
                 # 提取檔案名稱中的序號部分，例如 "_001", "_002" 等
                 sequence_number = int(
-                    last_merge_pdf_name.split('_')[-1].replace('.pdf', ''))  # 格式是 "{company_name}_合併檔案_{system_date}_001"
+                    last_merge_pdf_name.split('_')[-1].replace('.pdf',
+                                                               ''))  # 格式是 "{company_name}_合併檔案_{system_date}_001"
                 new_sequence = sequence_number + 1
             except ValueError:
                 # 如果解析序號出錯，序號從001開始
@@ -521,7 +570,6 @@ def merge_pdf():
                 logging.error(f"PDF file {pdf_name} does not exist at {pdf_path}")
                 return jsonify({"success": False, "message": f"文件 {pdf_name} 不存在"}), 400
 
-
         # 輸出合併後的文件
         merged_pdf = f'{company_name}_合併檔案_{system_date}_{new_sequence_str}.pdf'
         merged_pdf_path = os.path.join(merged_pdf_folder, merged_pdf)
@@ -538,7 +586,7 @@ def merge_pdf():
         cursor.connection.commit()
 
         # 回傳合併後的 PDF檔名
-        return jsonify({"success": True, "mergedPdf": merged_pdf,"mergedPdfUrl": merged_pdf_url})
+        return jsonify({"success": True, "mergedPdf": merged_pdf, "mergedPdfUrl": merged_pdf_url})
 
     except Exception as e:
         logging.error(f"Error during PDF merge process: {str(e)}")
@@ -549,6 +597,8 @@ def merge_pdf():
 
 
 app.config['upload_pdf_folder'] = upload_pdf_folder
+
+
 # 用於處理文件上傳的 API
 @app.route('/api/uploadPdf', methods=['POST'])
 def upload_pdf():
@@ -571,6 +621,7 @@ def upload_pdf():
             return jsonify({"success": False, "message": "Only PDF files are allowed"}), 400
 
     return jsonify({"success": True, "message": "Files uploaded successfully"}), 200
+
 
 @app.route('/api/updateMailPdfName', methods=['POST'])
 def update_mail_pdf_name():
@@ -599,7 +650,7 @@ def update_mail_pdf_name():
         mysql.connection.commit()
         logging.info(f"Successfully updated send_mail_pdf_name for {len(pdf_names)} PDF(s)")
         return jsonify({'success': True, 'message': '更新成功'}), 200
-        
+
     except Exception as e:
         logging.error(f"Error updating send_mail_pdf_name: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -608,10 +659,11 @@ def update_mail_pdf_name():
         if cursor:
             cursor.close()
 
+
 # 發送郵件的函數
-def send_email(file_path, recipient_email,mail_content,file_name_first_part):
-    sender_email = "kate1sync@gmail.com"  # 發送人郵件地址
-    sender_password = "nyprqzhhdvjtmcyl"  # 發送人應用密碼
+def send_email(file_path, recipient_email, mail_content, file_name_first_part):
+    sender_email = "lida7239718@gmail.com"  # 發送人郵件地址
+    sender_password = "tjzcodkjmftmvjeh"  # 發送人應用密碼
 
     try:
         # 設置郵件內容
@@ -638,12 +690,13 @@ def send_email(file_path, recipient_email,mail_content,file_name_first_part):
         logging.info(f"Email successfully sent to {recipient_email} with subject: {msg['Subject']}")
 
     except smtplib.SMTPException as e:
-            logging.error(f"SMTP error occurred: {e}")
-            raise
+        logging.error(f"SMTP error occurred: {e}")
+        raise
 
     except Exception as e:
         logging.error(f"An error occurred while sending the email: {e}")
         raise
+
 
 def update_form_status(file_name):
     cursor = None
@@ -656,7 +709,7 @@ def update_form_status(file_name):
 
         mysql.connection.commit()
         logging.info(f"Successfully updated form_status to 1 for file: {file_name}")
-    
+
     except Exception as e:
         logging.error(f"Error updating database: {e}")
         raise
@@ -664,6 +717,7 @@ def update_form_status(file_name):
     finally:
         if cursor:
             cursor.close()
+
 
 @app.route('/api/sendEmail', methods=['POST'])
 def send_email_request():
@@ -691,7 +745,7 @@ def send_email_request():
             file_path_name = rf'{file_path}/{file_name}'
             # 取出_分割後的第一個字段:公司名稱
             file_name_first_part = file_name.split('_')[0]
-            
+
             # 引用發送郵件函數
             try:
                 logging.info("Attempting to send email for file: %s", file_name)
@@ -717,6 +771,7 @@ def send_email_request():
         logging.error("Error processing email request: %s", e)
         return jsonify({"error": "郵件發送失敗"}), 500
 
+
 @app.route('/api/historyData', methods=['GET'])
 def history_data():
     cursor = None
@@ -739,7 +794,8 @@ def history_data():
         if user_role[0] == 'admin':
             query = "SELECT form_id, pdf_name, form_status,user_name FROM formA WHERE form_status = 1"
         else:
-            query = "SELECT form_id, pdf_name, form_status,user_name FROM formA WHERE form_status = 1 AND user_name = %s"
+            query = ("SELECT form_id, pdf_name, form_status,user_name FROM formA WHERE form_status = 1 AND user_name = "
+                     "%s")
 
         cursor.execute(query, (user,) if user_role[0] != 'admin' else ())
         forms = cursor.fetchall()
@@ -764,8 +820,77 @@ def history_data():
         if cursor:
             cursor.close()
 
+
+@app.route('/api/recipientSuggest', methods=['GET'])
+def recipient_suggest():
+    cursor = None
+    try:
+        recipient = request.args.get('recipient', '')
+        if not recipient:
+            return jsonify([])
+
+        cursor = get_db_connection()
+        # 查詢用户的角色
+        suggest_query = "SELECT id, email FROM recipient_account WHERE email LIKE %s LIMIT 5"
+        cursor.execute(suggest_query, ('%' + recipient + '%',))
+        results = cursor.fetchall()
+
+        # 將結果轉換為字典格式，以便前端能夠輕鬆處理
+        suggestions = [{'id': row[0], 'email': row[1]} for row in results]
+
+        logging.info(f"Found {len(suggestions)} results for recipient: {recipient}")
+        return jsonify(suggestions)
+
+    except Exception as e:
+        logging.error(f"Error while querying database: {e}")
+        return jsonify({"error": "An error occurred while processing your request"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+
+
+# 檢查郵件是否已經存在，並插入新郵件
+@app.route('/api/checkInsert', methods=['POST'])
+def check_insert_email():
+    cursor = None
+    try:
+        data = request.get_json()  # 解析 JSON 請求
+        email = data.get('recipient')  # .strip() # 移除郵件地址兩端的空格
+
+        if not email:
+            return jsonify({"error": "Email is required"}), 400
+
+        cursor = get_db_connection()
+
+        # 查詢郵件是否已經存在
+        cursor.execute("SELECT COUNT(*) AS count FROM recipient_account WHERE email = %s", (email,))
+        result = cursor.fetchone()
+
+        if result[0] > 0:
+            # 如果郵件已存在，返回 exists: true
+            return jsonify({"exists": True})
+        else:
+            # 如果郵件不存在，插入新郵件
+            cursor.execute("INSERT INTO recipient_account (email) VALUES (%s)", (email,))
+            cursor.connection.commit()  # 提交事務
+            return jsonify({"exists": False})
+
+    except Exception as e:
+        logging.error(f"Error while processing request: {e}")
+        return jsonify({"error": "An error occurred while processing your request"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+
+
+# 提供 React 靜態文件
+@app.route('/')
+def index():
+    return send_from_directory(os.path.join(app.static_folder), 'index.html')
+
+
 if __name__ == '__main__':
     logging.info("Starting the application")
     # app.run(debug=True)設置會讓 Flask 應用進入調試模式，有助於開發過程中的即時反饋。開發階段時，通常會啟用 debug 模式，部署到生產環境，應該禁用 debug 模式。
     # app.run(debug=False)
-    app.run(host='192.168.20.65', port=5000,debug=True)
+    app.run(host='192.168.20.65', port=5000, debug=False)
