@@ -61,7 +61,7 @@ const FormA = ({ user }) => {
     const [netincome, setNetIncome] = useState(0);
     const [extracost, setExtraCost] = useState(0);
     const [extraexpense, setExtraExpense] = useState(0);
-    const [netincomepercent, setNetIncomePercent] = useState('');
+    const [netincomepercent, setNetIncomePercent] = useState(null);
 
     const handleRevenueChange = (newValue) => {
         setRevenue(newValue);
@@ -87,10 +87,13 @@ const FormA = ({ user }) => {
 
     // 處理淨利百分比輸入，僅允許數字
     const handleNetIncomePercentChange = (e) => {
-        const value = e.target.value;
-        // 檢查輸入的值是否為數字或空字符（可以允許清空輸入框）
-        if (/^\d*\.?\d*$/.test(value)) {
-            setNetIncomePercent(value);
+        // 檢查是否選中
+        if (isChecked) {
+            const value = e.target.value;
+            // 檢查輸入的值是否為數字或空字符（可以允許清空輸入框）
+            if (/^\d*\.?\d*$/.test(value)) {
+                setNetIncomePercent(value);
+            }
         }
     };
 
