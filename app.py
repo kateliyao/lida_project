@@ -13,6 +13,13 @@ from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 import logging
 import sys
+import matplotlib
+matplotlib.use('Agg')  # 設置Matplotlib使用Agg後端，這樣不會開啟GUI
+import matplotlib.pyplot as plt
+from matplotlib import font_manager
+from matplotlib.ticker import MaxNLocator
+import io
+import base64
 
 app = Flask(__name__, static_folder='../react/build')
 # 設置一個密鑰來保護 session 資料
@@ -65,6 +72,14 @@ logging.basicConfig(
     ]
 )
 
+# 設定使用 Windows 內建的 msjh.ttc 字體
+font_path = 'C:\\Windows\\Fonts\\msjh.ttc'  # 字體文件路徑
+font_prop = font_manager.FontProperties(fname=font_path)
+
+# 設置全局默認字體
+plt.rcParams['font.family'] = font_prop.get_name()
+# 取得當前月份
+current_month = datetime.now().strftime("%m")  # 以數字格式獲取月份，結果會是 '12'
 
 # 特別設定 'werkzeug' 的日誌等級為 ERROR，避免它輸出 INFO 和 WARNING 訊息
 # logging.getLogger('werkzeug').setLevel(logging.ERROR)
@@ -470,7 +485,11 @@ def delete_form():
         cursor = get_db_connection()
 
         # 更新表單狀態=2 (已删除)
-        update_query = "UPDATE formA SET form_status = 2 WHERE form_id = %s"
+        update_query = """
+                    UPDATE formA 
+                    SET form_status = 2, updated_time = NOW() 
+                    WHERE form_id = %s
+                """
         cursor.execute(update_query, (form_id,))
 
         mysql.connection.commit()
@@ -704,7 +723,11 @@ def update_form_status(file_name):
         cursor = get_db_connection()
 
         # 信件成功寄出後，根據pdf_name更新form_status
-        update_query = "UPDATE formA SET form_status = 1 WHERE send_mail_pdf_name = %s"
+        update_query = """
+                            UPDATE formA 
+                            SET form_status = 1, updated_time = NOW() 
+                            WHERE send_mail_pdf_name = %s
+                        """
         cursor.execute(update_query, (file_name,))
 
         mysql.connection.commit()
@@ -889,8 +912,184 @@ def index():
     return send_from_directory(os.path.join(app.static_folder), 'index.html')
 
 
+@app.route('/api/getChart', methods=['GET'])
+def get_chart():
+    cursor = None
+    try:
+        cursor = get_db_connection()
+
+        # 當日服務人員數量查詢
+        cursor.execute("""
+                    SELECT user_name, COUNT(*) AS count 
+                    FROM formA 
+                    WHERE DATE(updated_time) = CURDATE() 
+                    AND form_status = 1 
+                    GROUP BY user_name
+        """)
+        result_today = cursor.fetchall()
+
+        print(f"Fetched {len(result_today)} rows from database.")
+        if not result_today:
+            print("No data found in the database.")
+
+        # 當年當月服務人員數量查詢
+        cursor.execute("""
+                SELECT user_name, COUNT(*) AS count 
+                FROM formA 
+                WHERE YEAR(updated_time) = YEAR(CURDATE()) 
+                AND MONTH(updated_time) = MONTH(CURDATE())
+                AND DATE(updated_time) < CURDATE()  -- 排除今天的資料
+                AND form_status = 1 
+                GROUP BY user_name
+        """)
+        result_month = cursor.fetchall()
+
+        print(f"Fetched {len(result_month)} rows for this month from database.")
+        if not result_month:
+            print("No data found for this month.")
+
+        # 生成空白圖表函數
+        def generate_empty_chart():
+            fig, ax = plt.subplots(figsize=(8, 6))
+            ax.set_facecolor('white')  # 設定背景為白色
+            ax.text(0.5, 0.5, '尚未有圖表數據', horizontalalignment='center', verticalalignment='center',
+                    fontsize=36, color='grey')
+            ax.axis('off')  # 不顯示軸
+            img = io.BytesIO()
+            plt.savefig(img, format='png')
+            img.seek(0)
+            return base64.b64encode(img.getvalue()).decode('utf-8')
+
+        # 2. 準備數據進行圖表繪製
+        # 如果沒有資料，則使用空的數據列表
+        users_today_sorted, counts_today_sorted = [], []
+        users_month_sorted, counts_month_sorted = [], []
+
+        if result_today:
+            users_today = [row[0] for row in result_today]
+            counts_today = [row[1] for row in result_today]
+
+            # 依據 user_name 進行排序
+            sorted_today = sorted(zip(users_today, counts_today), key=lambda x: x[0])
+            users_today_sorted, counts_today_sorted = zip(*sorted_today)
+
+        if result_month:
+            users_month = [row[0] for row in result_month]
+            counts_month = [row[1] for row in result_month]
+
+            # 依據 user_name 進行排序
+            sorted_month = sorted(zip(users_month, counts_month), key=lambda x: x[0])
+            users_month_sorted, counts_month_sorted = zip(*sorted_month)
+
+        # 3. 使用 Matplotlib 繪製圖表
+        # 當日長條圖
+        plt.figure(figsize=(8, 6))
+        if users_today_sorted:
+            plt.bar(users_today_sorted, counts_today_sorted, color='#E2D2D2')
+        # plt.xlabel('User')
+        # plt.ylabel('次數', fontproperties=font_prop)
+        # plt.title('當日服務人員成功寄信數量', fontproperties=font_prop, fontsize=20)
+        plt.xticks(rotation=45, fontsize=16) # 設定 X 軸刻度字體大小為 12，並且旋轉 45 度
+        plt.yticks(fontsize=16)  # Y 軸刻度字體大小
+
+        # 設定 y 軸顯示為整數刻度
+        plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+        img_today_base64 = generate_empty_chart() if not users_today_sorted else plt_to_base64()
+        # plt.close()
+
+        # 當年當月長條圖
+        plt.figure(figsize=(8, 6))
+        if users_month_sorted:
+            plt.bar(users_month_sorted, counts_month_sorted, color='#A2B59F')
+        # plt.xlabel('User')
+        # plt.ylabel('Count')
+        # plt.title(f'{current_month}月服務人員成功寄信數量', fontproperties=font_prop, fontsize=20)
+        plt.xticks(rotation=45, fontsize=16)
+        plt.yticks(fontsize=16)
+        plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+        img_month_base64 = generate_empty_chart() if not users_month_sorted else plt_to_base64()
+        # plt.close()
+
+        n = 10
+        colors = ['#E9E1D4', '#F5DDAD', '#F1BCAE', '#C9DECF', '#CFDD8E','#FEF5D4','#C7D6DB','#A3B6C5','#EACACB','#D5E1DF']
+
+        # 如果顏色數量少於區塊數量，重複顏色
+        if len(colors) <= n:
+            colors = colors * (n // len(colors)) + colors[:n % len(colors)]
+
+
+
+        # 當日圓餅圖
+        fig, ax = plt.subplots(figsize=(8, 6))  # 設定畫布大小
+
+        if counts_today_sorted:
+            # 畫圓餅圖 - 每個員工的數量佔總數的百分比
+            total_count = sum(counts_today_sorted)  # 當日總數
+            percentages_today = [count / total_count * 100 for count in counts_today_sorted]  # 計算每個員工的百分比
+
+            # 設置圓餅圖大小，調整 pctdistance 和 radius
+            ax.pie(percentages_today,
+                   labels=users_today_sorted,
+                   autopct='%1.1f%%',
+                   startangle=90,
+                   colors=colors,
+                   pctdistance=0.75,  # 這個參數控制百分比數字的距離，數字越小，圓餅圖會越大
+                   radius=1.2,  # 這個參數控制圓餅圖的半徑，數字越大，圓餅圖越大
+                   textprops={'fontsize': 16})
+
+        # 設定圓餅圖的標題
+        # plt.title('當日服務人員成功寄信數量占比', fontproperties=font_prop, fontsize=20)
+        img_pie_today_base64 = generate_empty_chart() if not counts_today_sorted else plt_to_base64()
+
+        # plt.close()
+
+
+
+        # 當年當月圓餅圖
+        fig, ax = plt.subplots(figsize=(8, 6))
+        if counts_month_sorted:
+            # 畫圓餅圖 - 同年同月每個員工數量佔總數的百分比
+            total_count_month = sum(counts_month_sorted)  # 同年同月的總數
+            percentages_month = [count / total_count_month * 100 for count in counts_month_sorted]  # 計算每個員工的百分比
+            # plt.pie(percentages_month, labels=users_month_sorted, autopct='%1.1f%%', startangle=90, colors=colors)
+            ax.pie(percentages_month,
+                   labels=users_month_sorted,
+                   autopct='%1.1f%%',
+                   startangle=90,
+                   colors=colors,       # colors=plt.cm.Paired.colors
+                   pctdistance=0.75,  # 這個參數控制百分比數字的距離，數字越小，圓餅圖會越大
+                   radius=1.2,  # 這個參數控制圓餅圖的半徑，數字越大，圓餅圖越大
+                   textprops={'fontsize': 16})
+        # plt.title('同年同月服務人員成功寄信數量占比', fontproperties=font_prop, fontsize=20)
+        # 保存當年當月圓餅圖
+        img_pie_month_base64 = generate_empty_chart() if not counts_month_sorted else plt_to_base64()
+        # plt.close()
+
+        # 4. 回傳四個圖表的 base64 編碼
+        return jsonify({
+            'chart_today': img_today_base64,
+            'chart_month': img_month_base64,
+            'chart_pie_today': img_pie_today_base64,  # 返回圓餅圖的Base64編碼
+            'chart_pie_month': img_pie_month_base64  # 返回圓餅圖的Base64編碼
+        })
+
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+# 將 plt 圖表轉換為 base64 編碼
+def plt_to_base64():
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    return base64.b64encode(img.getvalue()).decode('utf-8')
+
 if __name__ == '__main__':
     logging.info("Starting the application")
     # app.run(debug=True)設置會讓 Flask 應用進入調試模式，有助於開發過程中的即時反饋。開發階段時，通常會啟用 debug 模式，部署到生產環境，應該禁用 debug 模式。
     # app.run(debug=False)
-    app.run(host='192.168.20.65', port=5000, debug=False)
+    app.run(host='192.168.20.65', port=5000, debug=True)
