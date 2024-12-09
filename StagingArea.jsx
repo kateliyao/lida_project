@@ -14,9 +14,12 @@ import UploadIcon from './assets/upload_icon.png';
 import CancelIcon from './assets/cancel_icon.png';
 import TickWhite from './assets/tick_white.png';
 import TickYellow from './assets/tick_yellow.png';
+import ChartWhiteIcon from './assets/chart_white_icon.png';
+import ChartBlueIcon from './assets/chart_blue_icon.png';
 import AccountButton from './AccountButton';
 import FormA from './FormA';
 import HistoryForm from './HistoryForm';
+import ChartComponent from './ChartComponent';
 import './MainPage.css';
 
 const StagingArea = ({ onLogout, user }) => {
@@ -58,7 +61,6 @@ const StagingArea = ({ onLogout, user }) => {
     console.log('登出被觸發'); // 這裡可以確認是否進入此函數
     window.location.href = '/'; // 強制導航到 Login 頁面
     };
-
 
     //獲取表單資料
     const fetchForms = async () => {
@@ -414,6 +416,9 @@ const StagingArea = ({ onLogout, user }) => {
         setIsSuggestionSelected(true); // 標記為已選擇建議，避免發送請求
     };
 
+    // 檢查用戶是否有權限查看 "統計圖表" 項目
+    const canViewChart = user && user.startsWith('lda');
+
     return (
         <div className="mainpage">
             <div className="top">
@@ -462,6 +467,16 @@ const StagingArea = ({ onLogout, user }) => {
                             <img src={HistoryWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
                             歷史資料
                         </li>
+                        {/* 只有 user.startsWith('lda') 的使用者才能看到統計圖表選項 */}
+                        {canViewChart && (
+                            <li
+                                onClick={() => handleFormClick('CHART')}
+                                onMouseEnter={(e) => e.target.firstChild.src = ChartBlueIcon}
+                                onMouseLeave={(e) => e.target.firstChild.src = ChartWhiteIcon} >
+                                <img src={ChartWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
+                                統計圖表
+                            </li>
+                        )}
                     </ul>
                 </nav>
 
@@ -469,6 +484,7 @@ const StagingArea = ({ onLogout, user }) => {
                 <div className="form-area">
                     {activeForm === 'A' && <FormA user={user} />}
                     {activeForm === 'HISTORY' && <HistoryForm user={user}/>}
+                    {activeForm === 'CHART' && <ChartComponent user={user}/>}
                     {activeForm === 'STAGE' && (
                         //確保整個內容不會壓到邊線
                         <div style={{marginLeft: '30px',marginRight: '30px'}}>

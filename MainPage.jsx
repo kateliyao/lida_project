@@ -10,10 +10,12 @@ import QuotationBlueIcon from './assets/quotation_blue_icon.png';
 import HistoryWhiteIcon from './assets/history_white_icon.png';
 import HistoryBlueIcon from './assets/history_blue_icon.png';
 import StagingAreaIcon from './assets/stagingArea_icon.png';
+import ChartWhiteIcon from './assets/chart_white_icon.png';
+import ChartBlueIcon from './assets/chart_blue_icon.png';
 import AccountButton from './AccountButton';
 import FormA from './FormA';
 import HistoryForm from './HistoryForm';
-//import StagingArea from './StagingArea';
+import ChartComponent from './ChartComponent';
 import './MainPage.css';
 
 const MainPage = ({ onLogout,user }) => {
@@ -32,6 +34,9 @@ const MainPage = ({ onLogout,user }) => {
         //navigate('/'); // 導航回 Login 頁面
         window.location.href = '/'; // 強制導航到 Login 頁面
     };
+
+    // 檢查用戶是否有權限查看 "統計圖表" 項目
+    const canViewChart = user && user.startsWith('lda');
 
     return (
     <div className="mainpage">
@@ -83,6 +88,17 @@ const MainPage = ({ onLogout,user }) => {
                         <img src={HistoryWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
                         歷史資料
                     </li>
+
+                    {/* 只有 user.startsWith('lda') 的使用者才能看到統計圖表選項 */}
+                    {canViewChart && (
+                        <li
+                            onClick={() => handleFormClick('CHART')}
+                            onMouseEnter={(e) => e.target.firstChild.src = ChartBlueIcon}
+                            onMouseLeave={(e) => e.target.firstChild.src = ChartWhiteIcon} >
+                            <img src={ChartWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
+                            統計圖表
+                        </li>
+                    )}
                 </ul>
             </div>
             </nav>
@@ -90,6 +106,7 @@ const MainPage = ({ onLogout,user }) => {
             <div className="form-area">
                 {activeForm === 'A' && <FormA user={user}/>}
                 {activeForm === 'HISTORY' && <HistoryForm user={user}/>}
+                {activeForm === 'CHART' && <ChartComponent user={user}/>}
             </div>
         </div>
     </div>
