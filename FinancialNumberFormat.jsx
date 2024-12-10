@@ -55,6 +55,7 @@ const FinancialNumberFormat = ({onValueChange}) => {
                     width: '230px',
                     height: '40px'
                 }}
+                inputMode="decimal" // 引導輸入為數字或小數點
             />
         </div>
     );
