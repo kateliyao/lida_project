@@ -985,7 +985,12 @@ def get_chart():
         # 當日長條圖
         plt.figure(figsize=(8, 6))
         if users_today_sorted:
-            plt.bar(users_today_sorted, counts_today_sorted, color='#E2D2D2')
+            bars = plt.bar(users_today_sorted, counts_today_sorted, color='#E2D2D2')
+            # 為每個條形加上資料標籤
+            for bar in bars:
+                yval = bar.get_height()  # 獲取每個條形的高度，也就是數量
+                plt.text(bar.get_x() + bar.get_width() / 2, yval, str(int(yval)),
+                         ha='center', va='bottom', fontsize=16)  # 在條形上方顯示數量
         # plt.xlabel('User')
         # plt.ylabel('次數', fontproperties=font_prop)
         # plt.title('當日服務人員成功寄信數量', fontproperties=font_prop, fontsize=20)
@@ -1000,7 +1005,12 @@ def get_chart():
         # 當年當月長條圖
         plt.figure(figsize=(8, 6))
         if users_month_sorted:
-            plt.bar(users_month_sorted, counts_month_sorted, color='#A2B59F')
+            bars = plt.bar(users_month_sorted, counts_month_sorted, color='#A2B59F')
+            # 為每個條形加上資料標籤
+            for bar in bars:
+                yval = bar.get_height()  # 獲取每個條形的高度，也就是數量
+                plt.text(bar.get_x() + bar.get_width() / 2, yval, str(int(yval)),
+                         ha='center', va='bottom', fontsize=16)  # 在條形上方顯示數量
         # plt.xlabel('User')
         # plt.ylabel('Count')
         # plt.title(f'{current_month}月服務人員成功寄信數量', fontproperties=font_prop, fontsize=20)
@@ -1011,56 +1021,83 @@ def get_chart():
         # plt.close()
 
         n = 10
-        colors = ['#E9E1D4', '#F5DDAD', '#F1BCAE', '#C9DECF', '#CFDD8E','#FEF5D4','#C7D6DB','#A3B6C5','#EACACB','#D5E1DF']
+        colors = ['#E9E1D4', '#F5DDAD', '#F1BCAE', '#C9DECF', '#CFDD8E','#FEF5D4','#C9CBE0','#A3B6C5','#EACACB','#D5E1DF']
 
-        # 如果顏色數量少於區塊數量，重複顏色
-        if len(colors) <= n:
-            colors = colors * (n // len(colors)) + colors[:n % len(colors)]
+        # C7D6DB
+        # 用戶顏色對應字典，根據 user 數量為每個 user 配置顏色
+        def create_user_color_mapping(users, colors):
+            color_map = {}
+            num_colors = len(colors)
 
+            # 遍歷所有 user 並為其分配顏色
+            for idx, user in enumerate(users):
+                color_map[user] = colors[idx % num_colors]
 
+            return color_map
+
+        # # 假設有兩組用戶數據，今天和這個月的用戶
+        # users_today_sorted = ['user1', 'user2', 'user3', 'user4', 'user5']
+        # counts_today_sorted = [100, 200, 150, 50, 100]
+        #
+        # users_month_sorted = ['user1', 'user2', 'user3', 'user6', 'user5']
+        # counts_month_sorted = [120, 180, 130, 60, 110]
+
+        # 為當日和當月的用戶分配顏色
+        # all_users = list(set(users_today_sorted + users_month_sorted))  # 確保包含所有唯一的用戶
+        all_users = ['ld1', 'ld2', 'ld3', 'ld4', 'ld5', 'ld6', 'ld7', 'ld8', 'lda1', 'lda2']
+        user_color_mapping = create_user_color_mapping(all_users, colors)
 
         # 當日圓餅圖
         fig, ax = plt.subplots(figsize=(8, 6))  # 設定畫布大小
-
         if counts_today_sorted:
-            # 畫圓餅圖 - 每個員工的數量佔總數的百分比
             total_count = sum(counts_today_sorted)  # 當日總數
-            percentages_today = [count / total_count * 100 for count in counts_today_sorted]  # 計算每個員工的百分比
+            percentages_today = [count / total_count * 100 for count in counts_today_sorted]
 
-            # 設置圓餅圖大小，調整 pctdistance 和 radius
-            ax.pie(percentages_today,
+            # 按數量排序圓餅圖的數據，從大到小
+            sorted_today = sorted(zip(counts_today_sorted, users_today_sorted, percentages_today),
+                                  key=lambda x: (x[2], -ord(x[1][2])))  # 先按比例排序，比例相同時按帳號排序
+            counts_today_sorted, users_today_sorted, percentages_today_sorted = zip(*sorted_today)
+
+            # 根據 user 顏色映射來獲取顏色
+            colors_today = [user_color_mapping[user] for user in users_today_sorted]
+
+            # 畫圓餅圖
+            ax.pie(percentages_today_sorted,
                    labels=users_today_sorted,
                    autopct='%1.1f%%',
-                   startangle=90,
-                   colors=colors,
-                   pctdistance=0.75,  # 這個參數控制百分比數字的距離，數字越小，圓餅圖會越大
-                   radius=1.2,  # 這個參數控制圓餅圖的半徑，數字越大，圓餅圖越大
+                   startangle=90,  # 圓餅圖從上方開始
+                   colors=colors_today,
+                   pctdistance=0.75,
+                   radius=1.2,
                    textprops={'fontsize': 16})
 
         # 設定圓餅圖的標題
-        # plt.title('當日服務人員成功寄信數量占比', fontproperties=font_prop, fontsize=20)
         img_pie_today_base64 = generate_empty_chart() if not counts_today_sorted else plt_to_base64()
-
-        # plt.close()
-
-
 
         # 當年當月圓餅圖
         fig, ax = plt.subplots(figsize=(8, 6))
         if counts_month_sorted:
             # 畫圓餅圖 - 同年同月每個員工數量佔總數的百分比
             total_count_month = sum(counts_month_sorted)  # 同年同月的總數
-            percentages_month = [count / total_count_month * 100 for count in counts_month_sorted]  # 計算每個員工的百分比
-            # plt.pie(percentages_month, labels=users_month_sorted, autopct='%1.1f%%', startangle=90, colors=colors)
-            ax.pie(percentages_month,
+            percentages_month = [count / total_count_month * 100 for count in counts_month_sorted]
+
+            # 按數量排序圓餅圖的數據，從大到小
+            sorted_month = sorted(zip(counts_month_sorted, users_month_sorted, percentages_month),
+                                  key=lambda x: (x[2], -ord(x[1][2])))  # 先按比例排序，比例相同時按帳號排序
+            counts_month_sorted, users_month_sorted, percentages_month_sorted = zip(*sorted_month)
+
+            # 根據 user 顏色映射來獲取顏色
+            colors_month = [user_color_mapping[user] for user in users_month_sorted]
+
+            ax.pie(percentages_month_sorted,
                    labels=users_month_sorted,
                    autopct='%1.1f%%',
                    startangle=90,
-                   colors=colors,       # colors=plt.cm.Paired.colors
-                   pctdistance=0.75,  # 這個參數控制百分比數字的距離，數字越小，圓餅圖會越大
+                   colors=colors_month,  # 顏色對應
+                   pctdistance=0.85,  # 這個參數控制百分比數字的距離，數字越小，圓餅圖會越大
                    radius=1.2,  # 這個參數控制圓餅圖的半徑，數字越大，圓餅圖越大
-                   textprops={'fontsize': 16})
-        # plt.title('同年同月服務人員成功寄信數量占比', fontproperties=font_prop, fontsize=20)
+                   textprops={'fontsize': 14})
+
         # 保存當年當月圓餅圖
         img_pie_month_base64 = generate_empty_chart() if not counts_month_sorted else plt_to_base64()
         # plt.close()
@@ -1092,4 +1129,4 @@ if __name__ == '__main__':
     logging.info("Starting the application")
     # app.run(debug=True)設置會讓 Flask 應用進入調試模式，有助於開發過程中的即時反饋。開發階段時，通常會啟用 debug 模式，部署到生產環境，應該禁用 debug 模式。
     # app.run(debug=False)
-    app.run(host='192.168.20.65', port=5000, debug=True)
+    app.run(host='192.168.20.65', port=5000, debug=False)
