@@ -62,7 +62,7 @@ const NumberFormat = ({ onValueChange }) => {
                 onBlur={handleInputBlur}
                 placeholder="輸入數字"
                 style={{ width:'230px',height: '40px',...getNumberStyle(inputValue),}}
-
+                inputMode="decimal" // 引導輸入為數字或小數點
             />
         </div>
     );

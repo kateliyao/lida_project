@@ -438,7 +438,9 @@ const FormA = ({ user }) => {
                                             value={netincomepercent}
                                             onChange={handleNetIncomePercentChange}
                                             placeholder="輸入數字"
-                                            style={{width: '130px',height:'40px',textAlian:'left'}} />
+                                            style={{width: '130px',height:'40px',textAlian:'left'}}
+                                            inputMode="decimal" // 引導輸入為數字或小數點
+                                            />
                                         %申報淨利為(B)：&nbsp;
                                     </div>
                                     <NumberFormat onValueChange={setNetIncome} />。
