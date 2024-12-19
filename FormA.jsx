@@ -207,7 +207,7 @@ const FormA = ({ user }) => {
         }
 
         // 檢查服務人員是否已選擇
-        if (selectedStaff === null || selectedStaff === '選擇負責人員') {
+        if (selectedStaff === null || selectedStaff === '選擇負責人員' || selectedStaff === '') {
             alert('請選擇負責人員！');
             return; // 阻止表單提交
         }
