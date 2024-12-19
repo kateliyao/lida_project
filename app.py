@@ -1,25 +1,25 @@
-from flask import Flask, request, jsonify, send_from_directory
-from flask_mysqldb import MySQL
-from flask_cors import CORS
+import logging
+import sys
+import io
+import base64
+import urllib.parse
 import os
-import pdfkit
-from flask import send_file
-from flask import Flask, render_template
 from datetime import datetime
-from PyPDF2 import PdfMerger
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
-import logging
-import sys
+# 第三方庫導入
 import matplotlib
-matplotlib.use('Agg')  # 設置Matplotlib使用Agg後端，這樣不會開啟GUI
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 from matplotlib.ticker import MaxNLocator
-import io
-import base64
+from flask import Flask, request, jsonify, send_from_directory, send_file, render_template
+from flask_mysqldb import MySQL
+from flask_cors import CORS
+import pdfkit
+from PyPDF2 import PdfMerger
+matplotlib.use('Agg')  # 設置Matplotlib使用Agg後端，這樣不會開啟GUI
 
 app = Flask(__name__, static_folder='../react/build')
 # 設置一個密鑰來保護 session 資料
@@ -357,8 +357,8 @@ def submit_form():
                                        formatted_income=formatted_income, costPercent=costPercent,
                                        expensePercent=expensePercent, profitPercent=profitPercent,
                                        nonrevenuePercent=nonrevenuePercent, noncostPercent=noncostPercent,
-                                       incomePercent=incomePercent, selectedOption = selectedOption,
-                                       netincomepercent = netincomepercent, netincome=netincome,
+                                       incomePercent=incomePercent, selectedOption=selectedOption,
+                                       netincomepercent=netincomepercent, netincome=netincome,
                                        formatted_netincome=formatted_netincome, voucherNumber=voucherNumber,
                                        formatted_voucherNumber=formatted_voucherNumber, extracost=extracost,
                                        formatted_extracost=formatted_extracost, extraexpense=extraexpense,
@@ -369,12 +369,19 @@ def submit_form():
         last_12_chars = formId[-12:]
         pdf_filename = f"{companyName}_憑證統計表_{last_12_chars}.pdf"
 
+        # encoded_pdf_filename = urllib.parse.quote(pdf_filename)
+        # 如果文件名包含 "啓勝美術社" 或 "慶峯榮金屬企業社" 或 "一块田創意工作室" 才進行 URL 編碼，否則保持原文件名
+        if any(keyword in pdf_filename for keyword in ["啓勝美術社", "慶峯榮金屬企業社", "一块田創意工作室"]):
+            encoded_pdf_filename = urllib.parse.quote(pdf_filename)
+        else:
+            encoded_pdf_filename = pdf_filename
+
         # 確保 'pdfs' 目錄存在，若不存在則創建
         pdf_folder = os.path.join(os.getcwd(), 'pdfs')  # 當前目錄下的 pdfs 資料夾
         os.makedirs(pdf_folder, exist_ok=True)  # 如果資料夾不存在則創建
 
         # 使用 pdfkit 生成 PDF
-        pdf_path = os.path.join(pdf_folder, pdf_filename)
+        pdf_path = os.path.join(pdf_folder, encoded_pdf_filename)
 
         options = {
             'encoding': 'UTF-8',  # 可以解決中文亂碼問題
@@ -388,6 +395,26 @@ def submit_form():
         # 將 HTML 文件轉換為 PDF
         pdfkit.from_string(html_content, pdf_path, options=options)
 
+        rename_rules = {
+            "%E6%86%91%E8%AD%89%E7%B5%B1%E8%A8%88%E8%A1%A8": "憑證統計表",
+            "%E5%95%93%E5%8B%9D%E7%BE%8E%E8%A1%93%E7%A4%BE": "啓勝美術社",
+            "%E6%85%B6%E5%B3%AF%E6%A6%AE%E9%87%91%E5%B1%AC%E4%BC%81%E6%A5%AD%E7%A4%BE": "慶峯榮金屬企業社",
+            "%E4%B8%80%E5%9D%97%E7%94%B0%E5%89%B5%E6%84%8F%E5%B7%A5%E4%BD%9C%E5%AE%A4": "一块田創意工作室",
+        }
+        # 檢查文件名是否需要更改
+        new_filename = encoded_pdf_filename
+        for old_str, new_str in rename_rules.items():
+            if old_str in new_filename:
+                new_filename = new_filename.replace(old_str, new_str)
+
+        # 如果文件名有變化，則進行重新命名
+        if new_filename != encoded_pdf_filename:
+            old_filepath = os.path.join(pdf_folder, encoded_pdf_filename)
+            new_filepath = os.path.join(pdf_folder, new_filename)
+
+            # 執行重新命名
+            os.rename(old_filepath, new_filepath)
+
         # 更新資料庫中的pdf_name欄位
         update_query = """
                     UPDATE formA
@@ -399,8 +426,9 @@ def submit_form():
         logging.info(f"PDF generated successfully for formId: {formId}. PDF path: {pdf_path}")
 
         # 返回 PDF 文件
-        return send_file(pdf_path, as_attachment=True, download_name=pdf_filename, mimetype='application/pdf')
-        return jsonify({'success': True, 'message': '表單資料提交成功'}), 201
+        new_filepath = os.path.join(pdf_folder, new_filename)
+        return send_file(new_filepath, as_attachment=True, download_name=new_filename, mimetype='application/pdf')
+        # return jsonify({'success': True, 'message': '表單資料提交成功'}), 201
 
     except Exception as e:
         logging.error(f"Error while processing formId: {formId} - {str(e)}")
@@ -475,6 +503,7 @@ def serve_pdf(pdf_name):
 @app.route('/api/deleteForm', methods=['POST'])
 def delete_form():
     cursor = None
+    form_id = None
     try:
         data = request.get_json()
         form_id = data.get('formId')
@@ -798,8 +827,11 @@ def send_email_request():
 @app.route('/api/historyData', methods=['GET'])
 def history_data():
     cursor = None
+    user = None
     try:
         user = request.args.get('user')  # 獲取前端傳遞來的帳戶資訊
+        if not user:  # 如果 user 没有传递，返回错误信息
+            return jsonify({'success': False, 'message': 'User parameter is required'}), 400
 
         cursor = get_db_connection()
 
@@ -928,9 +960,9 @@ def get_chart():
         """)
         result_today = cursor.fetchall()
 
-        print(f"Fetched {len(result_today)} rows from database.")
+        logging.info(f"Fetched {len(result_today)} rows from database.")
         if not result_today:
-            print("No data found in the database.")
+            logging.info("No data found in the database.")
 
         # 當年當月服務人員數量查詢
         cursor.execute("""
@@ -944,9 +976,9 @@ def get_chart():
         """)
         result_month = cursor.fetchall()
 
-        print(f"Fetched {len(result_month)} rows for this month from database.")
+        logging.info(f"Fetched {len(result_month)} rows for this month from database.")
         if not result_month:
-            print("No data found for this month.")
+            logging.info("No data found for this month.")
 
         # 生成空白圖表函數
         def generate_empty_chart():
@@ -994,7 +1026,7 @@ def get_chart():
         # plt.xlabel('User')
         # plt.ylabel('次數', fontproperties=font_prop)
         # plt.title('當日服務人員成功寄信數量', fontproperties=font_prop, fontsize=20)
-        plt.xticks(rotation=45, fontsize=16) # 設定 X 軸刻度字體大小為 12，並且旋轉 45 度
+        plt.xticks(rotation=45, fontsize=16)  # 設定 X 軸刻度字體大小為 12，並且旋轉 45 度
         plt.yticks(fontsize=16)  # Y 軸刻度字體大小
 
         # 設定 y 軸顯示為整數刻度
@@ -1021,7 +1053,8 @@ def get_chart():
         # plt.close()
 
         n = 10
-        colors = ['#E9E1D4', '#F5DDAD', '#F1BCAE', '#C9DECF', '#CFDD8E','#FEF5D4','#C9CBE0','#A3B6C5','#EACACB','#D5E1DF']
+        colors = ['#E9E1D4', '#F5DDAD', '#F1BCAE', '#C9DECF', '#CFDD8E', '#FEF5D4',
+                  '#C9CBE0', '#A3B6C5', '#EACACB', '#D5E1DF']
 
         # C7D6DB
         # 用戶顏色對應字典，根據 user 數量為每個 user 配置顏色
@@ -1034,13 +1067,6 @@ def get_chart():
                 color_map[user] = colors[idx % num_colors]
 
             return color_map
-
-        # # 假設有兩組用戶數據，今天和這個月的用戶
-        # users_today_sorted = ['user1', 'user2', 'user3', 'user4', 'user5']
-        # counts_today_sorted = [100, 200, 150, 50, 100]
-        #
-        # users_month_sorted = ['user1', 'user2', 'user3', 'user6', 'user5']
-        # counts_month_sorted = [120, 180, 130, 60, 110]
 
         # 為當日和當月的用戶分配顏色
         # all_users = list(set(users_today_sorted + users_month_sorted))  # 確保包含所有唯一的用戶
@@ -1111,12 +1137,13 @@ def get_chart():
         })
 
     except Exception as e:
-        print(f"Error occurred: {e}")
+        logging.error(f"Error occurred: {e}")
         return jsonify({"error": str(e)}), 500
 
     finally:
         if cursor:
             cursor.close()
+
 
 # 將 plt 圖表轉換為 base64 編碼
 def plt_to_base64():
@@ -1124,6 +1151,7 @@ def plt_to_base64():
     plt.savefig(img, format='png')
     img.seek(0)
     return base64.b64encode(img.getvalue()).decode('utf-8')
+
 
 if __name__ == '__main__':
     logging.info("Starting the application")
