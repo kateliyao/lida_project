@@ -609,117 +609,121 @@ const StagingArea = ({ onLogout, user }) => {
                                         </button>
                                     </div>
 
-                                    {/* 顯示欲上傳的文件列表 */}
-                                    <ul style={{
-                                        width: '50%',  // 右側區塊佔50%
-                                        padding: '20px',
-                                        margin: 0,
-                                        listStyleType: 'none',  // 去除預設的列表樣式
-                                        overflowY: 'auto',  // 若文件過多，可以滾動
-                                        backgroundColor: '#455664',  // 灰色背景色
-                                        position: 'relative',  // 使子元素按钮可以相對定位
-                                        display: 'flex',  // 使用 flexbox 布局
-                                        flexDirection: 'column',  // 按列排列子元素
-                                        justifyContent: selectedFiles.length === 0 && uploadedFiles.length === 0 ? 'center' : 'flex-start', // 如果没有文件，居中
-                                        alignItems: 'center',  // 横向居中
-                                    }}>
+                                    <div style={{ width: '70%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                        {/* 顯示欲上傳的文件列表 */}
+                                        <ul style={{
+                                            flex: '1',
+                                            padding: '20px',
+                                            margin: 0,
+                                            listStyleType: 'none',  // 去除預設的列表樣式
+                                            overflowY: 'auto',  // 若文件過多，可以滾動
+                                            backgroundColor: '#455664',  // 灰色背景色
+                                            position: 'relative',  // 使子元素按钮可以相對定位
+                                            display: 'flex',  // 使用 flexbox 布局
+                                            flexDirection: 'column',  // 按列排列子元素
+                                            justifyContent: selectedFiles.length === 0 && uploadedFiles.length === 0 ? 'center' : 'flex-start', // 如果没有文件，居中
+                                            alignItems: 'center',  // 横向居中
+                                            height: '270px',
+                                        }}>
 
-                                    {/* 如果有上傳成功的文件，則顯示已上傳的文件列表 */}
-                                    {uploadedFiles.length > 0 ? (
-                                        <>
-                                        {uploadedFiles.map((fileName, index) => (
-                                            <li key={index} style={{ padding: '5px 0', borderBottom: '1px solid white', textAlign: 'left' }}>
-                                            <img src={TickYellow} alt="tickyellow" style={{ width: '25px', marginRight: '10px' }} />
-                                            <span>{fileName}</span>
+                                        {/* 如果有上傳成功的文件，則顯示已上傳的文件列表 */}
+                                        {uploadedFiles.length > 0 ? (
+                                            <>
+                                            {uploadedFiles.map((fileName, index) => (
+                                                <li key={index} style={{ padding: '5px 0', borderBottom: '1px solid white', textAlign: 'left' }}>
+                                                <img src={TickYellow} alt="tickyellow" style={{ width: '25px', marginRight: '10px' }} />
+                                                <span>{fileName}</span>
+                                                </li>
+                                            ))}
+                                            </>
+                                        ) : (
+                                            // 否則，顯示待上傳的列表
+                                            <>
+                                            {selectedFiles.length > 0 ? (
+                                                selectedFiles.map((file, index) => (
+                                                    <li key={index} style={{ display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        padding: '5px 0',
+                                                        borderBottom: '1px solid white',
+                                                        textAlign: 'left',}}>
+                                                    <span>{file.name}</span>
+                                                    {/* 叉叉按钮，用於刪除選錯的外部文件 */}
+                                                    <button
+                                                    onClick={() => handleFileDelete(index)}
+                                                    style={{
+                                                        background: 'transparent',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        color: 'red',
+                                                        fontSize: '18px',
+                                                        fontWeight: 'bold',
+                                                    }}
+                                                    >
+                                                    <img src={CancelIcon} alt="Cancel" style={{width: '30px',height: 'auto'}} />
+                                                    </button>
+                                                    </li>
+                                                ))
+                                            ) : (
+                                            <li style={{
+                                                display: 'flex',
+                                                justifyContent: 'center', // 居中显示
+                                                alignItems: 'center',
+                                                textAlign: 'center',
+                                                flex: '1', // 确保这一项占据父容器剩余空间
+                                            }}>
+                                                <img src={CancelIcon} alt="Cancel" style={{width: '40px',height: 'auto',padding: '10px'}} />
+                                                無文件上傳
                                             </li>
-                                        ))}
-                                        </>
-                                    ) : (
-                                        // 否則，顯示待上傳的列表
-                                        <>
-                                        {selectedFiles.length > 0 ? (
-                                            selectedFiles.map((file, index) => (
-                                                <li key={index} style={{ display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    alignItems: 'center',
-                                                    padding: '5px 0',
-                                                    borderBottom: '1px solid white',
-                                                    textAlign: 'left',}}>
-                                                <span>{file.name}</span>
-                                                {/* 叉叉按钮，用於刪除選錯的外部文件 */}
+                                            )
+                                            }
+                                            </>
+                                        )}
+                                        </ul>
+                                        <div style={{
+                                            height: '80px',
+                                            display: 'flex',
+                                            justifyContent: 'flex-end',
+                                            alignItems: 'center',
+                                            backgroundColor: '#455664',
+                                            paddingRight: '20px'
+                                        }}>
+
+                                            {/* 根據狀態同位置，顯示不同按鈕 */}
+                                            {uploadedFiles.length > 0 ? (
                                                 <button
-                                                onClick={() => handleFileDelete(index)}
+                                                onClick={handleClear}
                                                 style={{
-                                                    background: 'transparent',
-                                                    border: 'none',
+                                                    padding: '10px 40px',
+                                                    borderRadius: '20px',
+                                                    fontSize: '24px',
+                                                    backgroundColor: 'transparent',
+                                                    color: '#fff',
                                                     cursor: 'pointer',
-                                                    color: 'red',
-                                                    fontSize: '18px',
-                                                    fontWeight: 'bold',
+                                                    border: '2px solid #ddd',  // 邊框樣式
                                                 }}
                                                 >
-                                                <img src={CancelIcon} alt="Cancel" style={{width: '30px',height: 'auto'}} />
+                                                清空
                                                 </button>
-                                                </li>
-                                            ))
-                                        ) : (
-                                        <li style={{
-                                            display: 'flex',
-                                            justifyContent: 'center', // 居中显示
-                                            alignItems: 'center',
-                                            textAlign: 'center',
-                                            flex: '1', // 确保这一项占据父容器剩余空间
-                                        }}>
-                                            <img src={CancelIcon} alt="Cancel" style={{width: '40px',height: 'auto',padding: '10px'}} />
-                                            無文件上傳
-                                        </li>
-                                        )
-                                        }
-                                        </>
-                                    )}
-
-                                    <div style={{
-                                        position: 'absolute',
-                                        bottom: '20px',
-                                        right: '20px',
-                                        width: 'auto',
-                                        textAlign: 'right',
-                                    }}>
-                                    {/* 根據狀態同位置，顯示不同按鈕 */}
-                                    {uploadedFiles.length > 0 ? (
-                                        <button
-                                        onClick={handleClear}
-                                        style={{
-                                            padding: '10px 40px',
-                                            borderRadius: '20px',
-                                            fontSize: '24px',
-                                            backgroundColor: 'transparent',
-                                            color: '#fff',
-                                            cursor: 'pointer',
-                                            border: '2px solid #ddd',  // 邊框樣式
-                                        }}
-                                        >
-                                        清空
-                                        </button>
-                                    ) : (
-                                        <button
-                                        onClick={handleConfirmUpload}
-                                        disabled={selectedFiles.length === 0}
-                                        style={{
-                                            padding: '10px 40px',
-                                            borderRadius: '20px',
-                                            fontSize: '24px',
-                                            cursor: selectedFiles.length > 0 ? 'pointer' : 'not-allowed',
-                                            backgroundColor: selectedFiles.length > 0 ? 'transparent' : '#e0e0e0',
-                                            color: '#fff',
-                                            border: '2px solid #ddd',  // 邊框樣式
-                                        }}
-                                        >
-                                        上傳
-                                        </button>
-                                    )}
+                                            ) : (
+                                                <button
+                                                onClick={handleConfirmUpload}
+                                                disabled={selectedFiles.length === 0}
+                                                style={{
+                                                    padding: '10px 40px',
+                                                    borderRadius: '20px',
+                                                    fontSize: '24px',
+                                                    cursor: selectedFiles.length > 0 ? 'pointer' : 'not-allowed',
+                                                    backgroundColor: selectedFiles.length > 0 ? 'transparent' : '#e0e0e0',
+                                                    color: '#fff',
+                                                    border: '2px solid #ddd',  // 邊框樣式
+                                                }}
+                                                >
+                                                上傳
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                    </ul>
                                 </div>
                             </div>
 
