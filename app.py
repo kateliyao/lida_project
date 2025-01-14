@@ -247,6 +247,154 @@ def get_staff_info():
             cursor.close()
 
 
+def generate_pdf(app_dir,formId):
+    cursor = None
+    try:
+        cursor = get_db_connection()
+        query = """SELECT company_name,form_titleyear,form_titlemonth,revenue,cost,expense,profit,nonrevenue,noncost,
+                        income,cost_percent,expense_percent,profit_percent,nonrevenue_percent,
+                        noncost_percent,income_percent,ischecked,selectedoption,netincome_percent,netincome,extracost,
+                        extraexpense,note,staff,form_submityear,form_submitmonth,form_submitdate,user_name
+                    FROM formA 
+                    WHERE form_id = %s
+                """
+        cursor.execute(query, (formId,))
+        result = cursor.fetchone()  # 獲取查詢結果
+
+        if result:
+            companyName = result[0]
+            year1 = result[1]
+            month1 = result[2]
+            revenue = result[3]
+            cost = result[4]
+            expense = result[5]
+            profit = result[6]
+            nonrevenue = result[7]
+            noncost = result[8]
+            income = result[9]
+            costPercent = result[10]
+            expensePercent = result[11]
+            profitPercent = result[12]
+            nonrevenuePercent = result[13]
+            noncostPercent = result[14]
+            incomePercent = result[15]
+            isChecked = result[16]
+            selectedOption = result[17]
+            netincomepercent = result[18]
+            netincome = result[19]
+            extracost = result[20]
+            extraexpense = result[21]
+            note = result[22]
+            selectedStaff = result[23]
+            year = result[24]
+            month = result[25]
+            date = result[26]
+
+        # PDF格式化:千分位、負數紅字
+        revenue = float(revenue)
+        cost = float(cost)
+        expense = float(expense)
+        profit = float(profit)
+        nonrevenue = float(nonrevenue)
+        noncost = float(noncost)
+        income = float(income)
+        netincome = float(netincome)
+        voucherNumber = income - netincome
+        extracost = float(extracost)
+        extraexpense = float(extraexpense)
+
+        formatted_revenue = f"({abs(revenue):,.0f})" if revenue < 0 else f"{revenue:,.0f}"
+        formatted_cost = f"({abs(cost):,.0f})" if cost < 0 else f"{cost:,.0f}"
+        formatted_expense = f"({abs(expense):,.0f})" if expense < 0 else f"{expense:,.0f}"
+        formatted_profit = f"({abs(profit):,.0f})" if profit < 0 else f"{profit:,.0f}"
+        formatted_nonrevenue = f"({abs(nonrevenue):,.0f})" if nonrevenue < 0 else f"{nonrevenue:,.0f}"
+        formatted_noncost = f"({abs(noncost):,.0f})" if noncost < 0 else f"{noncost:,.0f}"
+        formatted_income = f"({abs(income):,.0f})" if income < 0 else f"{income:,.0f}"
+        formatted_netincome = f"({abs(netincome):,.0f})" if netincome < 0 else f"{netincome:,.0f}"
+        formatted_voucherNumber = f"({abs(voucherNumber):,.0f})" if voucherNumber < 0 else f"{voucherNumber:,.0f}"
+        formatted_extracost = f"({abs(extracost):,.0f})" if extracost < 0 else f"{extracost:,.0f}"
+        formatted_extraexpense = f"({abs(extraexpense):,.0f})" if extraexpense < 0 else f"{extraexpense:,.0f}"
+
+        # 根據isChecked套用不同的HTML模板
+        template_name = 'formA_template_checked.html' if isChecked == 'Y' else 'formA_template_unchecked.html'
+        html_content = render_template(template_name, app_dir=app_dir, formId=formId, companyName=companyName,
+                                       year1=year1, month1=month1, revenue=revenue, formatted_revenue=formatted_revenue,
+                                       cost=cost, formatted_cost=formatted_cost, expense=expense,
+                                       formatted_expense=formatted_expense, profit=profit,
+                                       formatted_profit=formatted_profit, nonrevenue=nonrevenue,
+                                       formatted_nonrevenue=formatted_nonrevenue, noncost=noncost,
+                                       formatted_noncost=formatted_noncost, income=income,
+                                       formatted_income=formatted_income, costPercent=costPercent,
+                                       expensePercent=expensePercent, profitPercent=profitPercent,
+                                       nonrevenuePercent=nonrevenuePercent, noncostPercent=noncostPercent,
+                                       incomePercent=incomePercent, selectedOption=selectedOption,
+                                       netincomepercent=netincomepercent, netincome=netincome,
+                                       formatted_netincome=formatted_netincome, voucherNumber=voucherNumber,
+                                       formatted_voucherNumber=formatted_voucherNumber, extracost=extracost,
+                                       formatted_extracost=formatted_extracost, extraexpense=extraexpense,
+                                       formatted_extraexpense=formatted_extraexpense, note=note,
+                                       selectedStaff=selectedStaff, year=year, month=month, date=date)
+
+        # 生成 PDF 文件名
+        last_12_chars = formId[-12:]
+        pdf_filename = f"{companyName}_憑證統計表_{last_12_chars}.pdf"
+
+        # URL編碼處理
+        if any(keyword in pdf_filename for keyword in ["啓勝美術社", "慶峯榮金屬企業社", "一块田創意工作室"]):
+            encoded_pdf_filename = urllib.parse.quote(pdf_filename)
+        else:
+            encoded_pdf_filename = pdf_filename
+
+        # 確保 'pdfs' 目錄存在
+        pdf_folder = os.path.join(os.getcwd(), 'pdfs')
+        os.makedirs(pdf_folder, exist_ok=True)
+
+        # 使用 pdfkit 生成 PDF
+        pdf_path = os.path.join(pdf_folder, encoded_pdf_filename)
+        options = {
+            'encoding': 'UTF-8',  # 可以解決中文亂碼問題
+            'no-outline': None,  # 禁用文檔輪廓
+            'quiet': None,  # 禁用日志
+            'margin-top': '5mm',  # 可調整pdf邊界問題
+            # 'margin-right': '0mm',
+            # 'margin-bottom': '0mm',
+            # 'margin-left': '0mm',
+        }
+        pdfkit.from_string(html_content, pdf_path, options=options)
+
+        rename_rules = {
+            "%E6%86%91%E8%AD%89%E7%B5%B1%E8%A8%88%E8%A1%A8": "憑證統計表",
+            "%E5%95%93%E5%8B%9D%E7%BE%8E%E8%A1%93%E7%A4%BE": "啓勝美術社",
+            "%E6%85%B6%E5%B3%AF%E6%A6%AE%E9%87%91%E5%B1%AC%E4%BC%81%E6%A5%AD%E7%A4%BE": "慶峯榮金屬企業社",
+            "%E4%B8%80%E5%9D%97%E7%94%B0%E5%89%B5%E6%84%8F%E5%B7%A5%E4%BD%9C%E5%AE%A4": "一块田創意工作室",
+        }
+
+        # 檢查文件名是否需要更改
+        new_filename = encoded_pdf_filename
+        for old_str, new_str in rename_rules.items():
+            if old_str in new_filename:
+                new_filename = new_filename.replace(old_str, new_str)
+
+        # 如果文件已經存在，先刪除它(限定是需要rename的，一般的會直接蓋過去)
+        new_filepath = os.path.join(pdf_folder, new_filename)
+        if any(keyword in pdf_filename for keyword in ["啓勝美術社", "慶峯榮金屬企業社", "一块田創意工作室"]):
+            if os.path.exists(new_filepath):
+                os.remove(new_filepath)
+
+        if new_filename != encoded_pdf_filename:
+            old_filepath = os.path.join(pdf_folder, encoded_pdf_filename)
+            new_filepath = os.path.join(pdf_folder, new_filename)
+            os.rename(old_filepath, new_filepath)
+
+        return new_filename, os.path.join(pdf_folder, new_filename), pdf_path
+    except Exception as e:
+        print(f"Error generating PDF: {str(e)}")
+        return None, None, None
+
+    finally:
+        if cursor:
+            cursor.close()
+
 # 表單資料提交
 @app.route('/api/submitForm', methods=['POST'])
 def submit_form():
@@ -312,108 +460,7 @@ def submit_form():
         mysql.connection.commit()
         logging.info(f"Form data for formId: {formId} successfully inserted into the database.")
 
-        # PDF格式化:千分位、負數紅字
-        revenue = float(revenue)
-        cost = float(cost)
-        expense = float(expense)
-        profit = float(profit)
-        nonrevenue = float(nonrevenue)
-        noncost = float(noncost)
-        income = float(income)
-        netincome = float(netincome)
-        voucherNumber = income - netincome
-        extracost = float(extracost)
-        extraexpense = float(extraexpense)
-
-        formatted_revenue = f"({abs(revenue):,.0f})" if revenue < 0 else f"{revenue:,.0f}"
-        formatted_cost = f"({abs(cost):,.0f})" if cost < 0 else f"{cost:,.0f}"
-        formatted_expense = f"({abs(expense):,.0f})" if expense < 0 else f"{expense:,.0f}"
-        formatted_profit = f"({abs(profit):,.0f})" if profit < 0 else f"{profit:,.0f}"
-        formatted_nonrevenue = f"({abs(nonrevenue):,.0f})" if nonrevenue < 0 else f"{nonrevenue:,.0f}"
-        formatted_noncost = f"({abs(noncost):,.0f})" if noncost < 0 else f"{noncost:,.0f}"
-        formatted_income = f"({abs(income):,.0f})" if income < 0 else f"{income:,.0f}"
-        formatted_netincome = f"({abs(netincome):,.0f})" if netincome < 0 else f"{netincome:,.0f}"
-        formatted_voucherNumber = f"({abs(voucherNumber):,.0f})" if voucherNumber < 0 else f"{voucherNumber:,.0f}"
-        formatted_extracost = f"({abs(extracost):,.0f})" if extracost < 0 else f"{extracost:,.0f}"
-        formatted_extraexpense = f"({abs(extraexpense):,.0f})" if extraexpense < 0 else f"{extraexpense:,.0f}"
-
-        # PDF格式化:比例只顯示小數點後兩位
-        costPercent = round(costPercent, 2)
-        expensePercent = round(expensePercent, 2)
-        profitPercent = round(profitPercent, 2)
-        nonrevenuePercent = round(nonrevenuePercent, 2)
-        noncostPercent = round(noncostPercent, 2)
-        incomePercent = round(incomePercent, 2)
-
-        # 根據isChecked套用不同的HTML模板
-        template_name = 'formA_template_checked.html' if isChecked == 'Y' else 'formA_template_unchecked.html'
-        html_content = render_template(template_name, app_dir=app_dir, formId=formId, companyName=companyName,
-                                       year1=year1, month1=month1, revenue=revenue, formatted_revenue=formatted_revenue,
-                                       cost=cost, formatted_cost=formatted_cost, expense=expense,
-                                       formatted_expense=formatted_expense, profit=profit,
-                                       formatted_profit=formatted_profit, nonrevenue=nonrevenue,
-                                       formatted_nonrevenue=formatted_nonrevenue, noncost=noncost,
-                                       formatted_noncost=formatted_noncost, income=income,
-                                       formatted_income=formatted_income, costPercent=costPercent,
-                                       expensePercent=expensePercent, profitPercent=profitPercent,
-                                       nonrevenuePercent=nonrevenuePercent, noncostPercent=noncostPercent,
-                                       incomePercent=incomePercent, selectedOption=selectedOption,
-                                       netincomepercent=netincomepercent, netincome=netincome,
-                                       formatted_netincome=formatted_netincome, voucherNumber=voucherNumber,
-                                       formatted_voucherNumber=formatted_voucherNumber, extracost=extracost,
-                                       formatted_extracost=formatted_extracost, extraexpense=extraexpense,
-                                       formatted_extraexpense=formatted_extraexpense, note=note,
-                                       selectedStaff=selectedStaff, year=year, month=month, date=date)
-
-        # 生成 PDF 文件名
-        last_12_chars = formId[-12:]
-        pdf_filename = f"{companyName}_憑證統計表_{last_12_chars}.pdf"
-
-        # encoded_pdf_filename = urllib.parse.quote(pdf_filename)
-        # 如果文件名包含 "啓勝美術社" 或 "慶峯榮金屬企業社" 或 "一块田創意工作室" 才進行 URL 編碼，否則保持原文件名
-        if any(keyword in pdf_filename for keyword in ["啓勝美術社", "慶峯榮金屬企業社", "一块田創意工作室"]):
-            encoded_pdf_filename = urllib.parse.quote(pdf_filename)
-        else:
-            encoded_pdf_filename = pdf_filename
-
-        # 確保 'pdfs' 目錄存在，若不存在則創建
-        pdf_folder = os.path.join(os.getcwd(), 'pdfs')  # 當前目錄下的 pdfs 資料夾
-        os.makedirs(pdf_folder, exist_ok=True)  # 如果資料夾不存在則創建
-
-        # 使用 pdfkit 生成 PDF
-        pdf_path = os.path.join(pdf_folder, encoded_pdf_filename)
-
-        options = {
-            'encoding': 'UTF-8',  # 可以解決中文亂碼問題
-            'no-outline': None,  # 禁用文檔輪廓
-            'quiet': None,  # 禁用日志
-            'margin-top': '5mm',  # 可調整pdf邊界問題
-            # 'margin-right': '0mm',
-            # 'margin-bottom': '0mm',
-            # 'margin-left': '0mm',
-        }
-        # 將 HTML 文件轉換為 PDF
-        pdfkit.from_string(html_content, pdf_path, options=options)
-
-        rename_rules = {
-            "%E6%86%91%E8%AD%89%E7%B5%B1%E8%A8%88%E8%A1%A8": "憑證統計表",
-            "%E5%95%93%E5%8B%9D%E7%BE%8E%E8%A1%93%E7%A4%BE": "啓勝美術社",
-            "%E6%85%B6%E5%B3%AF%E6%A6%AE%E9%87%91%E5%B1%AC%E4%BC%81%E6%A5%AD%E7%A4%BE": "慶峯榮金屬企業社",
-            "%E4%B8%80%E5%9D%97%E7%94%B0%E5%89%B5%E6%84%8F%E5%B7%A5%E4%BD%9C%E5%AE%A4": "一块田創意工作室",
-        }
-        # 檢查文件名是否需要更改
-        new_filename = encoded_pdf_filename
-        for old_str, new_str in rename_rules.items():
-            if old_str in new_filename:
-                new_filename = new_filename.replace(old_str, new_str)
-
-        # 如果文件名有變化，則進行重新命名
-        if new_filename != encoded_pdf_filename:
-            old_filepath = os.path.join(pdf_folder, encoded_pdf_filename)
-            new_filepath = os.path.join(pdf_folder, new_filename)
-
-            # 執行重新命名
-            os.rename(old_filepath, new_filepath)
+        pdf_filename, pdf_filepath, pdf_path = generate_pdf(app_dir,formId)
 
         # 更新資料庫中的pdf_name欄位
         update_query = """
@@ -426,8 +473,8 @@ def submit_form():
         logging.info(f"PDF generated successfully for formId: {formId}. PDF path: {pdf_path}")
 
         # 返回 PDF 文件
-        new_filepath = os.path.join(pdf_folder, new_filename)
-        return send_file(new_filepath, as_attachment=True, download_name=new_filename, mimetype='application/pdf')
+        # new_filepath = os.path.join(pdf_folder, new_filename)
+        return send_file(pdf_filepath, as_attachment=True, download_name=pdf_filename, mimetype='application/pdf')
         # return jsonify({'success': True, 'message': '表單資料提交成功'}), 201
 
     except Exception as e:
@@ -1152,6 +1199,80 @@ def plt_to_base64():
     img.seek(0)
     return base64.b64encode(img.getvalue()).decode('utf-8')
 
+# 獲取表單歷史資料
+@app.route('/api/getFormHistoryData', methods=['GET'])
+def get_form_history_data():
+    formId = request.args.get('formId')  # 獲取前端傳遞來的公司編碼
+    if formId:
+    #     logging.info(f"Received request to get company name for companyId: {companyId}")
+
+        cursor = None
+        try:
+            cursor = get_db_connection()
+            cursor.execute("SELECT form_Id,company_name,form_titleyear,form_titlemonth FROM formA WHERE form_Id = %s", (formId,))
+            result = cursor.fetchone()  # 獲取查詢結果
+
+            if result:
+                formId = result[0]
+                companyName = result[1]
+                formTitleYear = result[2]
+                formTitleMonth = result[3]
+                #logging.info(f"Found company name: {companyname} for companyId: {companyId}")  # 記錄成功查詢的結果
+                #return jsonify({'companyName': companyname})  # 回傳公司名稱
+                # 返回包含這三個欄位的JSON
+                return jsonify({
+                    'formId': formId,
+                    'companyName': companyName,
+                    'formTitleYear': formTitleYear,
+                    'formTitleMonth': formTitleMonth,
+                })
+            else:
+                logging.warning(f"FormId {formId} not found in the database")
+                return jsonify({'message': '找不到對應的表單資料'}), 404
+        except Exception as e:
+            logging.error(f"Error while fetching form data for formId {formId}: {e}")
+            return jsonify({'message': str(e)}), 500
+        finally:
+            if cursor:
+                cursor.close()
+    else:
+        return jsonify({'message': 'formId 不能為空'}), 400
+
+@app.route('/api/renewForm', methods=['POST'])
+def renew_form():
+    data = request.get_json()
+    formId = data.get('formId')
+    year1 = data.get('year1')
+
+    cursor = None
+    try:
+        cursor = get_db_connection()
+
+        # 更新年份的SQL語句
+        update_query = """
+                            UPDATE formA
+                            SET form_titleyear = %s
+                            WHERE form_id = %s
+                        """
+        cursor.execute(update_query, (year1, formId))
+
+        # 提交變更
+        mysql.connection.commit()
+
+        pdf_filename, pdf_filepath, pdf_path = generate_pdf(app_dir,formId)
+
+        logging.info(f"PDF generated successfully for formId: {formId}. PDF path: {pdf_path}")
+
+        # 返回 PDF 文件
+        # new_filepath = os.path.join(pdf_folder, new_filename)
+        return send_file(pdf_filepath, as_attachment=True, download_name=pdf_filename, mimetype='application/pdf')
+
+
+    except Exception as e:
+        return jsonify({'message': f'錯誤: {str(e)}'}), 500
+    finally:
+        if cursor:
+            cursor.close()
 
 if __name__ == '__main__':
     logging.info("Starting the application")
