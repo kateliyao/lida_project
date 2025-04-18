@@ -17,6 +17,9 @@ import FormA from './FormA';
 import HistoryForm from './HistoryForm';
 import ChartComponent from './ChartComponent';
 import './MainPage.css';
+import Quotation from './Quotation';
+import ServiceItem from './ServiceItem';
+import RequestPayment from './RequestPayment';
 
 const MainPage = ({ onLogout,user }) => {
     console.log("MainPage 收到的 user:", user);  // 打印傳遞來的 user
@@ -68,14 +71,14 @@ const MainPage = ({ onLogout,user }) => {
                         憑證統計表
                     </li>
                     <li
-                        onClick={() => handleFormClick('B')}
+                        onClick={() => handleFormClick('RequestPayment')}
                         onMouseEnter={(e) => e.target.firstChild.src = RequestBlueIcon}
                         onMouseLeave={(e) => e.target.firstChild.src = RequestWhiteIcon} >
                         <img src={RequestWhiteIcon} alt="pngB" style={{ width: '25px', marginRight: '10px' }} />
                         請款單
                     </li>
                     <li
-                        onClick={() => handleFormClick('C')}
+                        onClick={() => handleFormClick('Quotation')}
                         onMouseEnter={(e) => e.target.firstChild.src = QuotationBlueIcon}
                         onMouseLeave={(e) => e.target.firstChild.src = QuotationWhiteIcon} >
                         <img src={QuotationWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
@@ -99,6 +102,16 @@ const MainPage = ({ onLogout,user }) => {
                             統計圖表
                         </li>
                     )}
+
+                    {canViewChart && (
+                        <li
+                            onClick={() => handleFormClick('ServiceItem')}
+                            onMouseEnter={(e) => e.target.firstChild.src = ChartBlueIcon}
+                            onMouseLeave={(e) => e.target.firstChild.src = ChartWhiteIcon} >
+                            <img src={ChartWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
+                            工商項目設定
+                        </li>
+                    )}
                 </ul>
             </div>
             </nav>
@@ -107,6 +120,10 @@ const MainPage = ({ onLogout,user }) => {
                 {activeForm === 'A' && <FormA user={user}/>}
                 {activeForm === 'HISTORY' && <HistoryForm user={user}/>}
                 {activeForm === 'CHART' && <ChartComponent user={user}/>}
+                {activeForm === 'Quotation' && <Quotation user={user}/>}
+                {activeForm === 'ServiceItem' && <ServiceItem user={user}/>}
+                {activeForm === 'RequestPayment' && <RequestPayment user={user}/>}
+
             </div>
         </div>
     </div>

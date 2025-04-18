@@ -1,0 +1,319 @@
+/* Quotation.css */
+@font-face {
+  font-family: 'custom-sans-serif';
+  src: local('標楷體') , local('Microsoft JhengHei');
+  unicode-range: U+4E00-9FFF; /* 這表示中文字符範圍 */
+}
+
+@font-face {
+    font-family: 'custom-sans-serif';
+    src: local('book antiqua'), local(Segoe UI);
+    unicode-range: U+00-024F;
+}
+
+.Quotation {
+  font-size: 28px; /* 網頁字體大小 */
+  font-family: 'custom-sans-serif', sans-serif;
+}
+
+@media (max-width: 1700px) {
+  .Quotation {
+      font-size: 20px; /* 網頁字體大小 */
+      font-family: 'custom-sans-serif', sans-serif;
+    }
+}
+
+.Quotation input {
+    font-family: 'custom-sans-serif', sans-serif;
+    line-height: 80px; /* 行高設置為與高度一致 */
+    padding: 0; /* 取消內邊距，確保文字完全可見 */
+    margin: 10px 0; /* 添加上下邊距 */
+    border: 2px solid white; /* 設置邊框顏色為白色 */
+    background-color: #122331; /* 設置背景顏色為白色 */
+    color: white; /* 設置文字顏色 */
+}
+
+.Quotation .input-small {
+    width: 40px;
+    height: 40px;
+    text-align:center;
+}
+
+.Quotation .input-medium {
+    width: 60px;
+    height:40px;
+    text-align:center;
+}
+
+.Quotation .input-large {
+    width: 160px;
+    height: 40px;
+    font-size: 22px;
+}
+
+.Quotation  .input-email {
+    width: 270px;
+    height: 40px;
+    font-size: 22px;
+}
+
+.Quotation  .input-phone {
+    width: 180px;
+    height: 40px;
+    font-size: 22px;
+}
+
+.Quotation  .input-fax {
+    width: 130px;
+    height: 40px;
+    font-size: 22px;
+}
+
+.Quotation  .input-contactPerson {
+    width: 90px;
+    height: 40px;
+    font-size: 22px;
+}
+
+
+.Quotation .title {
+  display: flex;
+  flex-direction: row; /* 水平排列 */
+  align-items: center; /* 垂直置中 */
+  font-weight: bold;
+  font-size: 28px;
+  gap: 10px;
+}
+
+.input-title-group {
+  display: flex;
+  flex-direction: row; /* 水平排列 */
+  align-items: center; /* 垂直置中 */
+}
+
+.input-title {
+    width: 280px;
+    height: 60px;
+    font-size: 28px;
+}
+
+
+
+/* 表格輸入框專用樣式 */
+.table-seamless-input {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0 8px !important; /* ⬅️ 重點：拿掉 padding */
+  margin: 0;
+  border: none;
+  outline: none;
+  font-size: 100%;
+  line-height: 1; /* ⬅️ 保證高度純粹來自父容器，不多加垂直空間 */
+  background-color: #122331;
+}
+
+.table-seamless-input:focus {
+  background-color: #122331 !important; /* 保持與原本相同的背景色 */
+  color: white !important; /* 確保文字顏色保持白色 */
+  outline: none; /* 移除預設的 focus 輪廓 */
+}
+
+
+
+.table-seamless-cell {
+  padding: 0 !important;
+}
+
+.Quotation-table-wrapper {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed; /* 新增這行，強制使用固定佈局 */
+}
+
+.Quotation-table-wrapper th:nth-child(1),
+.Quotation-table-wrapper td:nth-child(1) {
+  width: 5%;  /* 第一列寬度 */
+}
+
+.Quotation-table-wrapper th:nth-child(2),
+.Quotation-table-wrapper td:nth-child(2) {
+  width: 5%;  /* 第二列寬度 */
+}
+
+.Quotation-table-wrapper th:nth-child(3),
+.Quotation-table-wrapper td:nth-child(3) {
+  width: 35%;  /* 第三列寬度 */
+}
+
+.Quotation-table-wrapper th:nth-child(4),
+.Quotation-table-wrapper td:nth-child(4) {
+  width: 15%;  /* 第四列寬度 */
+}
+
+.Quotation-table-wrapper th:nth-child(5),
+.Quotation-table-wrapper td:nth-child(5) {
+  width: 40%;  /* 第五列寬度 */
+}
+
+
+
+.Quotation-table-wrapper th,
+.Quotation-table-wrapper td {
+  border: 1px solid #ddd;
+  height: 40px; /* 或你想要的高度 */
+  padding: 0;   /* 這很重要，避免 td 自己也有 padding */
+}
+
+
+/* 取消最左側表頭的下邊框 */
+.Quotation-table-wrapper th:first-child {
+   border-top: 1px solid transparent;
+   border-left: 1px solid transparent;
+   border-bottom: 1px solid transparent;
+}
+
+/* 取消叉叉按鈕的上邊框 */
+.Quotation-table-wrapper td:first-child {
+  border-left: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+}
+
+
+
+/* 刪除按鈕樣式調整 */
+.Quotation-table-delete-btn {
+  background-color: transparent !important;
+  color: white !important;
+  border: none !important; /* 確保按鈕本身沒有邊框 */
+  outline: none !important; /* 移除聚焦時的輪廓 */
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  margin-left: -8px;
+  font-size: 20px;
+}
+
+.Quotation-table-delete-btn:hover {
+  background-color: #787878 !important;
+}
+
+
+/* 表格行容器 */
+.table-row-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+
+.search_button{
+    background-color: #EBC857;
+    margin-Left: 10px;
+    padding: 1px 10px;
+    color: #424242; /* 設置文字顏色 */
+    cursor: pointer; /* 鼠標指針樣式 */
+    font-size: 25px; /* 調整字體大小 */
+}
+
+.submit_button {
+    background-color: #EBC857;
+    margin: 0;
+    padding: 10px 20px; /* 增加內邊距以適應橢圓形 */
+    border-radius: 50px; /* 設置邊框半徑，形成橢圓形 */
+    color: #424242; /* 設置文字顏色 */
+    cursor: pointer; /* 鼠標指針樣式 */
+    font-size: 30px; /* 調整字體大小 */
+    transition: background-color 0.3s; /* 加入過渡效果 */
+}
+
+.search_button:hover,.submit_button:hover {
+    background-color: #D3B03D;
+}
+
+.Quotation .select_items {
+    width: 100%;
+  height: 100%;
+  padding: 0; /* ⬅️ 重點：拿掉 padding */
+  margin: 0;
+    font-size: 28px;
+    color: white;
+border: none;
+  outline: none;
+  font-size: 100%;
+  line-height: 1; /* ⬅️ 保證高度純粹來自父容器，不多加垂直空間 */
+  background: transparent;
+}
+.Quotation .select_items option {
+    background-color: #192F42;
+    font-family: 'custom-sans-serif', sans-serif;
+}
+
+
+.total-summary-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  position: relative;
+}
+
+.total-summary-column {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  width: 150px;
+  padding-right: 20px; /* 可微調使其與 單價 欄對齊 */
+}
+
+.total-summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0;
+}
+
+.divider-line {
+  height: 1px;
+  background-color: white;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.Quotation-table-totalprice {
+  display: flex;
+  flex-direction: column;
+  width: 60%;
+  gap: 10px; /* 列之間的間距（相當於 margin） */
+  margin-bottom:50px;
+}
+
+.Quotation-row {
+  display: flex;
+  width: 100%;
+
+}
+
+.Quotation-cell {
+  padding: 10px;
+  border-left: 1px solid #000;
+  margin-bottom:10px;
+}
+
+.Quotation-cell:first-child {
+  border-left: none;
+}
+
+.Quotation-cell.left {
+  width: 75%;
+  text-align: right;
+  background-color: #F9D9CA;
+  color:black;
+  font-weight: bold;
+
+}
+
+.Quotation-cell.right {
+  width: 25%;
+ border-bottom: 1px solid white;
+ text-align: right;
+}

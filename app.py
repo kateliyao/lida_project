@@ -25,7 +25,7 @@ app = Flask(__name__, static_folder='../react/build')
 # 設置一個密鑰來保護 session 資料
 app.secret_key = os.urandom(24)  # 或者設定固定的密鑰
 # CORS(app, origins=["http://localhost:5173"])
-CORS(app, origins=["http://192.168.20.65:3000"])
+CORS(app, origins=["http://192.168.20.65:3002"])
 
 # 配置 MySQL 資料庫連線
 app.config['MYSQL_HOST'] = 'localhost'
@@ -247,154 +247,6 @@ def get_staff_info():
             cursor.close()
 
 
-def generate_pdf(app_dir,formId):
-    cursor = None
-    try:
-        cursor = get_db_connection()
-        query = """SELECT company_name,form_titleyear,form_titlemonth,revenue,cost,expense,profit,nonrevenue,noncost,
-                        income,cost_percent,expense_percent,profit_percent,nonrevenue_percent,
-                        noncost_percent,income_percent,ischecked,selectedoption,netincome_percent,netincome,extracost,
-                        extraexpense,note,staff,form_submityear,form_submitmonth,form_submitdate,user_name
-                    FROM formA 
-                    WHERE form_id = %s
-                """
-        cursor.execute(query, (formId,))
-        result = cursor.fetchone()  # 獲取查詢結果
-
-        if result:
-            companyName = result[0]
-            year1 = result[1]
-            month1 = result[2]
-            revenue = result[3]
-            cost = result[4]
-            expense = result[5]
-            profit = result[6]
-            nonrevenue = result[7]
-            noncost = result[8]
-            income = result[9]
-            costPercent = result[10]
-            expensePercent = result[11]
-            profitPercent = result[12]
-            nonrevenuePercent = result[13]
-            noncostPercent = result[14]
-            incomePercent = result[15]
-            isChecked = result[16]
-            selectedOption = result[17]
-            netincomepercent = result[18]
-            netincome = result[19]
-            extracost = result[20]
-            extraexpense = result[21]
-            note = result[22]
-            selectedStaff = result[23]
-            year = result[24]
-            month = result[25]
-            date = result[26]
-
-        # PDF格式化:千分位、負數紅字
-        revenue = float(revenue)
-        cost = float(cost)
-        expense = float(expense)
-        profit = float(profit)
-        nonrevenue = float(nonrevenue)
-        noncost = float(noncost)
-        income = float(income)
-        netincome = float(netincome)
-        voucherNumber = income - netincome
-        extracost = float(extracost)
-        extraexpense = float(extraexpense)
-
-        formatted_revenue = f"({abs(revenue):,.0f})" if revenue < 0 else f"{revenue:,.0f}"
-        formatted_cost = f"({abs(cost):,.0f})" if cost < 0 else f"{cost:,.0f}"
-        formatted_expense = f"({abs(expense):,.0f})" if expense < 0 else f"{expense:,.0f}"
-        formatted_profit = f"({abs(profit):,.0f})" if profit < 0 else f"{profit:,.0f}"
-        formatted_nonrevenue = f"({abs(nonrevenue):,.0f})" if nonrevenue < 0 else f"{nonrevenue:,.0f}"
-        formatted_noncost = f"({abs(noncost):,.0f})" if noncost < 0 else f"{noncost:,.0f}"
-        formatted_income = f"({abs(income):,.0f})" if income < 0 else f"{income:,.0f}"
-        formatted_netincome = f"({abs(netincome):,.0f})" if netincome < 0 else f"{netincome:,.0f}"
-        formatted_voucherNumber = f"({abs(voucherNumber):,.0f})" if voucherNumber < 0 else f"{voucherNumber:,.0f}"
-        formatted_extracost = f"({abs(extracost):,.0f})" if extracost < 0 else f"{extracost:,.0f}"
-        formatted_extraexpense = f"({abs(extraexpense):,.0f})" if extraexpense < 0 else f"{extraexpense:,.0f}"
-
-        # 根據isChecked套用不同的HTML模板
-        template_name = 'formA_template_checked.html' if isChecked == 'Y' else 'formA_template_unchecked.html'
-        html_content = render_template(template_name, app_dir=app_dir, formId=formId, companyName=companyName,
-                                       year1=year1, month1=month1, revenue=revenue, formatted_revenue=formatted_revenue,
-                                       cost=cost, formatted_cost=formatted_cost, expense=expense,
-                                       formatted_expense=formatted_expense, profit=profit,
-                                       formatted_profit=formatted_profit, nonrevenue=nonrevenue,
-                                       formatted_nonrevenue=formatted_nonrevenue, noncost=noncost,
-                                       formatted_noncost=formatted_noncost, income=income,
-                                       formatted_income=formatted_income, costPercent=costPercent,
-                                       expensePercent=expensePercent, profitPercent=profitPercent,
-                                       nonrevenuePercent=nonrevenuePercent, noncostPercent=noncostPercent,
-                                       incomePercent=incomePercent, selectedOption=selectedOption,
-                                       netincomepercent=netincomepercent, netincome=netincome,
-                                       formatted_netincome=formatted_netincome, voucherNumber=voucherNumber,
-                                       formatted_voucherNumber=formatted_voucherNumber, extracost=extracost,
-                                       formatted_extracost=formatted_extracost, extraexpense=extraexpense,
-                                       formatted_extraexpense=formatted_extraexpense, note=note,
-                                       selectedStaff=selectedStaff, year=year, month=month, date=date)
-
-        # 生成 PDF 文件名
-        last_12_chars = formId[-12:]
-        pdf_filename = f"{companyName}_憑證統計表_{last_12_chars}.pdf"
-
-        # URL編碼處理
-        if any(keyword in pdf_filename for keyword in ["啓勝美術社", "慶峯榮金屬企業社", "一块田創意工作室"]):
-            encoded_pdf_filename = urllib.parse.quote(pdf_filename)
-        else:
-            encoded_pdf_filename = pdf_filename
-
-        # 確保 'pdfs' 目錄存在
-        pdf_folder = os.path.join(os.getcwd(), 'pdfs')
-        os.makedirs(pdf_folder, exist_ok=True)
-
-        # 使用 pdfkit 生成 PDF
-        pdf_path = os.path.join(pdf_folder, encoded_pdf_filename)
-        options = {
-            'encoding': 'UTF-8',  # 可以解決中文亂碼問題
-            'no-outline': None,  # 禁用文檔輪廓
-            'quiet': None,  # 禁用日志
-            'margin-top': '5mm',  # 可調整pdf邊界問題
-            # 'margin-right': '0mm',
-            # 'margin-bottom': '0mm',
-            # 'margin-left': '0mm',
-        }
-        pdfkit.from_string(html_content, pdf_path, options=options)
-
-        rename_rules = {
-            "%E6%86%91%E8%AD%89%E7%B5%B1%E8%A8%88%E8%A1%A8": "憑證統計表",
-            "%E5%95%93%E5%8B%9D%E7%BE%8E%E8%A1%93%E7%A4%BE": "啓勝美術社",
-            "%E6%85%B6%E5%B3%AF%E6%A6%AE%E9%87%91%E5%B1%AC%E4%BC%81%E6%A5%AD%E7%A4%BE": "慶峯榮金屬企業社",
-            "%E4%B8%80%E5%9D%97%E7%94%B0%E5%89%B5%E6%84%8F%E5%B7%A5%E4%BD%9C%E5%AE%A4": "一块田創意工作室",
-        }
-
-        # 檢查文件名是否需要更改
-        new_filename = encoded_pdf_filename
-        for old_str, new_str in rename_rules.items():
-            if old_str in new_filename:
-                new_filename = new_filename.replace(old_str, new_str)
-
-        # 如果文件已經存在，先刪除它(限定是需要rename的，一般的會直接蓋過去)
-        new_filepath = os.path.join(pdf_folder, new_filename)
-        if any(keyword in pdf_filename for keyword in ["啓勝美術社", "慶峯榮金屬企業社", "一块田創意工作室"]):
-            if os.path.exists(new_filepath):
-                os.remove(new_filepath)
-
-        if new_filename != encoded_pdf_filename:
-            old_filepath = os.path.join(pdf_folder, encoded_pdf_filename)
-            new_filepath = os.path.join(pdf_folder, new_filename)
-            os.rename(old_filepath, new_filepath)
-
-        return new_filename, os.path.join(pdf_folder, new_filename), pdf_path
-    except Exception as e:
-        print(f"Error generating PDF: {str(e)}")
-        return None, None, None
-
-    finally:
-        if cursor:
-            cursor.close()
-
 # 表單資料提交
 @app.route('/api/submitForm', methods=['POST'])
 def submit_form():
@@ -460,7 +312,108 @@ def submit_form():
         mysql.connection.commit()
         logging.info(f"Form data for formId: {formId} successfully inserted into the database.")
 
-        pdf_filename, pdf_filepath, pdf_path = generate_pdf(app_dir,formId)
+        # PDF格式化:千分位、負數紅字
+        revenue = float(revenue)
+        cost = float(cost)
+        expense = float(expense)
+        profit = float(profit)
+        nonrevenue = float(nonrevenue)
+        noncost = float(noncost)
+        income = float(income)
+        netincome = float(netincome)
+        voucherNumber = income - netincome
+        extracost = float(extracost)
+        extraexpense = float(extraexpense)
+
+        formatted_revenue = f"({abs(revenue):,.0f})" if revenue < 0 else f"{revenue:,.0f}"
+        formatted_cost = f"({abs(cost):,.0f})" if cost < 0 else f"{cost:,.0f}"
+        formatted_expense = f"({abs(expense):,.0f})" if expense < 0 else f"{expense:,.0f}"
+        formatted_profit = f"({abs(profit):,.0f})" if profit < 0 else f"{profit:,.0f}"
+        formatted_nonrevenue = f"({abs(nonrevenue):,.0f})" if nonrevenue < 0 else f"{nonrevenue:,.0f}"
+        formatted_noncost = f"({abs(noncost):,.0f})" if noncost < 0 else f"{noncost:,.0f}"
+        formatted_income = f"({abs(income):,.0f})" if income < 0 else f"{income:,.0f}"
+        formatted_netincome = f"({abs(netincome):,.0f})" if netincome < 0 else f"{netincome:,.0f}"
+        formatted_voucherNumber = f"({abs(voucherNumber):,.0f})" if voucherNumber < 0 else f"{voucherNumber:,.0f}"
+        formatted_extracost = f"({abs(extracost):,.0f})" if extracost < 0 else f"{extracost:,.0f}"
+        formatted_extraexpense = f"({abs(extraexpense):,.0f})" if extraexpense < 0 else f"{extraexpense:,.0f}"
+
+        # PDF格式化:比例只顯示小數點後兩位
+        costPercent = round(costPercent, 2)
+        expensePercent = round(expensePercent, 2)
+        profitPercent = round(profitPercent, 2)
+        nonrevenuePercent = round(nonrevenuePercent, 2)
+        noncostPercent = round(noncostPercent, 2)
+        incomePercent = round(incomePercent, 2)
+
+        # 根據isChecked套用不同的HTML模板
+        template_name = 'formA_template_checked.html' if isChecked == 'Y' else 'formA_template_unchecked.html'
+        html_content = render_template(template_name, app_dir=app_dir, formId=formId, companyName=companyName,
+                                       year1=year1, month1=month1, revenue=revenue, formatted_revenue=formatted_revenue,
+                                       cost=cost, formatted_cost=formatted_cost, expense=expense,
+                                       formatted_expense=formatted_expense, profit=profit,
+                                       formatted_profit=formatted_profit, nonrevenue=nonrevenue,
+                                       formatted_nonrevenue=formatted_nonrevenue, noncost=noncost,
+                                       formatted_noncost=formatted_noncost, income=income,
+                                       formatted_income=formatted_income, costPercent=costPercent,
+                                       expensePercent=expensePercent, profitPercent=profitPercent,
+                                       nonrevenuePercent=nonrevenuePercent, noncostPercent=noncostPercent,
+                                       incomePercent=incomePercent, selectedOption=selectedOption,
+                                       netincomepercent=netincomepercent, netincome=netincome,
+                                       formatted_netincome=formatted_netincome, voucherNumber=voucherNumber,
+                                       formatted_voucherNumber=formatted_voucherNumber, extracost=extracost,
+                                       formatted_extracost=formatted_extracost, extraexpense=extraexpense,
+                                       formatted_extraexpense=formatted_extraexpense, note=note,
+                                       selectedStaff=selectedStaff, year=year, month=month, date=date)
+
+        # 生成 PDF 文件名
+        last_12_chars = formId[-12:]
+        pdf_filename = f"{companyName}_憑證統計表_{last_12_chars}.pdf"
+
+        # encoded_pdf_filename = urllib.parse.quote(pdf_filename)
+        # 如果文件名包含 "啓勝美術社" 或 "慶峯榮金屬企業社" 或 "一块田創意工作室" 才進行 URL 編碼，否則保持原文件名
+        if any(keyword in pdf_filename for keyword in ["啓勝美術社", "慶峯榮金屬企業社", "一块田創意工作室"]):
+            encoded_pdf_filename = urllib.parse.quote(pdf_filename)
+        else:
+            encoded_pdf_filename = pdf_filename
+
+        # 確保 'pdfs' 目錄存在，若不存在則創建
+        pdf_folder = os.path.join(os.getcwd(), 'pdfs')  # 當前目錄下的 pdfs 資料夾
+        os.makedirs(pdf_folder, exist_ok=True)  # 如果資料夾不存在則創建
+
+        # 使用 pdfkit 生成 PDF
+        pdf_path = os.path.join(pdf_folder, encoded_pdf_filename)
+
+        options = {
+            'encoding': 'UTF-8',  # 可以解決中文亂碼問題
+            'no-outline': None,  # 禁用文檔輪廓
+            'quiet': None,  # 禁用日志
+            'margin-top': '5mm',  # 可調整pdf邊界問題
+            # 'margin-right': '0mm',
+            # 'margin-bottom': '0mm',
+            # 'margin-left': '0mm',
+        }
+        # 將 HTML 文件轉換為 PDF
+        pdfkit.from_string(html_content, pdf_path, options=options)
+
+        rename_rules = {
+            "%E6%86%91%E8%AD%89%E7%B5%B1%E8%A8%88%E8%A1%A8": "憑證統計表",
+            "%E5%95%93%E5%8B%9D%E7%BE%8E%E8%A1%93%E7%A4%BE": "啓勝美術社",
+            "%E6%85%B6%E5%B3%AF%E6%A6%AE%E9%87%91%E5%B1%AC%E4%BC%81%E6%A5%AD%E7%A4%BE": "慶峯榮金屬企業社",
+            "%E4%B8%80%E5%9D%97%E7%94%B0%E5%89%B5%E6%84%8F%E5%B7%A5%E4%BD%9C%E5%AE%A4": "一块田創意工作室",
+        }
+        # 檢查文件名是否需要更改
+        new_filename = encoded_pdf_filename
+        for old_str, new_str in rename_rules.items():
+            if old_str in new_filename:
+                new_filename = new_filename.replace(old_str, new_str)
+
+        # 如果文件名有變化，則進行重新命名
+        if new_filename != encoded_pdf_filename:
+            old_filepath = os.path.join(pdf_folder, encoded_pdf_filename)
+            new_filepath = os.path.join(pdf_folder, new_filename)
+
+            # 執行重新命名
+            os.rename(old_filepath, new_filepath)
 
         # 更新資料庫中的pdf_name欄位
         update_query = """
@@ -473,8 +426,8 @@ def submit_form():
         logging.info(f"PDF generated successfully for formId: {formId}. PDF path: {pdf_path}")
 
         # 返回 PDF 文件
-        # new_filepath = os.path.join(pdf_folder, new_filename)
-        return send_file(pdf_filepath, as_attachment=True, download_name=pdf_filename, mimetype='application/pdf')
+        new_filepath = os.path.join(pdf_folder, new_filename)
+        return send_file(new_filepath, as_attachment=True, download_name=new_filename, mimetype='application/pdf')
         # return jsonify({'success': True, 'message': '表單資料提交成功'}), 201
 
     except Exception as e:
@@ -1199,77 +1152,497 @@ def plt_to_base64():
     img.seek(0)
     return base64.b64encode(img.getvalue()).decode('utf-8')
 
-# 獲取表單歷史資料
-@app.route('/api/getFormHistoryData', methods=['GET'])
-def get_form_history_data():
-    formId = request.args.get('formId')  # 獲取前端傳遞來的公司編碼
-    if formId:
-    #     logging.info(f"Received request to get company name for companyId: {companyId}")
 
-        cursor = None
+@app.route('/api/submitServiceItem', methods=['POST'])
+def submit_service_item():
+    cursor = None
+    try:
+        data = request.get_json()
+        items = data.get('items', [])
+        print(f"data{data}")
+
+        if not items:
+            return jsonify({'success': False, 'message': '沒有任何資料要儲存'}), 400
+
+        cursor = get_db_connection()
+
+        # 先清空資料表
+        truncate_query = "TRUNCATE TABLE service_items"
+        cursor.execute(truncate_query)
+
+        insert_query = """
+            INSERT INTO service_items (title, subtitle, fee, note, user_name, updated_time)
+            VALUES (%s, %s, %s, %s, %s, NOW())
+        """
+
+        for item in items:
+            cursor.execute(insert_query, (
+                item.get('title'),
+                item.get('subtitle'),
+                item.get('fee', 0),
+                item.get('note'),
+                item.get('user_name')
+            ))
+
+        cursor.connection.commit()
+
+        return jsonify({'success': True, 'message': '所有項目已成功儲存'}), 200
+
+    except Exception as e:
+        logging.error(f"儲存服務項目失敗: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+@app.route('/api/getServiceItems', methods=['GET'])
+def get_service_items():
+    cursor = None
+    try:
+        cursor = get_db_connection()
+        query = "SELECT title, subtitle, fee, note FROM service_items ORDER BY updated_time DESC"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        # 回傳 JSON 陣列
+        service_items_list = [{
+            'title': row[0],
+            'subtitle': row[1],
+            'fee': row[2],
+            'note': row[3]
+        } for row in rows]
+
+        print(f"service_items_list:{service_items_list}")
+
+        return jsonify({'success': True, 'service_items': service_items_list})
+    except Exception as e:
+        logging.error(f"取得服務項目失敗: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+
+@app.route('/api/generateQuotationNumber', methods=['POST'])
+def generate_quotation_number():
+    try:
+        today = datetime.today()
+        date_str = today.strftime('%Y%m%d')  # 改為 4 位數年份
+
+        # 查詢當天所有報價單編號，獲取最大編號
+        cursor = get_db_connection()
+        cursor.execute("""
+            SELECT quotation_id
+            FROM quotation
+            WHERE quotation_id LIKE %s
+            ORDER BY quotation_id DESC
+            LIMIT 1
+        """, (f"{date_str}A%",))
+
+        last_quotation = cursor.fetchone()
+        print(f"last_quotation:{last_quotation}")
+
+        if last_quotation:
+            last_number = int(last_quotation[0][-3:])
+            new_number = f"{date_str}A{last_number + 1:03d}"
+        else:
+            new_number = f"{date_str}A001"
+
+        print(f"new_number:{new_number}")
+        return jsonify({
+            'success': True,
+            'quotationNumber': new_number
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+
+@app.route('/api/saveQuotation', methods=['POST'])
+def save_quotation():
+    cursor = None
+    try:
+        data = request.get_json()
+        quotation = data.get('quotation')
+        items = data.get('items', [])
+
+        print(f"data:{data}")
+        print(f"quotation:{quotation}")
+        print(f"items:{items}")
+
+        if not quotation:
+            return jsonify({'success': False, 'message': '缺少主表數據'}), 400
+
+        cursor = get_db_connection()
+
+        # 先刪除舊的細項數據
+        delete_query = "DELETE FROM quotation WHERE quotation_id = %s"
+        cursor.execute(delete_query, (quotation.get('quotation_id'),))
+
+        # 插入主表數據
+        insert_quotation_query = """
+            INSERT INTO quotation (
+                quotation_id, quotation_date, contact_email, contact_phone, contact_fax,
+                contact_person, company_name, company_contact_person,
+                subtotal_amount, tax_amount, total_amount, user_name
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                quotation_date = VALUES(quotation_date),
+                contact_email = VALUES(contact_email),
+                contact_phone = VALUES(contact_phone),
+                contact_fax = VALUES(contact_fax),
+                contact_person = VALUES(contact_person),
+                company_name = VALUES(company_name),
+                company_contact_person = VALUES(company_contact_person),
+                subtotal_amount = VALUES(subtotal_amount),
+                tax_amount = VALUES(tax_amount),
+                total_amount = VALUES(total_amount),
+                user_name = VALUES(user_name),
+                updated_time = NOW()
+        """
+        cursor.execute(insert_quotation_query, (
+            quotation.get('quotation_id'),
+            quotation.get('quotation_date'),
+            quotation.get('contact_email'),
+            quotation.get('contact_phone'),
+            quotation.get('contact_fax'),
+            quotation.get('contact_person'),
+            quotation.get('company_name'),
+            quotation.get('company_contact_person'),
+            float(quotation.get('subtotal_amount', 0)),
+            float(quotation.get('tax_amount', 0)),
+            float(quotation.get('total_amount', 0)),
+            quotation.get('user_name')
+        ))
+
+        # 插入新的細項數據
+        if items:
+            insert_item_query = """
+                INSERT INTO quotation_item (
+                    quotation_id, subtitle_no, subtitle, fee, note, user_name
+                ) VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            for item in items:
+                cursor.execute(insert_item_query, (
+                    item.get('quotation_id'),
+                    item.get('subtitle_no'),
+                    item.get('subtitle'),
+                    item.get('fee'),
+                    item.get('note'),
+                    item.get('user_name')
+                ))
+
+        cursor.connection.commit()
+
+        html_content = render_template('quotation_template.html', app_dir=app_dir, quotation_id=quotation.get('quotation_id'))
+
+        # 生成 PDF 文件名
+        pdf_filename = f"報價單.pdf"
+
+        # encoded_pdf_filename = urllib.parse.quote(pdf_filename)
+        # 如果文件名包含 "啓勝美術社" 或 "慶峯榮金屬企業社" 或 "一块田創意工作室" 才進行 URL 編碼，否則保持原文件名
+        if any(keyword in pdf_filename for keyword in ["啓勝美術社", "慶峯榮金屬企業社", "一块田創意工作室"]):
+            encoded_pdf_filename = urllib.parse.quote(pdf_filename)
+        else:
+            encoded_pdf_filename = pdf_filename
+
+        # 確保 'pdfs' 目錄存在，若不存在則創建
+        pdf_folder = os.path.join(os.getcwd(), 'pdfs')  # 當前目錄下的 pdfs 資料夾
+        os.makedirs(pdf_folder, exist_ok=True)  # 如果資料夾不存在則創建
+
+        # 使用 pdfkit 生成 PDF
+        pdf_path = os.path.join(pdf_folder, encoded_pdf_filename)
+
+        options = {
+            'encoding': 'UTF-8',  # 可以解決中文亂碼問題
+            'no-outline': None,  # 禁用文檔輪廓
+            'quiet': None,  # 禁用日志
+            'margin-top': '5mm',  # 可調整pdf邊界問題
+            # 'margin-right': '0mm',
+            # 'margin-bottom': '0mm',
+            # 'margin-left': '0mm',
+        }
+        # 將 HTML 文件轉換為 PDF
+        #pdfkit.from_string(html_content, pdf_path, options=options)
         try:
-            cursor = get_db_connection()
-            cursor.execute("SELECT form_Id,company_name,form_titleyear,form_titlemonth FROM formA WHERE form_Id = %s", (formId,))
-            result = cursor.fetchone()  # 獲取查詢結果
+            pdfkit.from_string(html_content, pdf_path, options=options)
+        except Exception as pdf_error:
+            logging.error(f"PDF 生成失敗: {str(pdf_error)}")
+            return jsonify({'success': False, 'message': f'PDF 生成失敗: {str(pdf_error)}'}), 500
 
-            if result:
-                formId = result[0]
-                companyName = result[1]
-                formTitleYear = result[2]
-                formTitleMonth = result[3]
-                #logging.info(f"Found company name: {companyname} for companyId: {companyId}")  # 記錄成功查詢的結果
-                #return jsonify({'companyName': companyname})  # 回傳公司名稱
-                # 返回包含這三個欄位的JSON
-                return jsonify({
-                    'formId': formId,
-                    'companyName': companyName,
-                    'formTitleYear': formTitleYear,
-                    'formTitleMonth': formTitleMonth,
-                })
-            else:
-                logging.warning(f"FormId {formId} not found in the database")
-                return jsonify({'message': '找不到對應的表單資料'}), 404
-        except Exception as e:
-            logging.error(f"Error while fetching form data for formId {formId}: {e}")
-            return jsonify({'message': str(e)}), 500
-        finally:
-            if cursor:
-                cursor.close()
-    else:
-        return jsonify({'message': 'formId 不能為空'}), 400
+        rename_rules = {
+            "%E6%86%91%E8%AD%89%E7%B5%B1%E8%A8%88%E8%A1%A8": "憑證統計表",
+            "%E5%95%93%E5%8B%9D%E7%BE%8E%E8%A1%93%E7%A4%BE": "啓勝美術社",
+            "%E6%85%B6%E5%B3%AF%E6%A6%AE%E9%87%91%E5%B1%AC%E4%BC%81%E6%A5%AD%E7%A4%BE": "慶峯榮金屬企業社",
+            "%E4%B8%80%E5%9D%97%E7%94%B0%E5%89%B5%E6%84%8F%E5%B7%A5%E4%BD%9C%E5%AE%A4": "一块田創意工作室",
+        }
+        # 檢查文件名是否需要更改
+        new_filename = encoded_pdf_filename
+        for old_str, new_str in rename_rules.items():
+            if old_str in new_filename:
+                new_filename = new_filename.replace(old_str, new_str)
 
-@app.route('/api/renewForm', methods=['POST'])
-def renew_form():
-    data = request.get_json()
-    formId = data.get('formId')
-    year1 = data.get('year1')
+        # 如果文件名有變化，則進行重新命名
+        if new_filename != encoded_pdf_filename:
+            old_filepath = os.path.join(pdf_folder, encoded_pdf_filename)
+            new_filepath = os.path.join(pdf_folder, new_filename)
+
+            # 執行重新命名
+            os.rename(old_filepath, new_filepath)
+
+        # # 更新資料庫中的pdf_name欄位
+        # update_query = """
+        #                     UPDATE formA
+        #                     SET pdf_name = %s
+        #                     WHERE form_id = %s
+        #                 """
+        # cursor.execute(update_query, (pdf_filename, formId))
+        # mysql.connection.commit()
+        # logging.info(f"PDF generated successfully for formId: {formId}. PDF path: {pdf_path}")
+
+        # 返回 PDF 文件
+        new_filepath = os.path.join(pdf_folder, new_filename)
+        return send_file(new_filepath, as_attachment=True, download_name=new_filename, mimetype='application/pdf')
+
+        #return jsonify({'success': True, 'message': '報價單已成功儲存'}), 200
+
+    except Exception as e:
+        logging.error(f"儲存報價單失敗: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+
+@app.route('/api/getQuotation', methods=['GET'])
+def get_quotation():
+    quotation_id = request.args.get('quotationId')
+    if not quotation_id:
+        return jsonify({'success': False, 'message': '請提供報價單編號'}), 400
+
+    print(f"quotation_id:{quotation_id}")
 
     cursor = None
     try:
         cursor = get_db_connection()
 
-        # 更新年份的SQL語句
-        update_query = """
-                            UPDATE formA
-                            SET form_titleyear = %s
-                            WHERE form_id = %s
-                        """
-        cursor.execute(update_query, (year1, formId))
+        # 查詢主表資訊
+        cursor.execute("""
+            SELECT quotation_id, quotation_date, contact_email, contact_phone, 
+                   contact_fax, contact_person, company_name, company_contact_person,
+                   subtotal_amount, tax_amount, total_amount, user_name, updated_time
+            FROM quotation 
+            WHERE quotation_id = %s
+        """, (quotation_id,))
+        quotation_data = cursor.fetchone()
 
-        # 提交變更
-        mysql.connection.commit()
+        if not quotation_data:
+            return jsonify({'success': False, 'message': '找不到指定的報價單'}), 404
 
-        pdf_filename, pdf_filepath, pdf_path = generate_pdf(app_dir,formId)
+        # 查詢項目明細
+        cursor.execute("""
+            SELECT subtitle_no, subtitle, fee, note, user_name, updated_time
+            FROM quotation_item 
+            WHERE quotation_id = %s
+            ORDER BY subtitle_no
+        """, (quotation_id,))
+        items_data = cursor.fetchall()
 
-        logging.info(f"PDF generated successfully for formId: {formId}. PDF path: {pdf_path}")
+        # 格式化回傳資料
+        quotation = {
+            'quotation_id': quotation_data[0],
+            'quotation_date': quotation_data[1].strftime('%Y/%m/%d') if quotation_data[1] else '',
+            'contact_email': quotation_data[2],
+            'contact_phone': quotation_data[3],
+            'contact_fax': quotation_data[4],
+            'contact_person': quotation_data[5],
+            'company_name': quotation_data[6],
+            'company_contact_person': quotation_data[7],
+            'subtotal_amount': float(quotation_data[8]) if quotation_data[8] else 0,
+            'tax_amount': float(quotation_data[9]) if quotation_data[9] else 0,
+            'total_amount': float(quotation_data[10]) if quotation_data[10] else 0,
+            'user_name': quotation_data[11],
+            'updated_time': quotation_data[12].strftime('%Y-%m-%d %H:%M:%S') if quotation_data[12] else ''
+        }
 
-        # 返回 PDF 文件
-        # new_filepath = os.path.join(pdf_folder, new_filename)
-        return send_file(pdf_filepath, as_attachment=True, download_name=pdf_filename, mimetype='application/pdf')
+        items = [{
+            'subtitle_no': item[0],
+            'subtitle': item[1],
+            'fee': item[2],
+            'note': item[3],
+            'user_name': item[4],
+            'updated_time': item[5].strftime('%Y-%m-%d %H:%M:%S') if item[5] else ''
+        } for item in items_data]
 
+        return jsonify({
+            'success': True,
+            'quotation': quotation,
+            'items': items
+        })
 
     except Exception as e:
-        return jsonify({'message': f'錯誤: {str(e)}'}), 500
+        logging.error(f"查詢報價單失敗: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+
+
+@app.route('/api/generateRequestPaymentNumber', methods=['POST'])
+def generate_request_payment_number():
+    try:
+        today = datetime.today()
+        date_str = today.strftime('%Y%m%d')  # 改為 4 位數年份
+
+        # 查詢當天所有報價單編號，獲取最大編號
+        cursor = get_db_connection()
+        cursor.execute("""
+            SELECT request_payment_id
+            FROM request_payment
+            WHERE request_payment_id LIKE %s
+            ORDER BY request_payment_id DESC
+            LIMIT 1
+        """, (f"{date_str}B%",))
+
+        last_quotation = cursor.fetchone()
+        print(f"last_quotation:{last_quotation}")
+
+        if last_quotation:
+            last_number = int(last_quotation[0][-3:])
+            new_number = f"{date_str}B{last_number + 1:03d}"
+        else:
+            new_number = f"{date_str}B001"
+
+        print(f"new_number_RP:{new_number}")
+        return jsonify({
+            'success': True,
+            'requestPaymentNumber': new_number
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+@app.route('/api/saveRequestPayment', methods=['POST'])
+def save_request_payment():
+    cursor = None
+    try:
+        data = request.get_json()
+        request_payment = data.get('requestPayment')
+        items1 = data.get('items1', [])
+        items2 = data.get('items2', [])
+
+        print(f"request_payment{request_payment}")
+        print(f"items1{items1}")
+        print(f"items2{items2}")
+
+        if not request_payment:
+            return jsonify({'success': False, 'message': '缺少主表數據'}), 400
+
+        cursor = get_db_connection()
+
+        # 先刪除舊的細項數據
+        delete_query1 = "DELETE FROM request_payment_item1 WHERE request_payment_id = %s"
+        delete_query2 = "DELETE FROM request_payment_item2 WHERE request_payment_id = %s"
+        cursor.execute(delete_query1, (request_payment.get('request_payment_id'),))
+        cursor.execute(delete_query2, (request_payment.get('request_payment_id'),))
+
+        # 插入主表數據
+        insert_request_payment_query = """
+            INSERT INTO request_payment (
+                request_payment_id, request_payment_date, quotation_id, contact_email,
+                contact_phone, contact_fax, contact_person, company_name,
+                company_contact_person, details_subtotal_amount, details_tax_amount,
+                details_total_amount, fees_total_amount, final_total_amount, user_name
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                request_payment_date = VALUES(request_payment_date),
+                quotation_id = VALUES(quotation_id),
+                contact_email = VALUES(contact_email),
+                contact_phone = VALUES(contact_phone),
+                contact_fax = VALUES(contact_fax),
+                contact_person = VALUES(contact_person),
+                company_name = VALUES(company_name),
+                company_contact_person = VALUES(company_contact_person),
+                details_subtotal_amount = VALUES(details_subtotal_amount),
+                details_tax_amount = VALUES(details_tax_amount),
+                details_total_amount = VALUES(details_total_amount),
+                fees_total_amount = VALUES(fees_total_amount),
+                final_total_amount = VALUES(final_total_amount),
+                user_name = VALUES(user_name),
+                updated_time = NOW()
+        """
+        cursor.execute(insert_request_payment_query, (
+            request_payment.get('request_payment_id'),
+            request_payment.get('request_payment_date'),
+            request_payment.get('quotation_id'),
+            request_payment.get('contact_email'),
+            request_payment.get('contact_phone'),
+            request_payment.get('contact_fax'),
+            request_payment.get('contact_person'),
+            request_payment.get('company_name'),
+            request_payment.get('company_contact_person'),
+            float(request_payment.get('details_subtotal_amount', 0)),
+            float(request_payment.get('details_tax_amount', 0)),
+            float(request_payment.get('details_total_amount', 0)),
+            float(request_payment.get('fees_total_amount', 0)),
+            float(request_payment.get('final_total_amount', 0)),
+            request_payment.get('user_name')
+        ))
+
+        # 插入第一個表格的細項數據 (request_payment_item1)
+        if items1:
+            insert_item1_query = """
+                INSERT INTO request_payment_item1 (
+                    request_payment_id, subtitle_no, subtitle, fee, note, user_name
+                ) VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            for item in items1:
+                cursor.execute(insert_item1_query, (
+                    item.get('request_payment_id'),
+                    item.get('subtitle_no'),
+                    item.get('subtitle'),
+                    item.get('fee'),
+                    item.get('note'),
+                    item.get('user_name')
+                ))
+
+        # 插入第二個表格的細項數據 (request_payment_item2)
+        if items2:
+            insert_item2_query = """
+                INSERT INTO request_payment_item2 (
+                    request_payment_id, subtitle_no, subtitle, fee, note, user_name
+                ) VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            for item in items2:
+                cursor.execute(insert_item2_query, (
+                    item.get('request_payment_id'),
+                    item.get('subtitle_no'),
+                    item.get('subtitle'),
+                    item.get('fee'),
+                    item.get('note'),
+                    item.get('user_name')
+                ))
+
+        cursor.connection.commit()
+
+        return jsonify({
+            'success': True,
+            'message': '請款單已成功儲存',
+        }), 200
+
+    except Exception as e:
+        logging.error(f"儲存請款單失敗: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
     finally:
         if cursor:
             cursor.close()
@@ -1278,4 +1651,4 @@ if __name__ == '__main__':
     logging.info("Starting the application")
     # app.run(debug=True)設置會讓 Flask 應用進入調試模式，有助於開發過程中的即時反饋。開發階段時，通常會啟用 debug 模式，部署到生產環境，應該禁用 debug 模式。
     # app.run(debug=False)
-    app.run(host='192.168.20.65', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5002, debug=False)

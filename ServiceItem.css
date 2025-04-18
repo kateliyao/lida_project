@@ -1,0 +1,146 @@
+/* ServiceItem.css */
+.ServiceItem{
+    color:white;
+}
+
+.ServiceItem input,
+.ServiceItem button {
+    color: white;
+    background-color: transparent; /* 若需要看清楚白色字 */
+    border: 1px solid white; /* 可視情況調整 */
+}
+
+.serviceitem-input {
+  width: 100%;
+  height: 100%;
+  padding: 0; /* ⬅️ 重點：拿掉 padding */
+  margin: 0;
+  border: none;
+  outline: none;
+  font-size: 100%;
+  line-height: 1; /* ⬅️ 保證高度純粹來自父容器，不多加垂直空間 */
+  background: transparent;
+  text-indent: 5px;
+}
+
+
+.table-seamless-input:focus {
+  background-color: #f8f9fa; /* 聚焦時輕微背景色變化 */
+}
+
+.ServiceItem-table-wrapper {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed; /* 新增這行，強制使用固定佈局 */
+}
+
+.ServiceItem-table-wrapper th:nth-child(1),
+.ServiceItem-table-wrapper td:nth-child(1) {
+  width: 5%;  /* 第一列寬度 */
+}
+
+.ServiceItem-table-wrapper th:nth-child(2),
+.ServiceItem-table-wrapper td:nth-child(2) {
+  width: 5%;  /* 第二列寬度 */
+}
+
+.ServiceItem-table-wrapper th:nth-child(3),
+.ServiceItem-table-wrapper td:nth-child(3) {
+  width: 15%;  /* 第三列寬度 */
+}
+
+.ServiceItem-table-wrapper th:nth-child(4),
+.ServiceItem-table-wrapper td:nth-child(4) {
+  width: 30%;  /* 第四列寬度 */
+}
+
+.ServiceItem-table-wrapper th:nth-child(5),
+.ServiceItem-table-wrapper td:nth-child(5) {
+  width: 15%;  /* 第五列寬度 */
+}
+
+.ServiceItem-table-wrapper th:nth-child(6),
+.ServiceItem-table-wrapper td:nth-child(6) {
+  width: 30%;  /* 第六列寬度 */
+}
+
+.ServiceItem-table-wrapper th,
+.ServiceItem-table-wrapper td {
+  border: 1px solid #ddd;
+  height: 40px; /* 或你想要的高度 */
+  padding: 0;   /* 這很重要，避免 td 自己也有 padding */
+}
+
+
+/* 取消最左側表頭的下邊框 */
+.ServiceItem-table-wrapper th:first-child {
+   border-top: 1px solid transparent;
+   border-left: 1px solid transparent;
+   border-bottom: 1px solid transparent;
+}
+
+/* 取消叉叉按鈕的上邊框 */
+.ServiceItem-table-wrapper td:first-child {
+  border-left: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+}
+
+.ServiceItem .submit-button-fixed {
+  position: fixed;
+  bottom: 20px;
+  left: 60%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 10px 30px;
+  border-radius: 8px;
+  background-color: #71777F;
+  color: white;
+  font-size: 28px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  writing-mode: horizontal-tb;
+  white-space: nowrap;
+}
+
+.ServiceItem .submit-button-fixed:hover {
+  background-color: #EBC857;
+  color: black; /* 可選：hover 時改字色更明顯 */
+}
+
+/* 刪除按鈕樣式調整 */
+.ServiceItem-table-delete-btn {
+  background-color: transparent !important;
+  color: white !important;
+  border: none !important; /* 確保按鈕本身沒有邊框 */
+  outline: none !important; /* 移除聚焦時的輪廓 */
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  margin-left: -8px;
+  font-size: 20px;
+}
+
+.ServiceItem-table-delete-btn:hover {
+  background-color: #787878 !important;
+}
+
+.ServiceItem-modify-btn{
+padding: 10px 30px;
+  border-radius: 8px;
+  background-color: #71777F !important;
+  color: white;
+  font-size: 28px;
+  font-weight: bold;
+  border: none !important;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  writing-mode: horizontal-tb;
+  white-space: nowrap;
+}
+
+.ServiceItem-modify-btn:hover {
+  background-color: #EBC857 !important;
+  color: black !important;
+}
