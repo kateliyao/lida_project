@@ -21,22 +21,55 @@ const FormA = ({ user }) => {
     const [currentUserStaffMenu, setCurrentUserStaffMenu] = useState(''); // 初始化為空字符串
     const apiUrl = import.meta.env.VITE_API_URL;
     const [selectedOption, setSelectedOption] = useState('');
-    const buttonRef = useRef();
-    const [formKey, setFormKey] = useState(0);
+    const [lineCount, setLineCount] = useState(0);
+    const textareaRef = useRef(null);
 
     const handleCheckboxChange = (event) => {
         setIsChecked(event.target.checked);
     };
+    const buttonRef = useRef();
+
+    // 計算輸入文字的行數
+  const calculateLineCount = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      // 創建一個隱藏的div來模擬textarea的內容
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.visibility = 'hidden';
+      tempDiv.style.whiteSpace = 'pre-wrap'; // 確保文本自動換行
+      tempDiv.style.wordWrap = 'break-word'; // 保證長單詞可以換行
+      tempDiv.style.fontSize = window.getComputedStyle(textarea).fontSize;
+      tempDiv.style.lineHeight = window.getComputedStyle(textarea).lineHeight;
+      tempDiv.style.fontFamily = window.getComputedStyle(textarea).fontFamily;
+      tempDiv.style.width = `${textarea.clientWidth}px`; // 設定寬度來與textarea一致
+
+      // 將textarea中的文字內容拷貝到tempDiv中
+      tempDiv.textContent = textarea.value;
+      document.body.appendChild(tempDiv);
+
+      // 獲取每行的高度
+      const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight, 10);
+      const textHeight = tempDiv.scrollHeight;
+
+      // 根據文本高度和行高計算行數
+      const lines = Math.ceil(textHeight / lineHeight);
+      setLineCount(lines);
+
+      // 清理臨時創建的div
+      document.body.removeChild(tempDiv);
+    }
+  };
 
     const handleInputChange = (event) => {
         const value = event.target.value;
 
         // 計算當前行數
-        const lines = value.split('\n').length;
+        calculateLineCount();
         // 計算當前字數
         const charCount = value.length;
 
-        if (lines > maxLines) {
+        if (lineCount > maxLines) {
           alert('您已超過最大行數限制！');
           return;
         }
@@ -47,6 +80,17 @@ const FormA = ({ user }) => {
         // 如果沒有超過限制，更新state
         setNote(value);
     };
+
+  // 初次渲染時計算行數
+  useEffect(() => {
+    calculateLineCount(); // 初次渲染時計算行數
+    const textarea = textareaRef.current;
+    textarea.addEventListener('input', handleInputChange); // 監聽輸入事件
+
+    return () => {
+      textarea.removeEventListener('input', handleInputChange); // 清理事件監聽
+    };
+  }, []);
 
 
     //引入系統日期
@@ -323,9 +367,6 @@ const FormA = ({ user }) => {
                     link.download = '憑證統計表.pdf'; // 設定下載檔案的名稱
                     //link.click(); // 自動觸發下載
                     alert('表單提交成功！');
-                    // 提交成功後重置表單狀態
-                    resetForm();
-
                 } else {
                     // 如果不是 PDF，嘗試讀取 JSON 錯誤訊息
                     const result = await response.json();
@@ -342,31 +383,6 @@ const FormA = ({ user }) => {
             console.error('Error submitting form:', error);
         }
         setFormId(''); // 清除表單編號
-    };
-
-    const resetForm = () => {
-        // 重置 FinancialForm
-        setFormKey(prev => prev + 1); // 強制重新生成 FinancialForm
-
-        // 重置所有表單狀態
-        setCompanyId('');
-        setCompanyName('');
-        setNote('');
-        setIsChecked(false);
-        setSelectedOption('');
-        setNetIncomePercent(null);
-        setFormId('無');
-
-        setRevenue(0);
-        setCost(0);
-        setExpense(0);
-        setProfit(0);
-        setNonrevenue(0);
-        setNoncost(0);
-        setIncome(0);
-        setNetIncome(0);
-        setExtraCost(0);
-        setExtraExpense(0);
     };
 
     return (
@@ -422,14 +438,13 @@ const FormA = ({ user }) => {
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column'}}>
-                        <FinancialForm  key={formKey}
-                            onRevenueChange={handleRevenueChange}
-                            onCostChange={handleCostChange}
-                            onExpenseChange={handleExpenseChange}
-                            onProfitChange={handleProfitChange}
-                            onNonrevenueChange={handleNonrevenueChange}
-                            onNoncostChange={handleNoncostChange}
-                            onIncomeChange={handleIncomeChange} />
+                        <FinancialForm onRevenueChange={handleRevenueChange}
+                                       onCostChange={handleCostChange}
+                                       onExpenseChange={handleExpenseChange}
+                                       onProfitChange={handleProfitChange}
+                                       onNonrevenueChange={handleNonrevenueChange}
+                                       onNoncostChange={handleNoncostChange}
+                                       onIncomeChange={handleIncomeChange} />
                     </div><br />
 
                     <div>
@@ -500,9 +515,10 @@ const FormA = ({ user }) => {
                     </div><br />
 
                     <div style={{ textAlign:'left' }}>
-                        <div>● 其他：(當前字數:{note.length}/{maxLength} 當前行數:{note.split('\n').length}/{maxLines}) </div>
+                        <div>● 其他：(當前字數:{note.length}/{maxLength} 當前行數:{lineCount}/{maxLines}) </div>
                         <div>
                             <textarea
+                                ref={textareaRef}
                                 rows="7"
                                 id="textarea-input"
                                 className="textarea-box"

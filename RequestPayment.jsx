@@ -301,38 +301,39 @@ const handleSubmit = async (e) => {
             }),
         });
 
-        const result = await response.json();
-
         if (response.ok) {
-            if (result.success) {
-                alert('請款單提交成功！');
-            } else {
-                setErrorMessage(result.message || '提交失敗');
-                alert('提交失敗: ' + result.message);
-            }
                 // 判斷回應的類型是否為 PDF
-//                 const contentType = response.headers.get('Content-Type');
-//                 if (contentType && contentType.includes('application/pdf')) {
-//                     // 如果是 PDF，獲取 PDF 文件的 blob 資料
-//                     const blob = await response.blob();
-//                     // 創建一個臨時連結來觸發文件下載
-//                     const link = document.createElement('a');
-//                     link.href = URL.createObjectURL(blob); // 創建 blob 物件 URL
-//                     link.download = '憑證統計表.pdf'; // 設定下載檔案的名稱
-//                     //link.click(); // 自動觸發下載
-//                     alert('表單提交成功！');
-//                 } else {
-//                     // 如果不是 PDF，嘗試讀取 JSON 錯誤訊息
-//                     const result = await response.json();
-//                     console.error('提交表單失敗:', result.message);
-//                     alert('提交表單失敗: ' + result.message);
-//                 }
+                const contentType = response.headers.get('Content-Type');
+                if (contentType && contentType.includes('application/pdf')) {
+                    // 如果是 PDF，獲取 PDF 文件的 blob 資料
+                    const blob = await response.blob();
+                    // 創建一個臨時連結來觸發文件下載
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob); // 創建 blob 物件 URL
+                    link.download = '請款單.pdf'; // 設定下載檔案的名稱
+                    //link.click(); // 自動觸發下載
+                    alert('表單提交成功！');
+                    setHasQuotationData(false);
+                    setCompanyName('');
+                    setOtherContactPerson('');
+                    setQuotationId('');
+                    setRows([{ item: '', fee: '', note: '' }]);
+                    setRows2([{ item: '', fee: '', note: '' }]);
+                    setErrorMessage('');
+
+                } else {
+                    // 如果不是 PDF，嘗試讀取 JSON 錯誤訊息
+                    const result = await response.json();
+                    console.error('提交表單失敗:', result.message);
+                    alert('提交表單失敗: ' + result.message);
+                }
         } else {
+            const result = await response.json();
             setErrorMessage(result.message || '暫存失敗');
         }
     } catch (error) {
-        console.error('暫存報價單時發生錯誤:', error);
-        setErrorMessage('暫存報價單時發生錯誤');
+        console.error('暫存請款單時發生錯誤:', error);
+        setErrorMessage('暫存請款單時發生錯誤');
     }
 };
 
@@ -346,7 +347,7 @@ const handleKeyDown = (e) => {
 
     return (
         <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
-            <div ref={formRef} className="Quotation">
+            <div ref={formRef} className="RequestPayment">
 
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <input
@@ -421,7 +422,7 @@ const handleKeyDown = (e) => {
                         <label style={{ marginRight: '8px' }}>TO</label>
                         <input
                         type="text"
-                        className="input-title"
+                        className="input-title1"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         placeholder="請輸入公司名稱"
@@ -432,7 +433,7 @@ const handleKeyDown = (e) => {
                         <label style={{ marginRight: '8px' }}>聯絡人:</label>
                         <input
                         type="text"
-                        className="input-title"
+                        className="input-title2"
                         value={otherContactPerson}
                         onChange={(e) => setOtherContactPerson(e.target.value)}
                         placeholder="請輸入聯絡人名稱"
@@ -441,8 +442,8 @@ const handleKeyDown = (e) => {
                 </div>
 
                 <div>
-                    <h2 style={{textAlign: 'left'}}>一、代辦明細</h2>
-                    <table className="Quotation-table-wrapper" border="1">
+                    <h3 style={{textAlign: 'left'}}>一、代辦明細</h3>
+                    <table className="RequestPayment-table-wrapper" border="1">
                         <thead>
                             <tr>
                             <th></th> {/* 新增操作欄位標題 */}
@@ -459,7 +460,7 @@ const handleKeyDown = (e) => {
                                     <td>
                                         <button
                                         type="button"
-                                        className="Quotation-table-delete-btn"
+                                        className="RequestPayment-table-delete-btn"
                                         onClick={() => deleteRow(index)}
                                         >
                                         X
@@ -553,25 +554,25 @@ const handleKeyDown = (e) => {
                 {/* 長直線 */}
 {/*                 <div className="divider-line" /> */}
 
-                <div className="Quotation-table-totalprice">
-                    <div className="Quotation-row">
-                        <div className="Quotation-cell left">小計</div>
-                        <div className="Quotation-cell right">{formatCurrency(subtotal1)}</div>
+                <div className="RequestPayment-table-totalprice">
+                    <div className="RequestPayment-row">
+                        <div className="RequestPayment-cell-left">小計</div>
+                        <div className="RequestPayment-cell-right">{formatCurrency(subtotal1)}</div>
                     </div>
-                    <div className="Quotation-row">
-                        <div className="Quotation-cell left">營業稅</div>
-                        <div className="Quotation-cell right">{formatCurrency(tax)}</div>
+                    <div className="RequestPayment-row">
+                        <div className="RequestPayment-cell-left">營業稅</div>
+                        <div className="RequestPayment-cell-right">{formatCurrency(tax)}</div>
                     </div>
-                    <div className="Quotation-row">
-                        <div className="Quotation-cell left">合計</div>
-                        <div className="Quotation-cell right">{formatCurrency(total)}</div>
+                    <div className="RequestPayment-row">
+                        <div className="RequestPayment-cell-left">合計</div>
+                        <div className="RequestPayment-cell-right">{formatCurrency(total)}</div>
                     </div>
                 </div>
 
 
                 <div>
-                    <h2 style={{textAlign: 'left'}}>二、代墊規費</h2>
-                    <table className="Quotation-table-wrapper" border="1">
+                    <h3 style={{textAlign: 'left'}}>二、代墊規費</h3>
+                    <table className="RequestPayment-table-wrapper" border="1">
                         <thead>
                             <tr>
                             <th></th> {/* 新增操作欄位標題 */}
@@ -588,7 +589,7 @@ const handleKeyDown = (e) => {
                                     <td>
                                         <button
                                         type="button"
-                                        className="Quotation-table-delete-btn"
+                                        className="RequestPayment-table-delete-btn"
                                         onClick={() => deleteRow2(index)}
                                         >
                                         X
@@ -659,10 +660,10 @@ const handleKeyDown = (e) => {
 
 {/*                 <div className="divider-line" /> */}
 
-                <div className="Quotation-table-totalprice">
-                    <div className="Quotation-row">
-                        <div className="Quotation-cell left">合計</div>
-                        <div className="Quotation-cell right">{formatCurrency(subtotal2)}</div>
+                <div className="RequestPayment-table-totalprice">
+                    <div className="RequestPayment-row">
+                        <div className="RequestPayment-cell-left">合計</div>
+                        <div className="RequestPayment-cell-right">{formatCurrency(subtotal2)}</div>
                     </div>
                 </div>
 

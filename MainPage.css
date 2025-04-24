@@ -246,6 +246,7 @@ background-color: transparent; /* 移除背景顏色 */
   width: 100%;                    /* 讓輸入框寬度自適應 */
   border-radius: 10px;             /* 邊框圓角效果 */
   margin-bottom:30px;
+  font-size: 28px;
 }
 @media (max-width: 1700px) {
   .mailaccount{
@@ -257,6 +258,21 @@ background-color: transparent; /* 移除背景顏色 */
   border-radius: 10px;             /* 邊框圓角效果 */
   margin-bottom:30px;
 }
+}
+
+.mailtitle{
+background-color: transparent; /* 移除背景顏色 */
+  border: 1px solid white;        /* 邊框顏色為白色 */
+  color: white;                   /* 文字顏色為白色 */
+  padding: 20px;                  /* 內邊距增加 */
+  width: 100%;                    /* 讓輸入框寬度自適應 */
+  height: 40px;                   /* 明確設定高度 */
+  border-radius: 10px;             /* 邊框圓角效果 */
+ text-align: left; /* 文字對齊左側 */
+  vertical-align: top;  /* 确保文本从顶部开始 */
+  resize: none;  /* 禁止改变textarea的大小 */
+  font-size: 28px;
+  margin-bottom:30px;
 }
 
 .mailcontent{

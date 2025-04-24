@@ -1,4 +1,4 @@
-/* Quotation.css */
+/* RequestPayment.css */
 @font-face {
   font-family: 'custom-sans-serif';
   src: local('標楷體') , local('Microsoft JhengHei');
@@ -11,19 +11,19 @@
     unicode-range: U+00-024F;
 }
 
-.Quotation {
+.RequestPayment {
   font-size: 28px; /* 網頁字體大小 */
   font-family: 'custom-sans-serif', sans-serif;
 }
 
 @media (max-width: 1700px) {
-  .Quotation {
+  .RequestPayment {
       font-size: 20px; /* 網頁字體大小 */
       font-family: 'custom-sans-serif', sans-serif;
     }
 }
 
-.Quotation input {
+.RequestPayment input {
     font-family: 'custom-sans-serif', sans-serif;
     line-height: 80px; /* 行高設置為與高度一致 */
     padding: 0; /* 取消內邊距，確保文字完全可見 */
@@ -33,55 +33,55 @@
     color: white; /* 設置文字顏色 */
 }
 
-.Quotation .input-small {
+.RequestPayment .input-small {
     width: 40px;
     height: 40px;
     text-align:center;
 }
 
-.Quotation .input-medium {
+.RequestPayment .input-medium {
     width: 60px;
     height:40px;
     text-align:center;
 }
 
-.Quotation .input-large {
+.RequestPayment .input-large {
     width: 160px;
     height: 40px;
     font-size: 22px;
 }
 
-.Quotation  .input-email {
+.RequestPayment  .input-email {
     width: 270px;
     height: 40px;
     font-size: 22px;
 }
 
-.Quotation  .input-phone {
+.RequestPayment  .input-phone {
     width: 180px;
     height: 40px;
     font-size: 22px;
 }
 
-.Quotation  .input-fax {
+.RequestPayment  .input-fax {
     width: 130px;
     height: 40px;
     font-size: 22px;
 }
 
-.Quotation  .input-contactPerson {
+.RequestPayment  .input-contactPerson {
     width: 90px;
     height: 40px;
     font-size: 22px;
 }
 
 
-.Quotation .title {
+.RequestPayment .title {
   display: flex;
   flex-direction: row; /* 水平排列 */
   align-items: center; /* 垂直置中 */
   font-weight: bold;
-  font-size: 28px;
+  font-size: 24px;
   gap: 10px;
 }
 
@@ -91,10 +91,16 @@
   align-items: center; /* 垂直置中 */
 }
 
-.input-title {
+.input-title1 {
     width: 280px;
     height: 60px;
-    font-size: 28px;
+    font-size: 24px;
+}
+
+.input-title2 {
+    width: 200px;
+    height: 60px;
+    font-size: 24px;
 }
 
 
@@ -125,41 +131,41 @@
   padding: 0 !important;
 }
 
-.Quotation-table-wrapper {
+.RequestPayment-table-wrapper {
   border-collapse: collapse;
   width: 100%;
   table-layout: fixed; /* 新增這行，強制使用固定佈局 */
 }
 
-.Quotation-table-wrapper th:nth-child(1),
-.Quotation-table-wrapper td:nth-child(1) {
+.RequestPayment-table-wrapper th:nth-child(1),
+.RequestPayment-table-wrapper td:nth-child(1) {
   width: 5%;  /* 第一列寬度 */
 }
 
-.Quotation-table-wrapper th:nth-child(2),
-.Quotation-table-wrapper td:nth-child(2) {
+.RequestPayment-table-wrapper th:nth-child(2),
+.RequestPayment-table-wrapper td:nth-child(2) {
   width: 5%;  /* 第二列寬度 */
 }
 
-.Quotation-table-wrapper th:nth-child(3),
-.Quotation-table-wrapper td:nth-child(3) {
+.RequestPayment-table-wrapper th:nth-child(3),
+.RequestPayment-table-wrapper td:nth-child(3) {
   width: 35%;  /* 第三列寬度 */
 }
 
-.Quotation-table-wrapper th:nth-child(4),
-.Quotation-table-wrapper td:nth-child(4) {
+.RequestPayment-table-wrapper th:nth-child(4),
+.RequestPayment-table-wrapper td:nth-child(4) {
   width: 15%;  /* 第四列寬度 */
 }
 
-.Quotation-table-wrapper th:nth-child(5),
-.Quotation-table-wrapper td:nth-child(5) {
+.RequestPayment-table-wrapper th:nth-child(5),
+.RequestPayment-table-wrapper td:nth-child(5) {
   width: 40%;  /* 第五列寬度 */
 }
 
 
 
-.Quotation-table-wrapper th,
-.Quotation-table-wrapper td {
+.RequestPayment-table-wrapper th,
+.RequestPayment-table-wrapper td {
   border: 1px solid #ddd;
   height: 40px; /* 或你想要的高度 */
   padding: 0;   /* 這很重要，避免 td 自己也有 padding */
@@ -167,14 +173,14 @@
 
 
 /* 取消最左側表頭的下邊框 */
-.Quotation-table-wrapper th:first-child {
+.RequestPayment-table-wrapper th:first-child {
    border-top: 1px solid transparent;
    border-left: 1px solid transparent;
    border-bottom: 1px solid transparent;
 }
 
 /* 取消叉叉按鈕的上邊框 */
-.Quotation-table-wrapper td:first-child {
+.RequestPayment-table-wrapper td:first-child {
   border-left: 1px solid transparent;
   border-bottom: 1px solid transparent;
 }
@@ -182,7 +188,7 @@
 
 
 /* 刪除按鈕樣式調整 */
-.Quotation-table-delete-btn {
+.RequestPayment-table-delete-btn {
   background-color: transparent !important;
   color: white !important;
   border: none !important; /* 確保按鈕本身沒有邊框 */
@@ -194,7 +200,7 @@
   font-size: 20px;
 }
 
-.Quotation-table-delete-btn:hover {
+.RequestPayment-table-delete-btn:hover {
   background-color: #787878 !important;
 }
 
@@ -231,7 +237,7 @@
     background-color: #D3B03D;
 }
 
-.Quotation .select_items {
+.RequestPayment .select_items {
     width: 100%;
   height: 100%;
   padding: 0; /* ⬅️ 重點：拿掉 padding */
@@ -243,8 +249,9 @@ border: none;
   font-size: 100%;
   line-height: 1; /* ⬅️ 保證高度純粹來自父容器，不多加垂直空間 */
   background: transparent;
+  font-family: 'custom-sans-serif', sans-serif;
 }
-.Quotation .select_items option {
+.RequestPayment .select_items option {
     background-color: #192F42;
     font-family: 'custom-sans-serif', sans-serif;
 }
@@ -279,7 +286,7 @@ border: none;
   width: 100%;
 }
 
-.Quotation-table-totalprice {
+.RequestPayment-table-totalprice {
   display: flex;
   flex-direction: column;
   width: 60%;
@@ -287,32 +294,31 @@ border: none;
   margin-bottom:50px;
 }
 
-.Quotation-row {
+.RequestPayment-row {
   display: flex;
   width: 100%;
 
 }
 
-.Quotation-cell {
+.RequestPayment-cell {
   padding: 10px;
   border-left: 1px solid #000;
   margin-bottom:10px;
 }
 
-.Quotation-cell:first-child {
+.RequestPayment-cell:first-child {
   border-left: none;
 }
 
-.Quotation-cell.left {
+.RequestPayment-cell-left {
   width: 75%;
   text-align: right;
-  background-color: #F9D9CA;
-  color:black;
+  color:white;
   font-weight: bold;
 
 }
 
-.Quotation-cell.right {
+.RequestPayment-cell-right {
   width: 25%;
  border-bottom: 1px solid white;
  text-align: right;

@@ -62,7 +62,6 @@
 .textarea-box {
     width: 990px;          /* 設定寬度 */
     height: 340px;         /* 設定高度 */
-    padding: 10px;         /* 內部邊距 */
     border: 1px solid #ccc; /* 邊框樣式 */
     border-radius: 5px;    /* 圓角 */
     font-family: 'custom-sans-serif', sans-serif; /* 設定字體 */
@@ -77,9 +76,8 @@
 
 @media (max-width: 1700px) {
   .textarea-box {
-    width: 860px;          /* 設定寬度 */
+    width: 870px;          /* 設定寬度 */
     height: 290px;         /* 設定高度 */
-    padding: 10px;         /* 內部邊距 */
     border: 1px solid #ccc; /* 邊框樣式 */
     border-radius: 5px;    /* 圓角 */
     font-family: 'custom-sans-serif', sans-serif; /* 設定字體 */

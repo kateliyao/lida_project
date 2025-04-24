@@ -42,26 +42,26 @@ const Quotation = ({ user }) => {
 
     // 透過公司ID帶出公司名稱與表單編號
     const handleSearch = async (e) => {
-    e.preventDefault();
-    if (companyId) {
-        try {
-            const response = await fetch(`${apiUrl}/api/getCompanyName?companyId=${companyId}`);
-            const data = await response.json();
+        e.preventDefault();
+        if (companyId) {
+            try {
+                const response = await fetch(`${apiUrl}/api/getCompanyName?companyId=${companyId}`);
+                const data = await response.json();
 
-            if (response.ok && data.companyName) {
-                setCompanyName(data.companyName);
-                setErrorMessage('');
-            } else {
-                setCompanyName('');
-                setErrorMessage('找不到對應的公司名稱');
+                if (response.ok && data.companyName) {
+                    setCompanyName(data.companyName);
+                    setErrorMessage('');
+                } else {
+                    setCompanyName('');
+                    setErrorMessage('找不到對應的公司名稱');
+                }
+            } catch (err) {
+                setErrorMessage('查詢失敗，請稍後重試');
             }
-        } catch (err) {
-            setErrorMessage('查詢失敗，請稍後重試');
+        } else {
+            setErrorMessage('請輸入公司編碼');
         }
-    } else {
-        setErrorMessage('請輸入公司編碼');
-    }
-};
+    };
 
     const buttonRef = useRef();
 
@@ -164,50 +164,72 @@ useEffect(() => {
 }, []);
 
     // 在 Quotation 組件中添加提交處理函數
-const handleSubmit = async (e) => {
-    e.preventDefault();
+    const handleSubmit = async (e) => {
+        setErrorMessage('');
+        e.preventDefault();
 
-    // 驗證必填欄位
-//     if (!companyId || !companyName) {
-//         setErrorMessage('公司編碼和公司名稱為必填欄位');
-//         return;
-//     }
+        // 檢查是否有任何行的 item 或 fee 是空白
+        const hasEmptyFields = rows.some(row => {
+            return row.item === '' || row.fee === '';
+        });
 
-    try {
-        // 準備主表數據
-        const quotationData = {
-            quotation_id: formId,
-            quotation_date: formattedDate,
-            contact_email: email,
-            contact_phone: phone,
-            contact_fax: fax,
-            contact_person: contactPerson,
-            company_name: companyName,
-            company_contact_person: otherContactPerson,
-            subtotal_amount: subtotal,
-            tax_amount: tax,
-            total_amount: total,
-            user_name: user
-        };
+        if (hasEmptyFields) {
+            alert('請正確選擇項目並確認單價(未稅)包含金額後再提交');
+            return;
+        }
 
-        // 準備細項數據
-        const itemsData = rows.map((row, index) => {
-  const rawFee = row.fee;
 
-  // 將 $ 和 , 移除，保留非數字原樣
-  const cleanFee = /^[\d\$,]+$/.test(rawFee)
-    ? rawFee.replace(/[,\$]/g, '')
-    : rawFee;
+        // 檢查是否有任何行的 fee 是 "客製化"
+        const hasCustomizedFee = rows.some(row =>
+            typeof row.fee === 'string' && row.fee.includes('客製化')
+        );
 
-  return {
-    quotation_id: formId,
-    subtitle_no: index + 1,
-    subtitle: row.item,
-    fee: cleanFee,
-    note: row.note,
-    user_name: user
-  };
-});
+        if (hasCustomizedFee) {
+            alert('請將所有「單價(未稅)」欄位中的「客製化」更改為具體數字後再提交');
+            return;
+        }
+
+        // 驗證必填欄位
+    //     if (!companyId || !companyName) {
+    //         setErrorMessage('公司編碼和公司名稱為必填欄位');
+    //         return;
+    //     }
+
+        try {
+            // 準備主表數據
+            const quotationData = {
+                quotation_id: formId,
+                quotation_date: formattedDate,
+                contact_email: email,
+                contact_phone: phone,
+                contact_fax: fax,
+                contact_person: contactPerson,
+                company_name: companyName,
+                company_contact_person: otherContactPerson,
+                subtotal_amount: subtotal,
+                tax_amount: tax,
+                total_amount: total,
+                user_name: user
+            };
+
+            // 準備細項數據
+            const itemsData = rows.map((row, index) => {
+      const rawFee = row.fee;
+
+      // 將 $ 和 , 移除，保留非數字原樣
+      const cleanFee = /^[\d\$,]+$/.test(rawFee)
+        ? rawFee.replace(/[,\$]/g, '')
+        : rawFee;
+
+      return {
+        quotation_id: formId,
+        subtitle_no: index + 1,
+        subtitle: row.item,
+        fee: cleanFee,
+        note: row.note,
+        user_name: user
+      };
+    });
 
 
         // 發送請求到後端
@@ -231,9 +253,19 @@ const handleSubmit = async (e) => {
                     // 創建一個臨時連結來觸發文件下載
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob); // 創建 blob 物件 URL
-                    link.download = '憑證統計表.pdf'; // 設定下載檔案的名稱
+                    link.download = '報價單.pdf'; // 設定下載檔案的名稱
                     //link.click(); // 自動觸發下載
                     alert('表單提交成功！');
+
+                    // 重置表單狀態
+                    setRows([{ item: '', fee: '', note: '' }]);
+                    setCompanyId('');
+                    setCompanyName('');
+                    setOtherContactPerson('');
+                    setErrorMessage('');
+
+                    // 生成新的報價單編號
+                    await generateQuotationNumber();
                 } else {
                     // 如果不是 PDF，嘗試讀取 JSON 錯誤訊息
                     const result = await response.json();
@@ -241,6 +273,7 @@ const handleSubmit = async (e) => {
                     alert('提交表單失敗: ' + result.message);
                 }
         } else {
+            const result = await response.json();
             setErrorMessage(result.message || '暫存失敗');
         }
     } catch (error) {
@@ -255,9 +288,7 @@ const handleSubmit = async (e) => {
                 <div style={{ display: 'flex'}}>
                     <div style={{ flex: 1.5, textAlign: 'left',fontSize:'30px' }}>報價單</div>
                     <div style={{ flex: 1, textAlign: 'left' }}>
-                        <div>報價單編號:{formId}
-                            {errorMessage && <p style={{ color: 'red', marginLeft: '10px' }}>{errorMessage}</p>}
-                        </div>
+                        <div>報價單編號:{formId}</div>
 
                         <div>報價日期:{formattedDate}</div>
                     </div>
@@ -312,7 +343,7 @@ const handleSubmit = async (e) => {
                     value={companyId}
                     onChange={handleCompanyIdChange}
                     placeholder="輸入公司編碼"
-                    required />
+                    />
                     <button type="button" onClick={handleSearch} className="search_button">查詢公司名稱</button>
                 </div>
 
@@ -321,22 +352,22 @@ const handleSubmit = async (e) => {
                         <label style={{ marginRight: '8px' }}>TO</label>
                         <input
                         type="text"
-                        className="input-title"
+                        className="input-title1"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         placeholder="請輸入公司名稱"
-                        />
+                        required />
                     </div>
 
                     <div className="input-title-group" style={{ flex: 1}}>
                         <label style={{ marginRight: '8px' }}>聯絡人:</label>
                         <input
                         type="text"
-                        className="input-title"
+                        className="input-title2"
                         value={otherContactPerson}
                         onChange={(e) => setOtherContactPerson(e.target.value)}
                         placeholder="請輸入聯絡人名稱"
-                        />
+                        required />
                     </div>
                 </div>
 
@@ -399,39 +430,39 @@ const handleSubmit = async (e) => {
                                     </td>
 
                                     <td className="table-seamless-cell">
-  <input
-    type="text"
-    className="table-seamless-input"
-    value={row.fee}
-    onChange={(e) => {
-      let value = e.target.value;
+                                        <input
+                                        type="text"
+                                        className="table-seamless-input"
+                                        value={row.fee}
+                                        onChange={(e) => {
+                                        let value = e.target.value;
 
-      // 如果是數字或貨幣格式，則處理格式化
-      if (/^[\d,]+$/.test(value.replace(/\$/g, ''))) {
-        const numValue = value.replace(/[^\d]/g, '');
-        if (numValue) {
-          value = `$${parseInt(numValue, 10).toLocaleString()}`;
-        } else {
-          value = '';
-        }
-      }
+                                        // 如果是數字或貨幣格式，則處理格式化
+                                        if (/^[\d,]+$/.test(value.replace(/\$/g, ''))) {
+                                        const numValue = value.replace(/[^\d]/g, '');
+                                        if (numValue) {
+                                        value = `$${parseInt(numValue, 10).toLocaleString()}`;
+                                        } else {
+                                        value = '';
+                                        }
+                                        }
 
-      const updatedRows = [...rows];
-      updatedRows[index].fee = value;
-      setRows(updatedRows);
-    }}
-    onBlur={(e) => {
-      const value = e.target.value;
-      if (/^\$?[\d,]+$/.test(value)) {
-        const numValue = value.replace(/[^\d]/g, '');
-        const updatedRows = [...rows];
-        updatedRows[index].fee = numValue ? `$${parseInt(numValue, 10).toLocaleString()}` : '';
-        setRows(updatedRows);
-      }
-    }}
-    style={{ textAlign: 'right' }}
-  />
-</td>
+                                        const updatedRows = [...rows];
+                                        updatedRows[index].fee = value;
+                                        setRows(updatedRows);
+                                        }}
+                                        onBlur={(e) => {
+                                        const value = e.target.value;
+                                        if (/^\$?[\d,]+$/.test(value)) {
+                                        const numValue = value.replace(/[^\d]/g, '');
+                                        const updatedRows = [...rows];
+                                        updatedRows[index].fee = numValue ? `$${parseInt(numValue, 10).toLocaleString()}` : '';
+                                        setRows(updatedRows);
+                                        }
+                                        }}
+                                        style={{ textAlign: 'right' }}
+                                        />
+                                    </td>
 
                                     <td className="table-seamless-cell">
                                         <input
@@ -455,19 +486,19 @@ const handleSubmit = async (e) => {
                 <div className="divider-line" />
 
                 <div className="Quotation-table-totalprice">
-  <div className="Quotation-row">
-    <div className="Quotation-cell left">小計</div>
-    <div className="Quotation-cell right">{formatCurrency(subtotal)}</div>
-  </div>
-  <div className="Quotation-row">
-    <div className="Quotation-cell left">營業稅</div>
-    <div className="Quotation-cell right">{formatCurrency(tax)}</div>
-  </div>
-  <div className="Quotation-row">
-    <div className="Quotation-cell left">合計</div>
-    <div className="Quotation-cell right">{formatCurrency(total)}</div>
-  </div>
-</div>
+                    <div className="Quotation-row">
+                    <div className="Quotation-cell-left">小計</div>
+                    <div className="Quotation-cell-right">{formatCurrency(subtotal)}</div>
+                    </div>
+                    <div className="Quotation-row">
+                    <div className="Quotation-cell-left">營業稅</div>
+                    <div className="Quotation-cell-right">{formatCurrency(tax)}</div>
+                    </div>
+                    <div className="Quotation-row">
+                    <div className="Quotation-cell-left">合計</div>
+                    <div className="Quotation-cell-right">{formatCurrency(total)}</div>
+                    </div>
+                </div>
 
 
 <div style={{ textAlign: 'left' }}>◎申請案件草稿經出具後取消申請者，仍需酌收工本作業費。</div>
@@ -492,6 +523,7 @@ const handleSubmit = async (e) => {
 
             </div>
                     <button ref={buttonRef} type="submit" className="submit_button">提交</button>
+                    {errorMessage && <p style={{ color: 'red', marginLeft: '10px' }}>{errorMessage}</p>}
         </form>
     );
 };

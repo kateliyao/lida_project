@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import logo from './assets/logo.png';
 import './Login.css';
 
@@ -7,6 +8,7 @@ function Login ({ onLogin }) {
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const apiUrl = import.meta.env.VITE_API_URL;
+    const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -26,7 +28,12 @@ function Login ({ onLogin }) {
             const data = await response.json();
 
             if (response.ok && data.success) {
-              onLogin(username);
+                onLogin(username);
+                if (username) {
+                    navigate(`/${username}/mainpage`); // 依照 username 跳轉到對應的頁面
+                } else {
+                    setErrorMessage('vendorCode不存在。');
+                }
             } else {
               setErrorMessage(data.message || '錯誤的帳號或密碼，請重新輸入。');
             }

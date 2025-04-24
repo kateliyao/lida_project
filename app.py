@@ -452,32 +452,54 @@ def staging_area():
         cursor.execute(role_query, (user,))
         user_role = cursor.fetchone()
 
-        # 如果查詢不到用户角色，回傳錯誤訊息
-        if user_role is None:
-            logging.warning(f"User not found: {user}")
-            return jsonify({'success': False, 'message': 'User not found'}), 404
-
-        # 根據用戶的角色設置不同的查詢條件
+        # 使用 UNION ALL 查詢 formA 和 quotation 資料
         if user_role[0] == 'admin':
-            query = "SELECT form_id, pdf_name, form_status,user_name FROM formA WHERE form_status = 0"
+            query = """
+                        SELECT form_id, pdf_name, form_status, user_name, '憑證統計表' AS form_type
+                        FROM formA
+                        WHERE form_status = 0
+                        UNION ALL
+                        SELECT quotation_id AS form_id, pdf_name, form_status, user_name, '報價單' AS form_type
+                        FROM quotation
+                        WHERE form_status = 0
+                        UNION ALL
+                        SELECT request_payment_id AS form_id, pdf_name, form_status, user_name, '請款單' AS form_type
+                        FROM request_payment
+                        WHERE form_status = 0
+                    """
+            cursor.execute(query)
         else:
-            query = ("SELECT form_id, pdf_name, form_status,user_name FROM formA WHERE form_status = 0 AND user_name = "
-                     "%s")
+            query = """
+                        SELECT form_id, pdf_name, form_status, user_name, '憑證統計表' AS form_type
+                        FROM formA
+                        WHERE form_status = 0 AND user_name = %s
+                        UNION ALL
+                        SELECT quotation_id AS form_id, pdf_name, form_status, user_name, '報價單' AS form_type
+                        FROM quotation
+                        WHERE form_status = 0 AND user_name = %s
+                        UNION ALL
+                        SELECT request_payment_id AS form_id, pdf_name, form_status, user_name, '請款單' AS form_type
+                        FROM request_payment
+                        WHERE form_status = 0 AND user_name = %s
+                    """
+            cursor.execute(query, (user, user, user))
 
-        cursor.execute(query, (user,) if user_role[0] != 'admin' else ())
-        forms = cursor.fetchall()
+        # 獲取查詢結果
+        results = cursor.fetchall()
 
         # 構建回傳的 JSON 數據
         form_list = []
-        for form in forms:
+        for form in results:
             form_data = {
                 "form_id": form[0],
                 "pdf_name": form[1],
                 "form_status": form[2],
-                "user_name": form[3]
+                "user_name": form[3],
+                "form_type": form[4],
             }
             form_list.append(form_data)
 
+        print(f"form_list:{form_list}")
         return jsonify({'success': True, 'forms': form_list}), 200
 
     except Exception as e:
@@ -507,6 +529,10 @@ def delete_form():
     try:
         data = request.get_json()
         form_id = data.get('formId')
+        form_type = data.get('formType')
+
+        print(f"form_id{form_id}")
+        print(f"form_type{form_type}")
 
         if not form_id:
             return jsonify({'success': False, 'message': 'formId 是必填的'}), 400
@@ -514,11 +540,27 @@ def delete_form():
         cursor = get_db_connection()
 
         # 更新表單狀態=2 (已删除)
-        update_query = """
-                    UPDATE formA 
-                    SET form_status = 2, updated_time = NOW() 
-                    WHERE form_id = %s
-                """
+        # 根據 form_type 選擇不同的表和欄位
+        if form_type == '報價單':
+            update_query = """
+                        UPDATE quotation
+                        SET form_status = 2, updated_time = NOW()
+                        WHERE quotation_id = %s
+                    """
+        elif form_type == '憑證統計表':
+            update_query = """
+                        UPDATE formA
+                        SET form_status = 2, updated_time = NOW()
+                        WHERE form_id = %s
+                    """
+        elif form_type == '請款單':
+            update_query = """
+                        UPDATE request_payment
+                        SET form_status = 2, updated_time = NOW()
+                        WHERE request_payment_id = %s
+                    """
+        else:
+            return jsonify({'success': False, 'message': '未知的表單類型'}), 400
         cursor.execute(update_query, (form_id,))
 
         mysql.connection.commit()
@@ -577,7 +619,16 @@ def merge_pdf():
         parts = first_pdf_name.split('_')
 
         company_name = parts[0]  # 公司名稱
-        system_date = parts[2]  # 系統日期
+        form_type = parts[1]
+        raw_date_segment  = parts[2]  # 系統日期
+
+        # 針對不同 form_type 判斷如何取出日期
+        if form_type == '報價單':
+            # 日期是開頭的 8 碼，例如 "20250422A040" → "20250422"
+            system_date = raw_date_segment[:8]
+        else:
+            # 憑證統計表或其他類型直接就是日期
+            system_date = raw_date_segment
 
         cursor = get_db_connection()
 
@@ -634,7 +685,7 @@ def merge_pdf():
         cursor.connection.commit()
 
         # 回傳合併後的 PDF檔名
-        return jsonify({"success": True, "mergedPdf": merged_pdf, "mergedPdfUrl": merged_pdf_url})
+        return jsonify({"success": True, "mergedPdf": merged_pdf, "mergedPdfUrl": merged_pdf_url, "formType": form_type})
 
     except Exception as e:
         logging.error(f"Error during PDF merge process: {str(e)}")
@@ -675,24 +726,33 @@ def upload_pdf():
 def update_mail_pdf_name():
     data = request.get_json()
     pdf_names = data.get('pdfNames')  # 所有的 PDF 文件名稱
+    merged_pdf_name = data.get('mergedPdf')  # 如果有合併檔案
 
     cursor = None
     try:
+        if not pdf_names:
+            return jsonify({'success': False, 'message': '缺少 pdfNames'}), 400
+
         cursor = get_db_connection()
 
-        # 如果只有一個pdf，更新對應表單的send_mail_pdf_name
-        if len(pdf_names) == 1:
+        for pdf_name in pdf_names:
+            if '憑證統計表' in pdf_name:
+                update_table = 'formA'
+            elif '報價單' in pdf_name:
+                update_table = 'quotation'
+            elif '請款單' in pdf_name:
+                update_table = 'request_payment'
+            else:
+                logging.warning(f"未知類型的 PDF: {pdf_name}")
+                continue  # 忽略未知的類型
+
+            # 判斷要使用合併後的名稱還是原始 pdf_name
+            target_pdf_name = merged_pdf_name if merged_pdf_name else pdf_name
+
+            # 執行更新
             cursor.execute(
-                "UPDATE formA SET send_mail_pdf_name = %s WHERE pdf_name = %s",
-                (pdf_names[0], pdf_names[0])  # 對應的pdf_name和form_id
-            )
-        else:
-            # 如果有多個pdf，處理為合併pdf
-            merged_pdf_name = data.get('mergedPdf')  # 合併後的文件名稱
-            placeholders = ', '.join(['%s'] * len(pdf_names))  # 生成占位符
-            cursor.execute(
-                f"UPDATE formA SET send_mail_pdf_name = %s WHERE pdf_name IN ({placeholders})",
-                [merged_pdf_name] + pdf_names  # 合併數據，將 merged_pdf_name 和 pdf_names 傳遞進去
+                f"UPDATE {update_table} SET send_mail_pdf_name = %s WHERE pdf_name = %s",
+                (target_pdf_name, pdf_name)
             )
 
         mysql.connection.commit()
@@ -708,17 +768,29 @@ def update_mail_pdf_name():
             cursor.close()
 
 
+
 # 發送郵件的函數
-def send_email(file_path, recipient_email, mail_content, file_name_first_part):
-    sender_email = "lida7239718@gmail.com"  # 發送人郵件地址
-    sender_password = "tjzcodkjmftmvjeh"  # 發送人應用密碼
+def send_email(file_path, recipient_email, mail_content, file_name_first_part, form_type, file_name, mail_title):
+    #sender_email = "lida7239718@gmail.com"  # 發送人郵件地址
+    #sender_password = "tjzcodkjmftmvjeh"  # 發送人應用密碼
+
+    sender_email = "kate1sync@gmail.com"  # 發送人郵件地址
+    sender_password = "nyprqzhhdvjtmcyl"  # 發送人應用密碼
+
+    if "合併檔案" in file_name:
+        second_subject = form_type
+    else:
+        parts = file_name.split('_')
+        form_type = parts[1]
+        second_subject = form_type
 
     try:
         # 設置郵件內容
         msg = MIMEMultipart()
         msg['From'] = sender_email
         msg['To'] = recipient_email
-        msg['Subject'] = f"{file_name_first_part}_憑證統計表"
+        # msg['Subject'] = f"{file_name_first_part}_{second_subject}"
+        msg['Subject'] = mail_title
 
         body = mail_content
         msg.attach(MIMEText(body, 'plain'))
@@ -751,16 +823,35 @@ def update_form_status(file_name):
     try:
         cursor = get_db_connection()
 
-        # 信件成功寄出後，根據pdf_name更新form_status
-        update_query = """
-                            UPDATE formA 
-                            SET form_status = 1, updated_time = NOW() 
-                            WHERE send_mail_pdf_name = %s
-                        """
-        cursor.execute(update_query, (file_name,))
+        # 更新 formA
+        cursor.execute("""
+                    UPDATE formA 
+                    SET form_status = 1, updated_time = NOW() 
+                    WHERE send_mail_pdf_name = %s
+                """, (file_name,))
+        affected_formA = cursor.rowcount  # 可選：查看有幾筆被更新
+
+        # 更新 quotation
+        cursor.execute("""
+                    UPDATE quotation 
+                    SET form_status = 1, updated_time = NOW() 
+                    WHERE send_mail_pdf_name = %s
+                """, (file_name,))
+        affected_quotation = cursor.rowcount  # 可選：查看有幾筆被更新
+
+        # 更新 request_payment
+        cursor.execute("""
+                        UPDATE request_payment 
+                        SET form_status = 1, updated_time = NOW() 
+                        WHERE send_mail_pdf_name = %s
+                    """, (file_name,))
+        affected_request_payment = cursor.rowcount  # 可選：查看有幾筆被更新
 
         mysql.connection.commit()
-        logging.info(f"Successfully updated form_status to 1 for file: {file_name}")
+        logging.info(
+            f"Successfully updated form_status to 1 for file: {file_name} | "
+            f"formA updated: {affected_formA}, quotation updated: {affected_quotation}, request_payment update: {affected_request_payment}"
+        )
 
     except Exception as e:
         logging.error(f"Error updating database: {e}")
@@ -780,6 +871,8 @@ def send_email_request():
         recipient_email = data.get('recipient')
         pdf_info = data.get('pdfInfo')
         mail_content = data.get('mailContent')
+        form_type = data.get('formType')
+        mail_title = data.get('mailtitle')
 
         if not recipient_email or not pdf_info:
             logging.error("Missing recipient email or PDF information")
@@ -801,7 +894,7 @@ def send_email_request():
             # 引用發送郵件函數
             try:
                 logging.info("Attempting to send email for file: %s", file_name)
-                send_email(file_path_name, recipient_email, mail_content, file_name_first_part)
+                send_email(file_path_name, recipient_email, mail_content, file_name_first_part, form_type, file_name, mail_title)
                 logging.info("Email sent successfully for file: %s", file_name)
             except Exception as e:
                 logging.error("Error sending email for file %s: %s", file_name, e)
@@ -847,22 +940,54 @@ def history_data():
 
         # 根據用戶的角色設置不同的查詢條件
         if user_role[0] == 'admin':
-            query = "SELECT form_id, pdf_name, form_status,user_name FROM formA WHERE form_status = 1"
+            query = """
+                        SELECT * FROM (
+                            SELECT form_id, pdf_name, form_status, user_name, '憑證統計表' AS form_type, updated_time
+                            FROM formA
+                            WHERE form_status = 1
+                            UNION ALL
+                            SELECT quotation_id AS form_id, pdf_name, form_status, user_name, '報價單' AS form_type, updated_time
+                            FROM quotation
+                            WHERE form_status = 1
+                            UNION ALL
+                            SELECT request_payment_id AS form_id, pdf_name, form_status, user_name, '請款單' AS form_type, updated_time
+                            FROM request_payment
+                            WHERE form_status = 1
+                        ) AS combined_forms
+                        ORDER BY updated_time DESC
+                    """
+            cursor.execute(query)
         else:
-            query = ("SELECT form_id, pdf_name, form_status,user_name FROM formA WHERE form_status = 1 AND user_name = "
-                     "%s")
+            query = """
+                        SELECT * FROM (
+                            SELECT form_id, pdf_name, form_status, user_name, '憑證統計表' AS form_type, updated_time
+                            FROM formA
+                            WHERE form_status = 1 AND user_name = %s
+                            UNION ALL
+                            SELECT quotation_id AS form_id, pdf_name, form_status, user_name, '報價單' AS form_type, updated_time
+                            FROM quotation
+                            WHERE form_status = 1 AND user_name = %s
+                            UNION ALL
+                            SELECT request_payment_id AS form_id, pdf_name, form_status, user_name, '請款單' AS form_type, updated_time
+                            FROM request_payment
+                            WHERE form_status = 1 AND user_name = %s
+                        ) AS combined_forms
+                        ORDER BY updated_time DESC
+                    """
+            cursor.execute(query, (user, user, user))
 
-        cursor.execute(query, (user,) if user_role[0] != 'admin' else ())
-        forms = cursor.fetchall()
+        results = cursor.fetchall()
 
         # 構建回傳的 JSON 數據
         form_list = []
-        for form in forms:
+        for form in results:
             form_data = {
                 "form_id": form[0],
                 "pdf_name": form[1],
                 "form_status": form[2],
-                "user_name": form[3]
+                "user_name": form[3],
+                "form_type": form[4],
+                "updated_time": form[5],
             }
             form_list.append(form_data)
 
@@ -1278,11 +1403,28 @@ def save_quotation():
         if not quotation:
             return jsonify({'success': False, 'message': '缺少主表數據'}), 400
 
+        quotation_id = quotation.get('quotation_id')
+        quotation_date = quotation.get('quotation_date')
+        contact_email = quotation.get('contact_email')
+        contact_phone = quotation.get('contact_phone')
+        contact_fax = quotation.get('contact_fax')
+        contact_person = quotation.get('contact_person')
+        company_name = quotation.get('company_name')
+        company_contact_person = quotation.get('company_contact_person')
+        subtotal_amount = float(quotation.get('subtotal_amount', 0))
+        tax_amount = float(quotation.get('tax_amount', 0))
+        total_amount = float(quotation.get('total_amount', 0))
+        user_name = quotation.get('user_name')
+
+        formatted_subtotal_amount = f"({abs(subtotal_amount):,.0f})" if subtotal_amount < 0 else f"{subtotal_amount:,.0f}"
+        formatted_tax_amount = f"({abs(tax_amount):,.0f})" if tax_amount < 0 else f"{tax_amount:,.0f}"
+        formatted_total_amount = f"({abs(total_amount):,.0f})" if total_amount < 0 else f"{total_amount:,.0f}"
+
         cursor = get_db_connection()
 
         # 先刪除舊的細項數據
         delete_query = "DELETE FROM quotation WHERE quotation_id = %s"
-        cursor.execute(delete_query, (quotation.get('quotation_id'),))
+        cursor.execute(delete_query, (quotation_id,))
 
         # 插入主表數據
         insert_quotation_query = """
@@ -1306,18 +1448,18 @@ def save_quotation():
                 updated_time = NOW()
         """
         cursor.execute(insert_quotation_query, (
-            quotation.get('quotation_id'),
-            quotation.get('quotation_date'),
-            quotation.get('contact_email'),
-            quotation.get('contact_phone'),
-            quotation.get('contact_fax'),
-            quotation.get('contact_person'),
-            quotation.get('company_name'),
-            quotation.get('company_contact_person'),
-            float(quotation.get('subtotal_amount', 0)),
-            float(quotation.get('tax_amount', 0)),
-            float(quotation.get('total_amount', 0)),
-            quotation.get('user_name')
+            quotation_id,
+            quotation_date,
+            contact_email,
+            contact_phone,
+            contact_fax,
+            contact_person,
+            company_name,
+            company_contact_person,
+            subtotal_amount,
+            tax_amount,
+            total_amount,
+            user_name,
         ))
 
         # 插入新的細項數據
@@ -1328,21 +1470,35 @@ def save_quotation():
                 ) VALUES (%s, %s, %s, %s, %s, %s)
             """
             for item in items:
+                item_quotation_id = item.get('quotation_id')
+                subtitle_no = item.get('subtitle_no')
+                subtitle = item.get('subtitle')
+                fee = float(item.get('fee', 0))
+                note = item.get('note')
+                item_user_name = item.get('user_name')
+
+                formatted_fee = f"({abs(fee):,.0f})" if fee < 0 else f"{fee:,.0f}"
+                item['formatted_fee'] = formatted_fee
+
                 cursor.execute(insert_item_query, (
-                    item.get('quotation_id'),
-                    item.get('subtitle_no'),
-                    item.get('subtitle'),
-                    item.get('fee'),
-                    item.get('note'),
-                    item.get('user_name')
+                    item_quotation_id,
+                    subtitle_no,
+                    subtitle,
+                    fee,
+                    note,
+                    item_user_name
                 ))
 
         cursor.connection.commit()
 
-        html_content = render_template('quotation_template.html', app_dir=app_dir, quotation_id=quotation.get('quotation_id'))
+        html_content = render_template('quotation_template.html', app_dir=app_dir,
+                                       quotation_id=quotation_id, quotation_date=quotation_date, contact_email=contact_email,
+                                       contact_phone=contact_phone, contact_fax=contact_fax, contact_person=contact_person,
+                                       company_name=company_name, company_contact_person=company_contact_person, formatted_subtotal_amount=formatted_subtotal_amount,
+                                       formatted_tax_amount=formatted_tax_amount, formatted_total_amount=formatted_total_amount, user_name=user_name, items=items)
 
         # 生成 PDF 文件名
-        pdf_filename = f"報價單.pdf"
+        pdf_filename = f"{company_name}_報價單_{quotation_id}.pdf"
 
         # encoded_pdf_filename = urllib.parse.quote(pdf_filename)
         # 如果文件名包含 "啓勝美術社" 或 "慶峯榮金屬企業社" 或 "一块田創意工作室" 才進行 URL 編碼，否則保持原文件名
@@ -1362,10 +1518,10 @@ def save_quotation():
             'encoding': 'UTF-8',  # 可以解決中文亂碼問題
             'no-outline': None,  # 禁用文檔輪廓
             'quiet': None,  # 禁用日志
-            'margin-top': '5mm',  # 可調整pdf邊界問題
-            # 'margin-right': '0mm',
+            'margin-top': '10mm',  # 可調整pdf邊界問題
+            'margin-right': '8mm',
             # 'margin-bottom': '0mm',
-            # 'margin-left': '0mm',
+            'margin-left': '8mm',
         }
         # 將 HTML 文件轉換為 PDF
         #pdfkit.from_string(html_content, pdf_path, options=options)
@@ -1380,6 +1536,7 @@ def save_quotation():
             "%E5%95%93%E5%8B%9D%E7%BE%8E%E8%A1%93%E7%A4%BE": "啓勝美術社",
             "%E6%85%B6%E5%B3%AF%E6%A6%AE%E9%87%91%E5%B1%AC%E4%BC%81%E6%A5%AD%E7%A4%BE": "慶峯榮金屬企業社",
             "%E4%B8%80%E5%9D%97%E7%94%B0%E5%89%B5%E6%84%8F%E5%B7%A5%E4%BD%9C%E5%AE%A4": "一块田創意工作室",
+            "%E5%A0%B1%E5%83%B9%E5%96%AE": "報價單"
         }
         # 檢查文件名是否需要更改
         new_filename = encoded_pdf_filename
@@ -1396,14 +1553,14 @@ def save_quotation():
             os.rename(old_filepath, new_filepath)
 
         # # 更新資料庫中的pdf_name欄位
-        # update_query = """
-        #                     UPDATE formA
-        #                     SET pdf_name = %s
-        #                     WHERE form_id = %s
-        #                 """
-        # cursor.execute(update_query, (pdf_filename, formId))
-        # mysql.connection.commit()
-        # logging.info(f"PDF generated successfully for formId: {formId}. PDF path: {pdf_path}")
+        update_query = """
+                            UPDATE quotation
+                            SET pdf_name = %s
+                            WHERE quotation_id = %s
+                        """
+        cursor.execute(update_query, (pdf_filename, quotation_id))
+        mysql.connection.commit()
+        logging.info(f"PDF generated successfully for quotation_id: {quotation_id}. PDF path: {pdf_path}")
 
         # 返回 PDF 文件
         new_filepath = os.path.join(pdf_folder, new_filename)
@@ -1547,6 +1704,29 @@ def save_request_payment():
         if not request_payment:
             return jsonify({'success': False, 'message': '缺少主表數據'}), 400
 
+        request_payment_id = request_payment.get('request_payment_id')
+        request_payment_date = request_payment.get('request_payment_date')
+        quotation_id = request_payment.get('quotation_id')
+        contact_email = request_payment.get('contact_email')
+        contact_phone = request_payment.get('contact_phone')
+        contact_fax = request_payment.get('contact_fax')
+        contact_person = request_payment.get('contact_person')
+        company_name = request_payment.get('company_name')
+        company_contact_person = request_payment.get('company_contact_person')
+        details_subtotal_amount = float(request_payment.get('details_subtotal_amount', 0))
+        details_tax_amount = float(request_payment.get('details_tax_amount', 0))
+        details_total_amount = float(request_payment.get('details_total_amount', 0))
+        fees_total_amount = float(request_payment.get('fees_total_amount', 0))
+        final_total_amount = float(request_payment.get('final_total_amount', 0))
+        user_name = request_payment.get('user_name')
+
+        # 格式化金額
+        formatted_details_subtotal = f"{details_subtotal_amount:,.0f}"
+        formatted_details_tax = f"{details_tax_amount:,.0f}"
+        formatted_details_total = f"{details_total_amount:,.0f}"
+        formatted_fees_total = f"{fees_total_amount:,.0f}"
+        formatted_final_total = f"{final_total_amount:,.0f}"
+
         cursor = get_db_connection()
 
         # 先刪除舊的細項數據
@@ -1581,21 +1761,21 @@ def save_request_payment():
                 updated_time = NOW()
         """
         cursor.execute(insert_request_payment_query, (
-            request_payment.get('request_payment_id'),
-            request_payment.get('request_payment_date'),
-            request_payment.get('quotation_id'),
-            request_payment.get('contact_email'),
-            request_payment.get('contact_phone'),
-            request_payment.get('contact_fax'),
-            request_payment.get('contact_person'),
-            request_payment.get('company_name'),
-            request_payment.get('company_contact_person'),
-            float(request_payment.get('details_subtotal_amount', 0)),
-            float(request_payment.get('details_tax_amount', 0)),
-            float(request_payment.get('details_total_amount', 0)),
-            float(request_payment.get('fees_total_amount', 0)),
-            float(request_payment.get('final_total_amount', 0)),
-            request_payment.get('user_name')
+            request_payment_id,
+            request_payment_date,
+            quotation_id,
+            contact_email,
+            contact_phone,
+            contact_fax,
+            contact_person,
+            company_name,
+            company_contact_person,
+            details_subtotal_amount,
+            details_tax_amount,
+            details_total_amount,
+            fees_total_amount,
+            final_total_amount,
+            user_name
         ))
 
         # 插入第一個表格的細項數據 (request_payment_item1)
@@ -1606,38 +1786,170 @@ def save_request_payment():
                 ) VALUES (%s, %s, %s, %s, %s, %s)
             """
             for item in items1:
+                item_request_payment_id = item.get('request_payment_id')
+                subtitle_no = item.get('subtitle_no')
+                subtitle = item.get('subtitle')
+                fee = float(item.get('fee', 0))
+                note = item.get('note')
+                item_user_name = item.get('user_name')
+
+                formatted_fee = f"({abs(fee):,.0f})" if fee < 0 else f"{fee:,.0f}"
+                item['formatted_fee'] = formatted_fee
+
                 cursor.execute(insert_item1_query, (
-                    item.get('request_payment_id'),
-                    item.get('subtitle_no'),
-                    item.get('subtitle'),
-                    item.get('fee'),
-                    item.get('note'),
-                    item.get('user_name')
+                    item_request_payment_id,
+                    subtitle_no,
+                    subtitle,
+                    fee,
+                    note,
+                    item_user_name
                 ))
 
         # 插入第二個表格的細項數據 (request_payment_item2)
         if items2:
+            filtered_items2 = []    # 過濾掉 subtitle 為空的項目
             insert_item2_query = """
                 INSERT INTO request_payment_item2 (
                     request_payment_id, subtitle_no, subtitle, fee, note, user_name
                 ) VALUES (%s, %s, %s, %s, %s, %s)
             """
             for item in items2:
+                subtitle = item.get('subtitle')
+                if not subtitle:
+                    continue  # 如果 subtitle 為空白，不處理
+
+                item_request_payment_id = item.get('request_payment_id')
+                subtitle_no = item.get('subtitle_no')
+                raw_fee = item.get('fee')
+                note = item.get('note')
+                item_user_name = item.get('user_name')
+
+                # 嘗試轉成 float（若無法轉換，fee 設為 None）
+                try:
+                    fee = float(raw_fee)
+                except (ValueError, TypeError):
+                    fee = None
+
+                # 格式化 fee（只有在 fee 是有效數字且大於 0 才格式化）
+                if fee is not None and fee > 0:
+                    formatted_fee = f"{fee:,.0f}"
+                elif fee is not None and fee < 0:
+                    formatted_fee = f"({abs(fee):,.0f})"
+                else:
+                    formatted_fee = ''
+
+                item['formatted_fee'] = formatted_fee
+                filtered_items2.append(item)
+
+                print(f"item_request_payment_id:{item_request_payment_id}")
+                print(f"subtitle_no:{subtitle_no}")
+                print(f"subtitle:{subtitle}")
+                print(f"fee:{fee}")
+                print(f"note:{note}")
+                print(f"item_user_name:{item_user_name}")
+
                 cursor.execute(insert_item2_query, (
-                    item.get('request_payment_id'),
-                    item.get('subtitle_no'),
-                    item.get('subtitle'),
-                    item.get('fee'),
-                    item.get('note'),
-                    item.get('user_name')
+                    item_request_payment_id,
+                    subtitle_no,
+                    subtitle,
+                    raw_fee,
+                    note,
+                    item_user_name
                 ))
 
         cursor.connection.commit()
 
-        return jsonify({
-            'success': True,
-            'message': '請款單已成功儲存',
-        }), 200
+        html_content = render_template('request_payment_template.html',
+                                       app_dir=app_dir,
+                                       request_payment_id=request_payment_id,
+                                       request_payment_date=request_payment_date,
+                                       quotation_id=quotation_id,
+                                       contact_email=contact_email,
+                                       contact_phone=contact_phone,
+                                       contact_fax=contact_fax,
+                                       contact_person=contact_person,
+                                       company_name=company_name,
+                                       company_contact_person=company_contact_person,
+                                       formatted_details_subtotal=formatted_details_subtotal,
+                                       formatted_details_tax=formatted_details_tax,
+                                       formatted_details_total=formatted_details_total,
+                                       formatted_fees_total=formatted_fees_total,
+                                       formatted_final_total=formatted_final_total,
+                                       user_name=user_name,
+                                       items1=items1,
+                                       items2=filtered_items2,
+                                       has_items2=bool(filtered_items2),
+                                       )
+
+        # 生成 PDF 文件名
+        pdf_filename = f"{company_name}_請款單_{request_payment_id}.pdf"
+
+        # encoded_pdf_filename = urllib.parse.quote(pdf_filename)
+        # 如果文件名包含 "啓勝美術社" 或 "慶峯榮金屬企業社" 或 "一块田創意工作室" 才進行 URL 編碼，否則保持原文件名
+        if any(keyword in pdf_filename for keyword in ["啓勝美術社", "慶峯榮金屬企業社", "一块田創意工作室"]):
+            encoded_pdf_filename = urllib.parse.quote(pdf_filename)
+        else:
+            encoded_pdf_filename = pdf_filename
+
+        # 確保 'pdfs' 目錄存在，若不存在則創建
+        pdf_folder = os.path.join(os.getcwd(), 'pdfs')  # 當前目錄下的 pdfs 資料夾
+        os.makedirs(pdf_folder, exist_ok=True)  # 如果資料夾不存在則創建
+
+        # 使用 pdfkit 生成 PDF
+        pdf_path = os.path.join(pdf_folder, encoded_pdf_filename)
+
+        options = {
+            'encoding': 'UTF-8',  # 可以解決中文亂碼問題
+            'no-outline': None,  # 禁用文檔輪廓
+            'quiet': None,  # 禁用日志
+            'margin-top': '10mm',  # 可調整pdf邊界問題
+            'margin-right': '8mm',
+            # 'margin-bottom': '0mm',
+            'margin-left': '8mm',
+        }
+        # 將 HTML 文件轉換為 PDF
+        # pdfkit.from_string(html_content, pdf_path, options=options)
+        try:
+            pdfkit.from_string(html_content, pdf_path, options=options)
+        except Exception as pdf_error:
+            logging.error(f"PDF 生成失敗: {str(pdf_error)}")
+            return jsonify({'success': False, 'message': f'PDF 生成失敗: {str(pdf_error)}'}), 500
+
+        rename_rules = {
+            "%E6%86%91%E8%AD%89%E7%B5%B1%E8%A8%88%E8%A1%A8": "憑證統計表",
+            "%E5%95%93%E5%8B%9D%E7%BE%8E%E8%A1%93%E7%A4%BE": "啓勝美術社",
+            "%E6%85%B6%E5%B3%AF%E6%A6%AE%E9%87%91%E5%B1%AC%E4%BC%81%E6%A5%AD%E7%A4%BE": "慶峯榮金屬企業社",
+            "%E4%B8%80%E5%9D%97%E7%94%B0%E5%89%B5%E6%84%8F%E5%B7%A5%E4%BD%9C%E5%AE%A4": "一块田創意工作室",
+            "%E5%A0%B1%E5%83%B9%E5%96%AE": "報價單",
+            "%E8%AB%8B%E6%AC%BE%E5%96%AE": "請款單"
+        }
+        # 檢查文件名是否需要更改
+        new_filename = encoded_pdf_filename
+        for old_str, new_str in rename_rules.items():
+            if old_str in new_filename:
+                new_filename = new_filename.replace(old_str, new_str)
+
+        # 如果文件名有變化，則進行重新命名
+        if new_filename != encoded_pdf_filename:
+            old_filepath = os.path.join(pdf_folder, encoded_pdf_filename)
+            new_filepath = os.path.join(pdf_folder, new_filename)
+
+            # 執行重新命名
+            os.rename(old_filepath, new_filepath)
+
+        # # 更新資料庫中的pdf_name欄位
+        update_query = """
+                            UPDATE request_payment
+                            SET pdf_name = %s
+                            WHERE request_payment_id = %s
+                        """
+        cursor.execute(update_query, (pdf_filename, request_payment_id))
+        mysql.connection.commit()
+        logging.info(f"PDF generated successfully for request_payment_id: {request_payment_id}. PDF path: {pdf_path}")
+
+        # 返回 PDF 文件
+        new_filepath = os.path.join(pdf_folder, new_filename)
+        return send_file(new_filepath, as_attachment=True, download_name=new_filename, mimetype='application/pdf')
 
     except Exception as e:
         logging.error(f"儲存請款單失敗: {str(e)}")

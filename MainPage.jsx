@@ -1,5 +1,5 @@
 import React, { useState,useEffect  } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Outlet, useLocation  } from 'react-router-dom';
 import logo from './assets/logo.png';
 import VoucherWhiteIcon from './assets/voucherStatisticsTable_white_icon.png';
 import VoucherBlueIcon from './assets/voucherStatisticsTable_blue_icon.png';
@@ -26,6 +26,9 @@ const MainPage = ({ onLogout,user }) => {
     console.log(window.innerWidth);
     const [activeForm, setActiveForm] = useState(null);
     const navigate = useNavigate();
+    const location = useLocation();
+    const [currentPage, setCurrentPage] = useState('');
+
 
     const handleFormClick = (form) => {
         console.log(`選擇了 ${form} 表單`);
@@ -41,6 +44,24 @@ const MainPage = ({ onLogout,user }) => {
     // 檢查用戶是否有權限查看 "統計圖表" 項目
     const canViewChart = user && user.startsWith('lda');
 
+
+    // 根據當前路由設置活動頁面
+    useEffect(() => {
+        const path = location.pathname;
+        if (path.includes('formA')) setCurrentPage('憑證統計表');
+        else if (path.includes('requestPayment')) setCurrentPage('請款單');
+        else if (path.includes('quotation')) setCurrentPage('報價單');
+        else if (path.includes('history')) setCurrentPage('歷史資料');
+        else if (path.includes('chart')) setCurrentPage('統計圖表');
+        else if (path.includes('serviceItem')) setCurrentPage('工商項目設定');
+        else if (path.includes('stagingarea')) setCurrentPage('檔案暫存區');
+    }, [location]);
+
+    // 導航函數
+    const handleNavigation = (path) => {
+        navigate(`/${user}/mainpage/${path}`);
+    };
+
     return (
     <div className="mainpage">
         <div className="top">
@@ -48,9 +69,7 @@ const MainPage = ({ onLogout,user }) => {
                 <img src={logo} alt="Logo" />
             </div>
             <div className="stagingarea-icon">
-                <button onClick={() => {
-                  navigate('/StagingArea'); // 如果需要導航到單獨的路由
-                }}
+                <button onClick={() => handleNavigation('stagingarea')}
                 style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}  // 隱藏按鈕邊框並設定為可點擊
                 >
                 <img src={StagingAreaIcon} alt="StagingAreaIcon"  />  {/* 根據需要調整圖片大小 */}
@@ -64,28 +83,28 @@ const MainPage = ({ onLogout,user }) => {
             <div>
                 <ul style={{ listStyleType: 'none', padding: 0 }}>
                     <li
-                        onClick={() => handleFormClick('A')}
+                        onClick={() => handleNavigation('formA')}
                         onMouseEnter={(e) => e.target.firstChild.src = VoucherBlueIcon}
                         onMouseLeave={(e) => e.target.firstChild.src = VoucherWhiteIcon} >
                         <img src={VoucherWhiteIcon} alt="pngA" style={{ width: '25px', marginRight: '10px' }} />
                         憑證統計表
                     </li>
                     <li
-                        onClick={() => handleFormClick('RequestPayment')}
+                        onClick={() => handleNavigation('requestPayment')}
                         onMouseEnter={(e) => e.target.firstChild.src = RequestBlueIcon}
                         onMouseLeave={(e) => e.target.firstChild.src = RequestWhiteIcon} >
                         <img src={RequestWhiteIcon} alt="pngB" style={{ width: '25px', marginRight: '10px' }} />
                         請款單
                     </li>
                     <li
-                        onClick={() => handleFormClick('Quotation')}
+                        onClick={() => handleNavigation('quotation')}
                         onMouseEnter={(e) => e.target.firstChild.src = QuotationBlueIcon}
                         onMouseLeave={(e) => e.target.firstChild.src = QuotationWhiteIcon} >
                         <img src={QuotationWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
                         報價單
                     </li>
                     <li
-                        onClick={() => handleFormClick('HISTORY')}
+                        onClick={() => handleNavigation('history')}
                         onMouseEnter={(e) => e.target.firstChild.src = HistoryBlueIcon}
                         onMouseLeave={(e) => e.target.firstChild.src = HistoryWhiteIcon} >
                         <img src={HistoryWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
@@ -95,7 +114,7 @@ const MainPage = ({ onLogout,user }) => {
                     {/* 只有 user.startsWith('lda') 的使用者才能看到統計圖表選項 */}
                     {canViewChart && (
                         <li
-                            onClick={() => handleFormClick('CHART')}
+                            onClick={() => handleNavigation('chart')}
                             onMouseEnter={(e) => e.target.firstChild.src = ChartBlueIcon}
                             onMouseLeave={(e) => e.target.firstChild.src = ChartWhiteIcon} >
                             <img src={ChartWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
@@ -105,7 +124,7 @@ const MainPage = ({ onLogout,user }) => {
 
                     {canViewChart && (
                         <li
-                            onClick={() => handleFormClick('ServiceItem')}
+                            onClick={() => handleNavigation('serviceItem')}
                             onMouseEnter={(e) => e.target.firstChild.src = ChartBlueIcon}
                             onMouseLeave={(e) => e.target.firstChild.src = ChartWhiteIcon} >
                             <img src={ChartWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
@@ -117,13 +136,7 @@ const MainPage = ({ onLogout,user }) => {
             </nav>
 
             <div className="form-area">
-                {activeForm === 'A' && <FormA user={user}/>}
-                {activeForm === 'HISTORY' && <HistoryForm user={user}/>}
-                {activeForm === 'CHART' && <ChartComponent user={user}/>}
-                {activeForm === 'Quotation' && <Quotation user={user}/>}
-                {activeForm === 'ServiceItem' && <ServiceItem user={user}/>}
-                {activeForm === 'RequestPayment' && <RequestPayment user={user}/>}
-
+                <Outlet />
             </div>
         </div>
     </div>

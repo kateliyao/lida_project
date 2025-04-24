@@ -144,3 +144,84 @@ CREATE TABLE dw.`request_payment` (
   `updated_time` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`quotation_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+drop table dw.`quotation_item`
+CREATE TABLE dw.`quotation_item` (
+  `quotation_id` varchar(12) NOT NULL,
+  subtitle_no int DEFAULT NULL,
+  `subtitle` varchar(30) DEFAULT NULL,
+  `fee` varchar(10) DEFAULT NULL,
+  `note` varchar(30) DEFAULT NULL,
+  `user_name` varchar(20) DEFAULT NULL,
+  `updated_time` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+drop table dw.`quotation`
+CREATE TABLE dw.`quotation` (
+  `quotation_id` varchar(12) NOT NULL,
+  quotation_date date NOT NULL,
+  contact_email varchar(35) DEFAULT NULL,
+  contact_phone varchar(30) DEFAULT NULL,
+  contact_fax varchar(30) DEFAULT NULL,
+  contact_person varchar(10) DEFAULT NULL,
+  `company_name` varchar(50) DEFAULT NULL,
+  `company_contact_person` varchar(10) DEFAULT NULL,
+  `subtotal_amount` decimal(15,2) DEFAULT 0,
+  `tax_amount` decimal(15,2) DEFAULT 0,
+  `total_amount` decimal(15,2) DEFAULT 0,
+  pdf_name VARCHAR(255) NULL,
+form_status int DEFAULT 0,
+  `user_name` varchar(20) DEFAULT NULL,
+  send_mail_pdf_name VARCHAR(255) NULL,
+  `updated_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`quotation_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+select * from dw.`quotation`
+select * from dw.`quotation_item`
+select * from dw.company_info
+
+drop table dw.`request_payment`
+CREATE TABLE dw.`request_payment` (
+  `request_payment_id` varchar(12) NOT NULL,
+  request_payment_date date NOT NULL,
+   `quotation_id` varchar(12) NOT NULL, 
+  contact_email varchar(35) DEFAULT NULL,
+  contact_phone varchar(30) DEFAULT NULL,
+  contact_fax varchar(30) DEFAULT NULL,
+  contact_person varchar(10) DEFAULT NULL,
+  `company_name` varchar(50) DEFAULT NULL,
+  `company_contact_person` varchar(10) DEFAULT NULL,
+  `details_subtotal_amount` decimal(15,2) DEFAULT 0,
+  `details_tax_amount` decimal(15,2) DEFAULT 0,
+  `details_total_amount` decimal(15,2) DEFAULT 0,
+  `fees_total_amount` decimal(15,2) DEFAULT 0,
+  `final_total_amount` decimal(15,2) DEFAULT 0,
+    pdf_name VARCHAR(255) NULL,
+form_status int DEFAULT 0,
+  `user_name` varchar(20) DEFAULT NULL,
+    send_mail_pdf_name VARCHAR(255) NULL,
+  `updated_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`request_payment_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE dw.`request_payment_item1` (
+  `request_payment_id` varchar(12) NOT NULL,
+  subtitle_no int DEFAULT NULL,
+  `subtitle` varchar(30) DEFAULT NULL,
+  `fee` varchar(10) DEFAULT NULL,
+  `note` varchar(30) DEFAULT NULL,
+  `user_name` varchar(20) DEFAULT NULL,
+  `updated_time` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE dw.`request_payment_item2` (
+  `request_payment_id` varchar(12) NOT NULL,
+  subtitle_no int DEFAULT NULL,
+  `subtitle` varchar(30) DEFAULT NULL,
+  `fee` varchar(10) DEFAULT NULL,
+  `note` varchar(30) DEFAULT NULL,
+  `user_name` varchar(20) DEFAULT NULL,
+  `updated_time` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
