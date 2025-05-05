@@ -111,6 +111,12 @@
     transition: background-color 0.3s; /* 加入過渡效果 */
 }
 
+.submit_button:disabled {
+    background-color: #D1B353; /* 禁用時的背景色 */
+    cursor: not-allowed; /* 改變為禁用指針樣式 */
+    opacity: 0.5; /* 可以調整禁用時按鈕的透明度，讓它看起來較為暗淡 */
+}
+
 .search_button:hover,.submit_button:hover {
     background-color: #D3B03D;
 }

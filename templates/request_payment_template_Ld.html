@@ -1,0 +1,244 @@
+<head>
+    <meta charset="UTF-8">  <!-- 加入這一行來設置字符集為 UTF-8 -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<base href="{{app_dir}}/"> 
+    <title>力達請款單</title>
+	<style>
+		@font-face {
+		  font-family: 'chinese-sans-serif';
+		  src: url('file:///C:/Windows/Fonts/kaiu.ttf'), local('Microsoft JhengHei');
+		  unicode-range: U+4E00-9FFF; /* 這表示中文字符範圍，標楷體 */
+		}
+		
+		@font-face {
+		  font-family: 'english-sans-serif';
+		  src: url('file:///C:/Windows/Fonts/BKANT.ttf'), local('Segoe UI');
+		  unicode-range: U+00-024F;		/* Book Antiqua */
+		}
+		
+		body {
+		  font-size: 23px;
+		  font-family: 'chinese-sans-serif', sans-serif;
+		  background-image: url('assets/quotation_background_lida.png');
+		  background-size: cover;         /* 讓圖片覆蓋整個區域 */
+		  background-repeat: no-repeat;   /* 不重複背景圖 */
+		  background-position: center center; /* 圖片置中 */
+		  margin: 0;                      /* 去掉邊距（避免有白邊） */
+		  padding: 0;
+		}
+		
+        .english-number-column {
+            font-family: 'english-sans-serif', sans-serif;
+        }
+		
+		.header-container {
+		    width: 100%;
+			overflow: hidden;
+		}
+		
+		.pdf-logo {
+            width: 220px;
+            height: 23px;
+        }
+		
+		.left-block {
+		  float: left;
+		  width: 55%;
+		  text-align: left;
+		}
+		.right-block {
+		  float: right;
+		  width: 35%;
+		  text-align: left;
+		}
+
+		.quotation-title {
+		  font-size: 36px; /* 想要多大就調多大 */
+		  font-weight: bold;
+		}
+	
+		/* 當數字是負數時，設定字體顏色為紅色 */
+        .negative {
+            color: red;
+        }
+
+        /* $符號 */
+        .dollar-sign {
+            position: absolute;
+            left: 0;
+            text-align: left;
+        }
+
+        /* 金額數字 */
+        .dollar-value {
+            padding-left: 16px; /* 為數字留出空間，避免與$符號重疊 */
+        }				
+	</style>
+</head>
+<body>
+	<div class="Quotation">	
+		<!-- 強制增加上邊距 -->
+		<div style="height: 70px;"></div>
+		
+		<table style="width: 100%; border: none; margin-top: 20px;">
+			<tr>
+			<!-- 左側空白欄（讓報價單置中用） -->
+				<td style="width: 33%;"></td>
+
+				<!-- 中間：報價單置中 -->
+				<td style="width: 34%; text-align: center; vertical-align: top;">
+					<span style="font-size: 36px; font-weight: bold;">請款單</span>
+				</td>
+
+				<!-- 右側：報價單編號與日期 -->
+				<td style="width: 33%; text-align: left; vertical-align: top;">
+					<div style="font-size: 20px; line-height: 1.6; padding-left: 20px;">
+						<div>請款單編號: <span class="english-number-column">{{request_payment_id}}</span></div>
+						<div>請款日期: <span class="english-number-column">{{request_payment_date}}</span></div>
+					</div>
+				</td>
+			</tr>
+		</table>
+		
+		<div style="font-size: 20px; margin-top: 40px;">
+			<span class="english-number-column">Email: {{contact_email}}</span>
+			\ 電話:<span class="english-number-column">{{contact_phone}} </span>
+			\ 傳真:<span class="english-number-column">{{contact_fax}} </span>
+			\ 聯絡人:{{contact_person}}
+		</div><br />
+		
+		<table style="width: 100%; border: none; font-size: 14px; line-height: 1.5;">
+			<tr>
+				<!-- TO 對齊左側（和 logo 同一條線） -->
+				<td style="text-align: left; width: 50%; font-size: 28px;">
+					<span class="english-number-column">TO：</span>{{company_name}}
+				</td>
+
+				<!-- 聯絡人 對齊右側（和編號/日期同一條線） -->
+				<td style="text-align: left; ; padding-left: 30px; font-size: 28px;">
+					聯絡人：{{company_contact_person}}
+				</td>
+			</tr>
+		</table>
+
+		<!-- 動態項目表格 -->
+		<div style="margin-top: 30px; font-size: 28px;">一、代辦明細：</div>
+		<table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 20px;">
+			<thead>
+				<tr style="background-color: #f0f0f0;">
+					<th style="border: 1px solid #ccc; padding: 8px; width: 10%; text-align: center;">項次</th>
+					<th style="border: 1px solid #ccc; padding: 8px; width: 40%; text-align: center;">項目</th>
+					<th style="border: 1px solid #ccc; padding: 8px; width: 20%; text-align: center;">單價(未稅)</th>
+					<th style="border: 1px solid #ccc; padding: 8px; width: 30%; text-align: center;">備註</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for item in items1 %}
+				<tr>
+					<td style="border: 1px solid #ccc; padding: 8px; width: 10%; text-align: center;">
+						<span class="english-number-column">{{ item.subtitle_no }}</span>						
+					</td>
+					<td style="border: 1px solid #ccc; padding: 8px; width: 40%; text-align: left;">{{ item.subtitle }}</td>
+					<td style="border: 1px solid #ccc; padding: 8px; width: 20%; text-align: right;">
+						<span class="english-number-column {% if item.fee < 0 %}negative{% endif %}">$ {{ item.formatted_fee }}</span>
+					</td>
+					<td style="border: 1px solid #ccc; padding: 8px; width: 30%; text-align: left;">{{ item.note }}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+
+		<table style="width: 70%; border: none; margin-top: 10px; font-size: 20px;">
+			<tbody>
+				<tr>
+					<td style="padding: 8px; width: 50%; text-align: right;">小計</td>
+					<td style="padding: 8px; width: 20%; text-align: right; border-bottom: 1px solid black;">
+						<span class="english-number-column">$ {{ formatted_details_subtotal }}</span>						
+					</td>
+				</tr>
+				<tr>
+					<td style="padding: 8px; width: 50%; text-align: right;">營業稅</td>
+					<td style="padding: 8px; width: 20%; text-align: right; border-bottom: 1px solid black;">
+						<span class="english-number-column">$ {{ formatted_details_tax }}</span>						
+					</td>
+				</tr>
+				<tr>
+					<td style="padding: 8px; width: 50%; text-align: right;">合計</td>
+					<td style="padding: 8px; width: 20%; text-align: right; border-bottom: 1px solid black;">
+						<span class="english-number-column">$ {{ formatted_details_total }}</span>						
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		
+		<div style="margin-top: 30px; font-size: 28px;">二、代墊規費：</div>
+
+		{% if has_items2 %}
+			<table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 20px;">
+				<thead>
+					<tr style="background-color: #f0f0f0;">
+						<th style="border: 1px solid #ccc; padding: 8px; width: 10%; text-align: center;">項次</th>
+						<th style="border: 1px solid #ccc; padding: 8px; width: 40%; text-align: center;">項目</th>
+						<th style="border: 1px solid #ccc; padding: 8px; width: 20%; text-align: center;">金額</th>
+						<th style="border: 1px solid #ccc; padding: 8px; width: 30%; text-align: center;">備註</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for item in items2 %}
+					<tr>
+						<td style="border: 1px solid #ccc; padding: 8px; text-align: center;">
+							<span class="english-number-column">{{ item.subtitle_no }}</span>
+						</td>
+						<td style="border: 1px solid #ccc; padding: 8px;">{{ item.subtitle }}</td>
+						<td style="border: 1px solid #ccc; padding: 8px; text-align: right;">
+							<span class="english-number-column {% if item.fee < 0 %}negative{% endif %}">
+								{% if item.formatted_fee %}$ {{ item.formatted_fee }}{% endif %}
+							</span>
+						</td>
+						<td style="border: 1px solid #ccc; padding: 8px;">{{ item.note }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+
+			<table style="width: 70%; border: none; margin-top: 10px; font-size: 20px;">
+				<tbody>
+					<tr>
+						<td style="padding: 8px; width: 50%; text-align: right;">合計</td>
+						<td style="padding: 8px; width: 20%; text-align: right; border-bottom: 1px solid black;">
+							<span class="english-number-column">$ {{ formatted_fees_total }}</span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		{% else %}
+			<div style="margin-top: 10px; font-size: 20px;">(無)</div>
+		{% endif %}
+
+		
+		<div style="margin-top: 40px; text-align: right; font-size: 24px; font-weight: bold;">
+			合計應收：$ <span class="english-number-column">{{ formatted_final_total }}</span>
+		</div>
+		<div style="border-top: 1px solid black; margin-top: 10px; margin-bottom: 20px;"></div>
+		
+		<div style="margin-top: 10px;">
+			◎匯款帳號：
+			<strong>
+				彰化一信<span class="english-number-column">(158)</span>　曉陽分社
+				<span style="border: 1px solid black; padding: 4px 8px; display: inline-block;">
+					<span class="english-number-column">0037-11-17922-8-0</span>
+				</span>
+			</strong>
+		</div>
+		
+		<div style="margin-top: 10px;">
+			◎開立支票：資越管理顧問有限公司
+		</div>
+	
+		<div style="margin-top: 10px;">
+			<span class="english-number-column">**</span>匯款或寄出支票請通知本公司以利及時對帳，萬分感謝<span class="english-number-column">☺</span>
+		</div>	
+		
+	</div>
+</body>
+</html>

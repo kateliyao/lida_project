@@ -99,52 +99,6 @@ CREATE TABLE dw.`service_items` (
 
 select * from dw.`service_items`
 
-drop table dw.`quotation_item`
-CREATE TABLE dw.`quotation_item` (
-  `quotation_id` varchar(12) NOT NULL,
-  subtitle_no int DEFAULT NULL,
-  `subtitle` varchar(30) DEFAULT NULL,
-  `fee` varchar(10) DEFAULT NULL,
-  `note` varchar(30) DEFAULT NULL,
-  `user_name` varchar(20) DEFAULT NULL,
-  `updated_time` datetime DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-drop table dw.`quotation`
-CREATE TABLE dw.`quotation` (
-  `quotation_id` varchar(12) NOT NULL,
-  quotation_date date NOT NULL,
-  contact_email varchar(35) DEFAULT NULL,
-  contact_phone varchar(30) DEFAULT NULL,
-  contact_fax varchar(30) DEFAULT NULL,
-  contact_person varchar(10) DEFAULT NULL,
-  `company_name` varchar(50) DEFAULT NULL,
-  `company_contact_person` varchar(10) DEFAULT NULL,
-  `subtotal_amount` decimal(15,2) DEFAULT 0,
-  `tax_amount` decimal(15,2) DEFAULT 0,
-  `total_amount` decimal(15,2) DEFAULT 0,
-  `user_name` varchar(20) DEFAULT NULL,
-  `updated_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`quotation_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE dw.`request_payment` (
-  `quotation_id` varchar(12) NOT NULL,
-  quotation_date date NOT NULL,
-  contact_email varchar(35) DEFAULT NULL,
-  contact_phone varchar(30) DEFAULT NULL,
-  contact_fax varchar(30) DEFAULT NULL,
-  contact_person varchar(10) DEFAULT NULL,
-  `company_name` varchar(50) DEFAULT NULL,
-  `company_contact_person` varchar(10) DEFAULT NULL,
-  `subtotal_amount` decimal(15,2) DEFAULT 0,
-  `tax_amount` decimal(15,2) DEFAULT 0,
-  `total_amount` decimal(15,2) DEFAULT 0,
-  `user_name` varchar(20) DEFAULT NULL,
-  `updated_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`quotation_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
 
 drop table dw.`quotation_item`
 CREATE TABLE dw.`quotation_item` (

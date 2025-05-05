@@ -499,7 +499,6 @@ def staging_area():
             }
             form_list.append(form_data)
 
-        print(f"form_list:{form_list}")
         return jsonify({'success': True, 'forms': form_list}), 200
 
     except Exception as e:
@@ -530,9 +529,6 @@ def delete_form():
         data = request.get_json()
         form_id = data.get('formId')
         form_type = data.get('formType')
-
-        print(f"form_id{form_id}")
-        print(f"form_type{form_type}")
 
         if not form_id:
             return jsonify({'success': False, 'message': 'formId 是必填的'}), 400
@@ -768,14 +764,10 @@ def update_mail_pdf_name():
             cursor.close()
 
 
-
 # 發送郵件的函數
 def send_email(file_path, recipient_email, mail_content, file_name_first_part, form_type, file_name, mail_title):
-    #sender_email = "lida7239718@gmail.com"  # 發送人郵件地址
-    #sender_password = "tjzcodkjmftmvjeh"  # 發送人應用密碼
-
-    sender_email = "kate1sync@gmail.com"  # 發送人郵件地址
-    sender_password = "nyprqzhhdvjtmcyl"  # 發送人應用密碼
+    sender_email = "lida7239718@gmail.com"  # 發送人郵件地址
+    sender_password = "tjzcodkjmftmvjeh"  # 發送人應用密碼
 
     if "合併檔案" in file_name:
         second_subject = form_type
@@ -1284,7 +1276,6 @@ def submit_service_item():
     try:
         data = request.get_json()
         items = data.get('items', [])
-        print(f"data{data}")
 
         if not items:
             return jsonify({'success': False, 'message': '沒有任何資料要儲存'}), 400
@@ -1338,7 +1329,33 @@ def get_service_items():
             'note': row[3]
         } for row in rows]
 
-        print(f"service_items_list:{service_items_list}")
+
+        return jsonify({'success': True, 'service_items': service_items_list})
+    except Exception as e:
+        logging.error(f"取得服務項目失敗: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+@app.route('/api/getServiceItemsDetails', methods=['GET'])
+def get_service_items_details():
+    cursor = None
+    try:
+        cursor = get_db_connection()
+        query = "SELECT title, subtitle, fee, note FROM service_items WHERE title = '代辦費' ORDER BY updated_time DESC"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        # 回傳 JSON 陣列
+        service_items_list = [{
+            'title': row[0],
+            'subtitle': row[1],
+            'fee': row[2],
+            'note': row[3]
+        } for row in rows]
+
 
         return jsonify({'success': True, 'service_items': service_items_list})
     except Exception as e:
@@ -1350,11 +1367,47 @@ def get_service_items():
             cursor.close()
 
 
+@app.route('/api/getServiceItemsFees', methods=['GET'])
+def get_service_items_fees():
+    cursor = None
+    try:
+        cursor = get_db_connection()
+        query = "SELECT title, subtitle, fee, note FROM service_items WHERE title = '代墊費用' ORDER BY updated_time DESC"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        # 回傳 JSON 陣列
+        service_items_list = [{
+            'title': row[0],
+            'subtitle': row[1],
+            'fee': row[2],
+            'note': row[3]
+        } for row in rows]
+
+
+        return jsonify({'success': True, 'service_items': service_items_list})
+    except Exception as e:
+        logging.error(f"取得服務項目失敗: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
 @app.route('/api/generateQuotationNumber', methods=['POST'])
 def generate_quotation_number():
+    data = request.get_json()
+    component_name = data.get('componentName', 'Unknown')
+
+
     try:
         today = datetime.today()
         date_str = today.strftime('%Y%m%d')  # 改為 4 位數年份
+
+        if component_name == 'QuotationLd':
+            prefix = 'L'
+        else:
+            prefix = 'A'
 
         # 查詢當天所有報價單編號，獲取最大編號
         cursor = get_db_connection()
@@ -1364,18 +1417,16 @@ def generate_quotation_number():
             WHERE quotation_id LIKE %s
             ORDER BY quotation_id DESC
             LIMIT 1
-        """, (f"{date_str}A%",))
+        """, (f"{date_str}{prefix}%",))
 
         last_quotation = cursor.fetchone()
-        print(f"last_quotation:{last_quotation}")
 
         if last_quotation:
             last_number = int(last_quotation[0][-3:])
-            new_number = f"{date_str}A{last_number + 1:03d}"
+            new_number = f"{date_str}{prefix}{last_number + 1:03d}"
         else:
-            new_number = f"{date_str}A001"
+            new_number = f"{date_str}{prefix}001"
 
-        print(f"new_number:{new_number}")
         return jsonify({
             'success': True,
             'quotationNumber': new_number
@@ -1395,10 +1446,7 @@ def save_quotation():
         data = request.get_json()
         quotation = data.get('quotation')
         items = data.get('items', [])
-
-        print(f"data:{data}")
-        print(f"quotation:{quotation}")
-        print(f"items:{items}")
+        componentName = data.get('componentName')
 
         if not quotation:
             return jsonify({'success': False, 'message': '缺少主表數據'}), 400
@@ -1479,6 +1527,7 @@ def save_quotation():
 
                 formatted_fee = f"({abs(fee):,.0f})" if fee < 0 else f"{fee:,.0f}"
                 item['formatted_fee'] = formatted_fee
+                item['fee'] = fee
 
                 cursor.execute(insert_item_query, (
                     item_quotation_id,
@@ -1491,7 +1540,8 @@ def save_quotation():
 
         cursor.connection.commit()
 
-        html_content = render_template('quotation_template.html', app_dir=app_dir,
+        template_name = 'quotation_template_Ld.html' if componentName == 'QuotationLd' else 'quotation_template.html'
+        html_content = render_template(template_name, app_dir=app_dir,
                                        quotation_id=quotation_id, quotation_date=quotation_date, contact_email=contact_email,
                                        contact_phone=contact_phone, contact_fax=contact_fax, contact_person=contact_person,
                                        company_name=company_name, company_contact_person=company_contact_person, formatted_subtotal_amount=formatted_subtotal_amount,
@@ -1518,7 +1568,7 @@ def save_quotation():
             'encoding': 'UTF-8',  # 可以解決中文亂碼問題
             'no-outline': None,  # 禁用文檔輪廓
             'quiet': None,  # 禁用日志
-            'margin-top': '10mm',  # 可調整pdf邊界問題
+            'margin-top': '5mm' if componentName == 'QuotationLd' else '10mm',
             'margin-right': '8mm',
             # 'margin-bottom': '0mm',
             'margin-left': '8mm',
@@ -1583,7 +1633,6 @@ def get_quotation():
     if not quotation_id:
         return jsonify({'success': False, 'message': '請提供報價單編號'}), 400
 
-    print(f"quotation_id:{quotation_id}")
 
     cursor = None
     try:
@@ -1668,7 +1717,6 @@ def generate_request_payment_number():
         """, (f"{date_str}B%",))
 
         last_quotation = cursor.fetchone()
-        print(f"last_quotation:{last_quotation}")
 
         if last_quotation:
             last_number = int(last_quotation[0][-3:])
@@ -1676,7 +1724,6 @@ def generate_request_payment_number():
         else:
             new_number = f"{date_str}B001"
 
-        print(f"new_number_RP:{new_number}")
         return jsonify({
             'success': True,
             'requestPaymentNumber': new_number
@@ -1696,10 +1743,6 @@ def save_request_payment():
         request_payment = data.get('requestPayment')
         items1 = data.get('items1', [])
         items2 = data.get('items2', [])
-
-        print(f"request_payment{request_payment}")
-        print(f"items1{items1}")
-        print(f"items2{items2}")
 
         if not request_payment:
             return jsonify({'success': False, 'message': '缺少主表數據'}), 400
@@ -1795,6 +1838,7 @@ def save_request_payment():
 
                 formatted_fee = f"({abs(fee):,.0f})" if fee < 0 else f"{fee:,.0f}"
                 item['formatted_fee'] = formatted_fee
+                item['fee'] = fee
 
                 cursor.execute(insert_item1_query, (
                     item_request_payment_id,
@@ -1839,14 +1883,8 @@ def save_request_payment():
                     formatted_fee = ''
 
                 item['formatted_fee'] = formatted_fee
+                item['fee'] = fee
                 filtered_items2.append(item)
-
-                print(f"item_request_payment_id:{item_request_payment_id}")
-                print(f"subtitle_no:{subtitle_no}")
-                print(f"subtitle:{subtitle}")
-                print(f"fee:{fee}")
-                print(f"note:{note}")
-                print(f"item_user_name:{item_user_name}")
 
                 cursor.execute(insert_item2_query, (
                     item_request_payment_id,
@@ -1859,7 +1897,8 @@ def save_request_payment():
 
         cursor.connection.commit()
 
-        html_content = render_template('request_payment_template.html',
+        template_name = 'request_payment_template_Ld.html' if 'L' in quotation_id else 'request_payment_template.html'
+        html_content = render_template(template_name,
                                        app_dir=app_dir,
                                        request_payment_id=request_payment_id,
                                        request_payment_date=request_payment_date,
@@ -1902,7 +1941,7 @@ def save_request_payment():
             'encoding': 'UTF-8',  # 可以解決中文亂碼問題
             'no-outline': None,  # 禁用文檔輪廓
             'quiet': None,  # 禁用日志
-            'margin-top': '10mm',  # 可調整pdf邊界問題
+            'margin-top': '5mm' if 'L' in quotation_id else '10mm',
             'margin-right': '8mm',
             # 'margin-bottom': '0mm',
             'margin-left': '8mm',
@@ -1958,6 +1997,104 @@ def save_request_payment():
     finally:
         if cursor:
             cursor.close()
+
+
+@app.route('/api/getAllQuotations', methods=['GET'])
+def get_all_quotations():
+    cursor = None
+    user = None
+    try:
+        user = request.args.get('user')  # 獲取前端傳遞來的帳戶資訊
+        if not user:  # 如果 user 没有传递，返回错误信息
+            return jsonify({'success': False, 'message': 'User parameter is required'}), 400
+
+        cursor = get_db_connection()
+
+        # 查詢用户的角色
+        role_query = "SELECT role FROM users_info WHERE username = %s"
+        cursor.execute(role_query, (user,))
+        user_role = cursor.fetchone()
+
+        # 如果查詢不到用戶的角色，回傳錯誤訊息
+        if user_role is None:
+            logging.warning(f"User {user} not found in users_info.")
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        # 根據用戶的角色設置不同的查詢條件
+        if user_role[0] == 'admin':
+            # 如果是admin，查詢所有報價單
+            query = """
+                SELECT quotation_id, quotation_date, contact_email, contact_phone, 
+                       contact_fax, contact_person, company_name, company_contact_person,
+                       subtotal_amount, tax_amount, total_amount, user_name, updated_time
+                FROM quotation
+                ORDER BY quotation_Date desc, quotation_id desc
+            """
+            cursor.execute(query)
+        else:
+            # 如果是一般使用者，查詢該使用者的報價單
+            query = """
+                SELECT quotation_id, quotation_date, contact_email, contact_phone, 
+                       contact_fax, contact_person, company_name, company_contact_person,
+                       subtotal_amount, tax_amount, total_amount, user_name, updated_time
+                FROM quotation
+                WHERE user_name = %s
+                ORDER BY quotation_Date desc, quotation_id desc
+            """
+            cursor.execute(query, (user,))
+
+        quotations_data = cursor.fetchall()
+
+        quotations = []
+        for quotation_data in quotations_data:
+            # 查詢每個報價單的項目明細
+            cursor.execute("""
+                SELECT subtitle_no, subtitle, fee, note, user_name, updated_time
+                FROM quotation_item 
+                WHERE quotation_id = %s
+                ORDER BY subtitle_no
+            """, (quotation_data[0],))
+            items_data = cursor.fetchall()
+
+            items = [{
+                'subtitle_no': item[0],
+                'subtitle': item[1],
+                'fee': item[2],
+                'note': item[3],
+                'user_name': item[4],
+                'updated_time': item[5].strftime('%Y-%m-%d %H:%M:%S') if item[5] else ''
+            } for item in items_data]
+
+            # 將報價單資訊與項目明細組合
+            quotations.append({
+                'quotation_id': quotation_data[0],
+                'quotation_date': quotation_data[1].strftime('%Y/%m/%d') if quotation_data[1] else '',
+                'contact_email': quotation_data[2],
+                'contact_phone': quotation_data[3],
+                'contact_fax': quotation_data[4],
+                'contact_person': quotation_data[5],
+                'company_name': quotation_data[6],
+                'company_contact_person': quotation_data[7],
+                'subtotal_amount': float(quotation_data[8]) if quotation_data[8] else 0,
+                'tax_amount': float(quotation_data[9]) if quotation_data[9] else 0,
+                'total_amount': float(quotation_data[10]) if quotation_data[10] else 0,
+                'user_name': quotation_data[11],
+                'updated_time': quotation_data[12].strftime('%Y-%m-%d %H:%M:%S') if quotation_data[12] else '',
+                'items': items
+            })
+
+        return jsonify({
+            'success': True,
+            'quotations': quotations
+        })
+
+    except Exception as e:
+        logging.error(f"查詢所有報價單失敗: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+
 
 if __name__ == '__main__':
     logging.info("Starting the application")

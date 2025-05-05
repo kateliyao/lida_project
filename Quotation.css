@@ -237,6 +237,13 @@
     background-color: #D3B03D;
 }
 
+/* 當按鈕禁用時，改變指針樣式 */
+.submit_button:disabled {
+    background-color: #D1B353; /* 禁用時的背景色 */
+    cursor: not-allowed; /* 改變為禁用指針樣式 */
+    opacity: 0.5; /* 可以調整禁用時按鈕的透明度，讓它看起來較為暗淡 */
+}
+
 .Quotation .select_items {
     width: 100%;
   height: 100%;
@@ -323,3 +330,8 @@ border: none;
  border-bottom: 1px solid white;
  text-align: right;
 }
+
+.red-text {
+  color: red;
+}
+

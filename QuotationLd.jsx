@@ -5,8 +5,8 @@ import FinancialForm from './FinancialForm';
 import increaseQuantity from './assets/increase_quantity.png';
 import './Quotation.css';
 
-const Quotation = ({ user }) => {
-	console.log("Quotation 收到的 user:", user);  // 打印傳遞來的 user
+const QuotationLd = ({ user }) => {
+	console.log("QuotationLd 收到的 user:", user);  // 打印傳遞來的 user
 
 	const formRef = useRef();
 	const [formId, setFormId] = useState('無');  // 表單編號，默認為無
@@ -185,7 +185,7 @@ const formatCurrencyForDisplay = (value) => {
 
 // 在組件掛載時或適當的時候調用此函數
 useEffect(() => {
-    generateQuotationNumber('Quotation');
+    generateQuotationNumber('QuotationLd');
 }, []);
 
     // 在 Quotation 組件中添加提交處理函數
@@ -236,6 +236,7 @@ useEffect(() => {
             setIsSubmitting(false);
             return;
         }
+
 
 
         // 驗證必填欄位
@@ -319,7 +320,7 @@ useEffect(() => {
                     setErrorMessage('');
 
                     // 生成新的報價單編號
-                    await generateQuotationNumber('Quotation');
+                    await generateQuotationNumber('QuotationLd');
                 } else {
                     // 如果不是 PDF，嘗試讀取 JSON 錯誤訊息
                     const result = await response.json();
@@ -339,17 +340,16 @@ useEffect(() => {
 };
 
     return (
-        <form onSubmit={(e) => handleSubmit(e, 'Quotation')}>
+        <form onSubmit={(e) => handleSubmit(e, 'QuotationLd')}>
             <div ref={formRef} className="Quotation">
                 <div style={{ display: 'flex'}}>
-                    <div style={{ flex: 1.5, textAlign: 'left',fontSize:'30px' }}>報價單</div>
+                    <div style={{ flex: 1.5, textAlign: 'left',fontSize:'30px' }}>報價單LD</div>
                     <div style={{ flex: 1, textAlign: 'left' }}>
                         <div>報價單編號:{formId}</div>
 
                         <div>報價日期:{formattedDate}</div>
                     </div>
                 </div>
-                <div style={{ textAlign: 'left' }}>資越管理顧問有限公司</div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', alignItems: 'center', textAlign: 'left' }}>
@@ -598,4 +598,4 @@ useEffect(() => {
     );
 };
 
-export default Quotation;
+export default QuotationLd;

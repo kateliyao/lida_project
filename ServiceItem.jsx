@@ -70,7 +70,7 @@ const ServiceItem = ({ user }) => {
         const payload = (nonEmptyRows.length > 0 ? nonEmptyRows : rows).map(row => ({
             title: row.title,
             subtitle: row.subtitle,
-            fee: row.fee,
+            fee: row.fee.replace(/[$,]/g, ''),
             note: row.note,
             user_name: user
         }));
@@ -95,6 +95,21 @@ const ServiceItem = ({ user }) => {
             console.error('提交錯誤:', error);
             alert('發生錯誤，請稍後再試');
         }
+    };
+
+    // 檢查是否為數字或貨幣格式
+    const isNumeric = (value) => {
+        return /^[\d,]+$/.test(value.replace(/\$/g, ''));
+    };
+
+    // 格式化貨幣顯示
+    const formatCurrency = (value) => {
+        if (value === '' || value === null || value === undefined) return '';
+        if (isNumeric(value)) {
+            const numValue = value.replace(/[^\d]/g, '');
+            return numValue ? `$${parseInt(numValue, 10).toLocaleString()}` : '';
+        }
+        return value; // 非數字保持原樣
     };
 
     return (
@@ -160,20 +175,34 @@ const ServiceItem = ({ user }) => {
                         </td>
                         <td>
                             <input
-                                type="text"
-                                className="serviceitem-input"
-                                value={
-                                /^\d+$/.test(row.fee)
-                                ? `$${parseInt(row.fee).toLocaleString()}`
-                                : row.fee
-                                }
-                                onChange={(e) => {
-                                // 移除千分位逗號後再儲存
-                                const rawValue = e.target.value.replace(/,/g, '');
-                                handleChange(index, 'fee', rawValue);
-                                }}
-                                style={{ textAlign: 'right' }}
-                            />
+                                    type="text"
+                                    className="serviceitem-input"
+                                    value={formatCurrency(row.fee)}
+                                    onChange={(e) => {
+                                        let value = e.target.value;
+                                        // 如果是數字或貨幣格式，則處理格式化
+                                        if (isNumeric(value)) {
+                                            const numValue = value.replace(/[^\d]/g, '');
+                                            if (numValue) {
+                                                value = `$${parseInt(numValue, 10).toLocaleString()}`;
+                                            } else {
+                                                value = '';
+                                            }
+                                        }
+                                        handleChange(index, 'fee', value);
+                                    }}
+                                    onBlur={(e) => {
+                                        const value = e.target.value;
+                                        if (isNumeric(value)) {
+                                            const numValue = value.replace(/[^\d]/g, '');
+                                            const updatedRows = [...rows];
+                                            updatedRows[index].fee = numValue ? `$${parseInt(numValue, 10).toLocaleString()}` : '';
+                                            setRows(updatedRows);
+                                        }
+                                    }}
+                                    style={{ textAlign: 'right' }}
+                                    disabled={!isEditing}
+                                />
                         </td>
                         <td>
                             <input

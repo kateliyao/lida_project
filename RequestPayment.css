@@ -216,10 +216,11 @@
 .search_button{
     background-color: #EBC857;
     margin-Left: 10px;
-    padding: 1px 10px;
+    padding: 8px 20px; /* 增加內邊距以適應橢圓形 */
+    border-radius: 50px;
     color: #424242; /* 設置文字顏色 */
     cursor: pointer; /* 鼠標指針樣式 */
-    font-size: 25px; /* 調整字體大小 */
+    font-size: 22px; /* 調整字體大小 */
 }
 
 .submit_button {
@@ -233,8 +234,16 @@
     transition: background-color 0.3s; /* 加入過渡效果 */
 }
 
+/* 當按鈕禁用時，改變指針樣式 */
+.submit_button:disabled {
+    background-color: #D1B353; /* 禁用時的背景色 */
+    cursor: not-allowed; /* 改變為禁用指針樣式 */
+    opacity: 0.5; /* 可以調整禁用時按鈕的透明度，讓它看起來較為暗淡 */
+}
+
 .search_button:hover,.submit_button:hover {
     background-color: #D3B03D;
+    color:black;
 }
 
 .RequestPayment .select_items {
@@ -322,4 +331,92 @@ border: none;
   width: 25%;
  border-bottom: 1px solid white;
  text-align: right;
+}
+
+/* 報價單編號模擬框 */
+.quotation-modal {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 10;
+    background-color: #122331;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    padding: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    width: 1100px;
+    color: white;
+    max-height: 600px;
+    overflow-y: auto;
+    font-family: 'custom-login', sans-serif;
+}
+
+.quotation-table {
+    width: 100%;
+    border-collapse: separate; /* 改為 separate 以實現標題與內容的間距 */
+    border-spacing: 0 10px; /* 垂直方向增加 10px 間距 */
+
+}
+
+.quotation-table th, .quotation-table td {
+    padding: 10px;
+    text-align: center;
+    word-break: break-all;
+}
+
+.quotation-table th {
+    background-color: #122331;
+    position: sticky;
+    top: 0;
+    font-size:16px;
+}
+
+/* 奇數列樣式 */
+.quotation-table .odd-row {
+    background-color: #455664;
+}
+
+/* 偶數列樣式 */
+.quotation-table .even-row {
+    background-color: #1D374E;
+}
+
+
+.quotation-table tr:hover{
+    background-color: #122331;
+    color:#D3B03D;
+}
+
+.quotation-table td:nth-child(3) {
+    max-width: 300px; /* 限制最大寬度 */
+    min-width: 150px; /* 設置最小寬度 */
+}
+
+@media (max-width: 1700px) {
+  .quotation-modal {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 10;
+    background-color: #122331;
+    border: 1px solid #ccc;
+    padding: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    width: 800px;
+    color: white;
+    max-height: 600px;
+    overflow-y: auto;
+    font-family: 'custom-login', sans-serif;
+}
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.red-text {
+  color: red;
 }

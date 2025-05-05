@@ -12,6 +12,8 @@ import HistoryBlueIcon from './assets/history_blue_icon.png';
 import StagingAreaIcon from './assets/stagingArea_icon.png';
 import ChartWhiteIcon from './assets/chart_white_icon.png';
 import ChartBlueIcon from './assets/chart_blue_icon.png';
+import ServiceWhiteIcon from './assets/service_white_icon.png';
+import ServiceBlueIcon from './assets/service_blue_icon.png';
 import AccountButton from './AccountButton';
 import FormA from './FormA';
 import HistoryForm from './HistoryForm';
@@ -104,6 +106,13 @@ const MainPage = ({ onLogout,user }) => {
                         報價單
                     </li>
                     <li
+                        onClick={() => handleNavigation('quotationLd')}
+                        onMouseEnter={(e) => e.target.firstChild.src = QuotationBlueIcon}
+                        onMouseLeave={(e) => e.target.firstChild.src = QuotationWhiteIcon} >
+                        <img src={QuotationWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
+                        報價單LD
+                    </li>
+                    <li
                         onClick={() => handleNavigation('history')}
                         onMouseEnter={(e) => e.target.firstChild.src = HistoryBlueIcon}
                         onMouseLeave={(e) => e.target.firstChild.src = HistoryWhiteIcon} >
@@ -125,9 +134,9 @@ const MainPage = ({ onLogout,user }) => {
                     {canViewChart && (
                         <li
                             onClick={() => handleNavigation('serviceItem')}
-                            onMouseEnter={(e) => e.target.firstChild.src = ChartBlueIcon}
-                            onMouseLeave={(e) => e.target.firstChild.src = ChartWhiteIcon} >
-                            <img src={ChartWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
+                            onMouseEnter={(e) => e.target.firstChild.src = ServiceBlueIcon}
+                            onMouseLeave={(e) => e.target.firstChild.src = ServiceWhiteIcon} >
+                            <img src={ServiceWhiteIcon} alt="pngC" style={{ width: '25px', marginRight: '10px' }} />
                             工商項目設定
                         </li>
                     )}

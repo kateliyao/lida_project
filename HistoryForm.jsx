@@ -109,7 +109,7 @@ const HistoryForm = ({ user }) => {
                         padding: '10px',
                     }}
                     >
-                        <div style={{ display: 'flex', alignItems: 'center' , whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center' ,wordBreak: 'break-word', maxWidth: '700px', whiteSpace: 'normal',textAlign:'left' }}>
                             <span>{form.pdf_name}</span>
                         </div>
 

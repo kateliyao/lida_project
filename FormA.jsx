@@ -23,6 +23,7 @@ const FormA = ({ user }) => {
     const [selectedOption, setSelectedOption] = useState('');
     const buttonRef = useRef();
     const [formKey, setFormKey] = useState(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);  // 控制是否正在提交
 
     const handleCheckboxChange = (event) => {
         setIsChecked(event.target.checked);
@@ -199,39 +200,49 @@ const FormA = ({ user }) => {
     // 處理表單提交後送資料庫以及轉印成PDF
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("handleSubmit 被調用"); // 檢查是否多次調用
+         // 防止多次提交
+        if (isSubmitting) return;  // 如果正在提交，則直接返回
+
+        setIsSubmitting(true);  // 設置為正在提交
 
         // 在這裡檢查 formId 是否為 "無"，限定用戶提交基本原則
         if (formId === '無' || !formId) {
             alert('無效的表單編號！請檢查表單編號');
+            setIsSubmitting(false);
             return; // 阻止表單提交
         }
 
         // 檢查服務人員是否已選擇
         if (selectedStaff === null || selectedStaff === '選擇負責人員' || selectedStaff === '') {
             alert('請選擇負責人員！');
+            setIsSubmitting(false);
             return; // 阻止表單提交
         }
 
         // 檢查金額欄位是否為空
         if (!revenue || revenue.trim() === '') {
             alert('請填寫銷貨收入！');
+            setIsSubmitting(false);
             return;
         }
         if (!cost || cost.trim() === '') {
             alert('請填寫銷貨成本！');
+            setIsSubmitting(false);
             return;
         }
         if (!expense || expense.trim() === '') {
             alert('請填寫營業費用金額！');
+            setIsSubmitting(false);
             return;
         }
         if (!nonrevenue || nonrevenue.trim() === '') {
             alert('請填寫非營業收入！');
+            setIsSubmitting(false);
             return;
         }
         if (!noncost || noncost.trim() === '') {
             alert('請填寫非營業支出成本！');
+            setIsSubmitting(false);
             return;
         }
 
@@ -239,22 +250,27 @@ const FormA = ({ user }) => {
         if (isChecked) {
             if (!selectedOption || selectedOption.trim() === '') {
                 alert('請選擇申報方式！');
+                setIsSubmitting(false);
                 return;
             }
             if (!netincomepercent || netincomepercent.trim() === '') {
                 alert('請輸入淨利%！');
+                setIsSubmitting(false);
                 return;
             }
             if (!netincome || netincome.trim() === '') {
                 alert('請輸入申報淨利(B)！');
+                setIsSubmitting(false);
                 return;
             }
             if (!extracost || extracost.trim() === '') {
                 alert('請輸入建議補成本金額！');
+                setIsSubmitting(false);
                 return;
             }
             if (!extraexpense || extraexpense.trim() === '') {
                 alert('請輸入建議補費用金額！');
+                setIsSubmitting(false);
                 return;
             }
 
@@ -340,6 +356,8 @@ const FormA = ({ user }) => {
             }
         } catch (error) {
             console.error('Error submitting form:', error);
+        } finally {
+            setIsSubmitting(false);  // 無論如何，提交完成後重置狀態
         }
         setFormId(''); // 清除表單編號
     };
@@ -581,7 +599,9 @@ const FormA = ({ user }) => {
                     <div style={{textAlign:'left'}}>簽收：＿＿＿＿＿＿＿＿＿＿＿＿（可撕下簽回聯或PDF電子簽章回傳事務所)</div>
                 </div><br />
             </div>
-            <button ref={buttonRef} type="submit" className="submit_button">暫存檔案</button>
+            <button ref={buttonRef} type="submit" disabled={isSubmitting} className="submit_button">
+                {isSubmitting ? '提交中...' : '提交'}
+            </button>
         </form>
     );
 };

@@ -1,0 +1,12 @@
+.serviceitem-input {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 10px 8px !important; /* ⬅️ 重點：拿掉 padding */
+  margin: 0;
+  border: none;
+  outline: none;
+  font-size: 100%;
+  line-height: 1; /* ⬅️ 保證高度純粹來自父容器，不多加垂直空間 */
+  background-color: #122331;
+}

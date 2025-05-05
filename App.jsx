@@ -9,6 +9,7 @@ import Quotation from './Quotation';
 import ServiceItem from './ServiceItem';
 import RequestPayment from './RequestPayment';
 import StagingArea from './StagingArea';
+import QuotationLd from './QuotationLd';
 import './App.css';
 
 const App = () => {
@@ -63,6 +64,7 @@ const App = () => {
           <Route path="chart" element={<ChartComponent user={user} />} />
           <Route path="serviceItem" element={<ServiceItem user={user} />} />
           <Route path="stagingarea" element={<StagingArea onLogout={handleLogout} user={user} />} />
+          <Route path="quotationLd" element={<QuotationLd user={user} />} />
         </Route>
       </Routes>
     </div>

@@ -42,6 +42,7 @@ const StagingArea = ({ onLogout, user }) => {
     const [availableFormTypes, setAvailableFormTypes] = useState([]);
     const [formType, setFormType] = useState(null); // 新增狀態儲存 formType
     const [mailtitle, setMailTitle] = useState('');  // 儲存郵件主旨
+    const [isSubmitting, setIsSubmitting] = useState(false);  // 控制是否正在提交信件
 
 
     // 確保登入後，如果 activeForm 為 null 或 undefined，則設置為 'STAGE'
@@ -332,14 +333,23 @@ const StagingArea = ({ onLogout, user }) => {
 
     // 提交表單的處理函數
     const handleSubmit = async () => {
+        event.preventDefault();
+
+        // 防止多次提交
+        if (isSubmitting) return;  // 如果正在提交，則直接返回
+
+        setIsSubmitting(true);  // 設置為正在提交
+
         // 檢查是否包含 "@" 符號
         if (!recipient || !recipient.includes('@')) {
             alert('請輸入有效的電子郵件地址');
+            setIsSubmitting(false);
             return;
         }
 
         if (pdfInfo.length === 0) {
             alert('請選擇要寄出的PDF清單');
+            setIsSubmitting(false);
             return;
         }
 
@@ -393,7 +403,9 @@ const StagingArea = ({ onLogout, user }) => {
             }
         } catch (error) {
             console.error('發送郵件時發生錯誤:', error);
-        }
+        } finally {
+        setIsSubmitting(false);  // 無論如何，提交完成後重置狀態
+    }
     };
 
     useEffect(() => {
@@ -493,7 +505,7 @@ const StagingArea = ({ onLogout, user }) => {
                             }}
                         >
                             {/* 左側：複選框 + 檔名 */}
-                            <div style={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <input
                                     type="checkbox"
                                     checked={selectedForms.includes(form.pdf_name)}
@@ -512,7 +524,7 @@ const StagingArea = ({ onLogout, user }) => {
                                         padding: '15px'
                                     }}
                                 />
-                                <span style={{ color: selectedForms.includes(form.pdf_name) ? '#EBC857' : 'inherit' }}>
+                                <span style={{ color: selectedForms.includes(form.pdf_name) ? '#EBC857' : 'inherit' ,wordBreak: 'break-word', maxWidth: '550px', whiteSpace: 'normal', textAlign:'left'}}>
                                     {form.pdf_name}
                                 </span>
                             </div>
@@ -801,17 +813,31 @@ const StagingArea = ({ onLogout, user }) => {
                 <div style={{ marginTop: '20px', textAlign: 'center' }}>
                     <button
                     onClick={handleSubmit}
-                    disabled={!recipient || !recipient.includes('@') || pdfInfo.length === 0 || !mailtitle}  // 如果收件者或 PDF 信息不存在，禁用按鈕
+                    disabled={!recipient || !recipient.includes('@') || pdfInfo.length === 0 || !mailtitle || isSubmitting}  // 如果收件者或 PDF 信息不存在，禁用按鈕
                     style={{
                         padding: '10px 240px',
                         borderRadius: '20px',
                         fontSize: '24px',
-                        cursor: recipient && recipient.includes('@') && pdfInfo.length > 0 && mailtitle ? 'pointer' : 'not-allowed',
-                        backgroundColor: recipient && recipient.includes('@') && pdfInfo.length > 0 && mailtitle ? '#71777F' : '#e0e0e0', // 兩者都存在時為綠色，否則為灰色
+                        cursor:
+                            isSubmitting ||
+                            !recipient ||
+                            !recipient.includes('@') ||
+                            pdfInfo.length === 0 ||
+                            !mailtitle
+                                ? 'not-allowed'
+                                : 'pointer',
+                        backgroundColor:
+                            isSubmitting ||
+                            !recipient ||
+                            !recipient.includes('@') ||
+                            pdfInfo.length === 0 ||
+                            !mailtitle
+                                ? '#e0e0e0'
+                                : '#71777F',
 
                     }}
                     >
-                    發送郵件
+                    {isSubmitting ? '發送中…' : '發送郵件'}
                     </button>
                 </div>
             </div>

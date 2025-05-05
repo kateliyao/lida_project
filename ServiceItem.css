@@ -13,14 +13,14 @@
 .serviceitem-input {
   width: 100%;
   height: 100%;
-  padding: 0; /* ⬅️ 重點：拿掉 padding */
+  box-sizing: border-box;
+  padding: 0 8px !important; /* ⬅️ 重點：拿掉 padding */
   margin: 0;
   border: none;
   outline: none;
   font-size: 100%;
   line-height: 1; /* ⬅️ 保證高度純粹來自父容器，不多加垂直空間 */
-  background: transparent;
-  text-indent: 5px;
+  background-color: #122331;
 }
 
 
@@ -51,7 +51,7 @@
 
 .ServiceItem-table-wrapper th:nth-child(4),
 .ServiceItem-table-wrapper td:nth-child(4) {
-  width: 30%;  /* 第四列寬度 */
+  width: 35%;  /* 第四列寬度 */
 }
 
 .ServiceItem-table-wrapper th:nth-child(5),
@@ -61,7 +61,7 @@
 
 .ServiceItem-table-wrapper th:nth-child(6),
 .ServiceItem-table-wrapper td:nth-child(6) {
-  width: 30%;  /* 第六列寬度 */
+  width: 25%;  /* 第六列寬度 */
 }
 
 .ServiceItem-table-wrapper th,

@@ -88,7 +88,7 @@ body, html {
 
 .sidebar {
   background-color: #192F42;
-  width: 300px; /* 固定宽度 */
+  width: 300px;
   height: calc(100% - 0px); /* 垂直居中 */
 }
 
@@ -101,11 +101,13 @@ body, html {
 }
 
 .sidebar li {
-    padding: 8px 0; /* 设置合适的行间距 */
+    padding: 8px 0;
     padding-left: 30px;
     text-align: left;
-    cursor: pointer; /* 鼠标指针样式 */
+    cursor: pointer;
     color : #FFFFFF;
+    display: flex;               /* 讓內容橫向排列 */
+  align-items: center;         /* 垂直置中對齊 */
 }
 
 .sidebar li:hover {
