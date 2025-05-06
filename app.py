@@ -25,7 +25,7 @@ app = Flask(__name__, static_folder='../react/build')
 # 設置一個密鑰來保護 session 資料
 app.secret_key = os.urandom(24)  # 或者設定固定的密鑰
 # CORS(app, origins=["http://localhost:5173"])
-CORS(app, origins=["http://192.168.20.65:3002"])
+CORS(app, origins=["http://192.168.100.14:3002"])
 
 # 配置 MySQL 資料庫連線
 app.config['MYSQL_HOST'] = 'localhost'

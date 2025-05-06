@@ -1013,7 +1013,20 @@ const handleKeyDown = (e) => {
   </span>
 </div>
 
-                <div style={{ textAlign: 'left' }}>◎開立支票：資越管理顧問有限公司</div>
+                {quotationId.includes('L') ? (
+                    <>
+                        <div style={{ textAlign: 'left' }}>
+                            ◎開立支票：力達稅務記帳士事務所
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div style={{ textAlign: 'left' }}>
+                            ◎開立支票：資越管理顧問有限公司
+                        </div>
+                    </>
+                )}
+
                 <div style={{ textAlign: 'left', marginTop: '50px'}}>**匯款或寄出支票請通知本公司以利及時對帳，萬分感謝☺</div>
 
              </>
