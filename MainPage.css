@@ -328,4 +328,21 @@ background-color: transparent; /* 移除背景顏色 */
 }
 
 
+.staging-pdfname {
+  word-break: break-word;
+  max-width: 1550px;
+  white-space: normal;
+  text-align: left;
+  color: inherit;
+}
 
+
+@media (max-width: 2000px) {
+  .staging-pdfname {
+  word-break: break-word;
+  max-width: 550px;
+  white-space: normal;
+  text-align: left;
+  color: inherit;
+}
+}

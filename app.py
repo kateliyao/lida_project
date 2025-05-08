@@ -25,7 +25,7 @@ app = Flask(__name__, static_folder='../react/build')
 # 設置一個密鑰來保護 session 資料
 app.secret_key = os.urandom(24)  # 或者設定固定的密鑰
 # CORS(app, origins=["http://localhost:5173"])
-CORS(app, origins=["http://192.168.100.14:3002"])
+CORS(app, origins=["http://192.168.20.65:3000"])
 
 # 配置 MySQL 資料庫連線
 app.config['MYSQL_HOST'] = 'localhost'
@@ -283,6 +283,7 @@ def submit_form():
     month = data.get('month')
     date = data.get('date')
     user = data.get('user')
+    department = '力達'
 
     # 檢查所有字段是否必填
     # if not formId or not companyId or not year1 or not month1 or not revenue or not income:
@@ -294,19 +295,20 @@ def submit_form():
         cursor = get_db_connection()
 
         query = """
-            INSERT INTO formA(form_id,company_id,company_name,form_titleyear,form_titlemonth,revenue,cost
-            ,expense,profit,nonrevenue,noncost,income,cost_percent,expense_percent,profit_percent
-            ,nonrevenue_percent,noncost_percent,income_percent,ischecked,selectedoption,netincome_percent
-            ,netincome,extracost,extraexpense,note,staff,form_submityear,form_submitmonth,form_submitdate,user_name)
+            INSERT INTO formA(form_id, company_id, company_name, form_titleyear, form_titlemonth, revenue, cost
+            ,expense, profit, nonrevenue, noncost, income, cost_percent, expense_percent, profit_percent
+            ,nonrevenue_percent, noncost_percent, income_percent, ischecked, selectedoption, netincome_percent
+            ,netincome, extracost, extraexpense, note, staff, form_submityear, form_submitmonth, form_submitdate
+            ,user_name, department)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         cursor.execute(query, (formId, companyId, companyName, year1, month1, revenue, cost, expense, profit,
                                nonrevenue, noncost, income, costPercent, expensePercent, profitPercent,
                                nonrevenuePercent, noncostPercent, incomePercent, isChecked, selectedOption,
                                netincomepercent, netincome, extracost, extraexpense, note, selectedStaff,
-                               year, month, date, user))
+                               year, month, date, user, department))
 
         # 提交
         mysql.connection.commit()
@@ -455,30 +457,30 @@ def staging_area():
         # 使用 UNION ALL 查詢 formA 和 quotation 資料
         if user_role[0] == 'admin':
             query = """
-                        SELECT form_id, pdf_name, form_status, user_name, '憑證統計表' AS form_type
+                        SELECT form_id, pdf_name, form_status, user_name, '憑證統計表' AS form_type, department
                         FROM formA
                         WHERE form_status = 0
                         UNION ALL
-                        SELECT quotation_id AS form_id, pdf_name, form_status, user_name, '報價單' AS form_type
+                        SELECT quotation_id AS form_id, pdf_name, form_status, user_name, '報價單' AS form_type, department
                         FROM quotation
                         WHERE form_status = 0
                         UNION ALL
-                        SELECT request_payment_id AS form_id, pdf_name, form_status, user_name, '請款單' AS form_type
+                        SELECT request_payment_id AS form_id, pdf_name, form_status, user_name, '請款單' AS form_type, department
                         FROM request_payment
                         WHERE form_status = 0
                     """
             cursor.execute(query)
         else:
             query = """
-                        SELECT form_id, pdf_name, form_status, user_name, '憑證統計表' AS form_type
+                        SELECT form_id, pdf_name, form_status, user_name, '憑證統計表' AS form_type, department
                         FROM formA
                         WHERE form_status = 0 AND user_name = %s
                         UNION ALL
-                        SELECT quotation_id AS form_id, pdf_name, form_status, user_name, '報價單' AS form_type
+                        SELECT quotation_id AS form_id, pdf_name, form_status, user_name, '報價單' AS form_type, department
                         FROM quotation
                         WHERE form_status = 0 AND user_name = %s
                         UNION ALL
-                        SELECT request_payment_id AS form_id, pdf_name, form_status, user_name, '請款單' AS form_type
+                        SELECT request_payment_id AS form_id, pdf_name, form_status, user_name, '請款單' AS form_type, department
                         FROM request_payment
                         WHERE form_status = 0 AND user_name = %s
                     """
@@ -496,6 +498,7 @@ def staging_area():
                 "form_status": form[2],
                 "user_name": form[3],
                 "form_type": form[4],
+                "department": form[5],
             }
             form_list.append(form_data)
 
@@ -766,8 +769,11 @@ def update_mail_pdf_name():
 
 # 發送郵件的函數
 def send_email(file_path, recipient_email, mail_content, file_name_first_part, form_type, file_name, mail_title):
-    sender_email = "lida7239718@gmail.com"  # 發送人郵件地址
-    sender_password = "tjzcodkjmftmvjeh"  # 發送人應用密碼
+    # sender_email = "lida7239718@gmail.com"  # 發送人郵件地址
+    # sender_password = "tjzcodkjmftmvjeh"  # 發送人應用密碼
+
+    sender_email = "kate1sync@gmail.com"  # 发件人电子邮件地址
+    sender_password = "nyprqzhhdvjtmcyl"  # 发件人应用密码
 
     if "合併檔案" in file_name:
         second_subject = form_type
@@ -934,15 +940,15 @@ def history_data():
         if user_role[0] == 'admin':
             query = """
                         SELECT * FROM (
-                            SELECT form_id, pdf_name, form_status, user_name, '憑證統計表' AS form_type, updated_time
+                            SELECT form_id, pdf_name, form_status, user_name, '憑證統計表' AS form_type, updated_time, department
                             FROM formA
                             WHERE form_status = 1
                             UNION ALL
-                            SELECT quotation_id AS form_id, pdf_name, form_status, user_name, '報價單' AS form_type, updated_time
+                            SELECT quotation_id AS form_id, pdf_name, form_status, user_name, '報價單' AS form_type, updated_time, department
                             FROM quotation
                             WHERE form_status = 1
                             UNION ALL
-                            SELECT request_payment_id AS form_id, pdf_name, form_status, user_name, '請款單' AS form_type, updated_time
+                            SELECT request_payment_id AS form_id, pdf_name, form_status, user_name, '請款單' AS form_type, updated_time, department
                             FROM request_payment
                             WHERE form_status = 1
                         ) AS combined_forms
@@ -952,15 +958,15 @@ def history_data():
         else:
             query = """
                         SELECT * FROM (
-                            SELECT form_id, pdf_name, form_status, user_name, '憑證統計表' AS form_type, updated_time
+                            SELECT form_id, pdf_name, form_status, user_name, '憑證統計表' AS form_type, updated_time, department
                             FROM formA
                             WHERE form_status = 1 AND user_name = %s
                             UNION ALL
-                            SELECT quotation_id AS form_id, pdf_name, form_status, user_name, '報價單' AS form_type, updated_time
+                            SELECT quotation_id AS form_id, pdf_name, form_status, user_name, '報價單' AS form_type, updated_time, department
                             FROM quotation
                             WHERE form_status = 1 AND user_name = %s
                             UNION ALL
-                            SELECT request_payment_id AS form_id, pdf_name, form_status, user_name, '請款單' AS form_type, updated_time
+                            SELECT request_payment_id AS form_id, pdf_name, form_status, user_name, '請款單' AS form_type, updated_time, department
                             FROM request_payment
                             WHERE form_status = 1 AND user_name = %s
                         ) AS combined_forms
@@ -980,6 +986,7 @@ def history_data():
                 "user_name": form[3],
                 "form_type": form[4],
                 "updated_time": form[5],
+                "department": form[6],
             }
             form_list.append(form_data)
 
@@ -1287,8 +1294,8 @@ def submit_service_item():
         cursor.execute(truncate_query)
 
         insert_query = """
-            INSERT INTO service_items (title, subtitle, fee, note, user_name, updated_time)
-            VALUES (%s, %s, %s, %s, %s, NOW())
+            INSERT INTO service_items (title, subtitle, fee, note, user_name, updated_time, department)
+            VALUES (%s, %s, %s, %s, %s, NOW(), %s)
         """
 
         for item in items:
@@ -1297,7 +1304,8 @@ def submit_service_item():
                 item.get('subtitle'),
                 item.get('fee', 0),
                 item.get('note'),
-                item.get('user_name')
+                item.get('user_name'),
+                item.get('department')
             ))
 
         cursor.connection.commit()
@@ -1307,7 +1315,6 @@ def submit_service_item():
     except Exception as e:
         logging.error(f"儲存服務項目失敗: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
-
     finally:
         if cursor:
             cursor.close()
@@ -1317,7 +1324,7 @@ def get_service_items():
     cursor = None
     try:
         cursor = get_db_connection()
-        query = "SELECT title, subtitle, fee, note FROM service_items ORDER BY updated_time DESC"
+        query = "SELECT title, subtitle, fee, note, department FROM service_items ORDER BY updated_time DESC"
         cursor.execute(query)
         rows = cursor.fetchall()
 
@@ -1326,7 +1333,8 @@ def get_service_items():
             'title': row[0],
             'subtitle': row[1],
             'fee': row[2],
-            'note': row[3]
+            'note': row[3],
+            'department': row[4]
         } for row in rows]
 
 
@@ -1334,7 +1342,6 @@ def get_service_items():
     except Exception as e:
         logging.error(f"取得服務項目失敗: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
-
     finally:
         if cursor:
             cursor.close()
@@ -1344,7 +1351,7 @@ def get_service_items_details():
     cursor = None
     try:
         cursor = get_db_connection()
-        query = "SELECT title, subtitle, fee, note FROM service_items WHERE title = '代辦費' ORDER BY updated_time DESC"
+        query = "SELECT title, subtitle, fee, note, department FROM service_items WHERE department like '資越%' AND title like '代辦%' ORDER BY updated_time DESC"
         cursor.execute(query)
         rows = cursor.fetchall()
 
@@ -1353,26 +1360,51 @@ def get_service_items_details():
             'title': row[0],
             'subtitle': row[1],
             'fee': row[2],
-            'note': row[3]
+            'note': row[3],
+            'department': row[4]
         } for row in rows]
-
 
         return jsonify({'success': True, 'service_items': service_items_list})
     except Exception as e:
         logging.error(f"取得服務項目失敗: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
-
     finally:
         if cursor:
             cursor.close()
 
+
+@app.route('/api/getServiceItemsDetailsLd', methods=['GET'])
+def get_service_items_details_ld():
+    cursor = None
+    try:
+        cursor = get_db_connection()
+        query = "SELECT title, subtitle, fee, note, department FROM service_items WHERE department like '力達%' AND title like '代辦%' ORDER BY updated_time DESC"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        # 回傳 JSON 陣列
+        service_items_list = [{
+            'title': row[0],
+            'subtitle': row[1],
+            'fee': row[2],
+            'note': row[3],
+            'department': row[4]
+        } for row in rows]
+
+        return jsonify({'success': True, 'service_items': service_items_list})
+    except Exception as e:
+        logging.error(f"取得服務項目失敗: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
 
 @app.route('/api/getServiceItemsFees', methods=['GET'])
 def get_service_items_fees():
     cursor = None
     try:
         cursor = get_db_connection()
-        query = "SELECT title, subtitle, fee, note FROM service_items WHERE title = '代墊費用' ORDER BY updated_time DESC"
+        query = "SELECT title, subtitle, fee, note, department FROM service_items WHERE department like '資越%' AND title like '代墊%' ORDER BY updated_time DESC"
         cursor.execute(query)
         rows = cursor.fetchall()
 
@@ -1381,15 +1413,41 @@ def get_service_items_fees():
             'title': row[0],
             'subtitle': row[1],
             'fee': row[2],
-            'note': row[3]
+            'note': row[3],
+            'department': row[4]
         } for row in rows]
-
 
         return jsonify({'success': True, 'service_items': service_items_list})
     except Exception as e:
         logging.error(f"取得服務項目失敗: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
 
+
+@app.route('/api/getServiceItemsFeesLd', methods=['GET'])
+def get_service_items_fees_ld():
+    cursor = None
+    try:
+        cursor = get_db_connection()
+        query = "SELECT title, subtitle, fee, note, department FROM service_items WHERE department like '力達%' AND title like '代墊%' ORDER BY updated_time DESC"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        # 回傳 JSON 陣列
+        service_items_list = [{
+            'title': row[0],
+            'subtitle': row[1],
+            'fee': row[2],
+            'note': row[3],
+            'department': row[4]
+        } for row in rows]
+
+        return jsonify({'success': True, 'service_items': service_items_list})
+    except Exception as e:
+        logging.error(f"取得服務項目失敗: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
     finally:
         if cursor:
             cursor.close()
@@ -1463,6 +1521,7 @@ def save_quotation():
         tax_amount = float(quotation.get('tax_amount', 0))
         total_amount = float(quotation.get('total_amount', 0))
         user_name = quotation.get('user_name')
+        department = '力達' if 'L' in quotation_id else '資越'
 
         formatted_subtotal_amount = f"({abs(subtotal_amount):,.0f})" if subtotal_amount < 0 else f"{subtotal_amount:,.0f}"
         formatted_tax_amount = f"({abs(tax_amount):,.0f})" if tax_amount < 0 else f"{tax_amount:,.0f}"
@@ -1479,8 +1538,8 @@ def save_quotation():
             INSERT INTO quotation (
                 quotation_id, quotation_date, contact_email, contact_phone, contact_fax,
                 contact_person, company_name, company_contact_person,
-                subtotal_amount, tax_amount, total_amount, user_name
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                subtotal_amount, tax_amount, total_amount, user_name, department
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON DUPLICATE KEY UPDATE
                 quotation_date = VALUES(quotation_date),
                 contact_email = VALUES(contact_email),
@@ -1493,7 +1552,8 @@ def save_quotation():
                 tax_amount = VALUES(tax_amount),
                 total_amount = VALUES(total_amount),
                 user_name = VALUES(user_name),
-                updated_time = NOW()
+                updated_time = NOW(),
+                department = VALUES(department)
         """
         cursor.execute(insert_quotation_query, (
             quotation_id,
@@ -1508,6 +1568,7 @@ def save_quotation():
             tax_amount,
             total_amount,
             user_name,
+            department,
         ))
 
         # 插入新的細項數據
@@ -1762,6 +1823,7 @@ def save_request_payment():
         fees_total_amount = float(request_payment.get('fees_total_amount', 0))
         final_total_amount = float(request_payment.get('final_total_amount', 0))
         user_name = request_payment.get('user_name')
+        department = '力達' if 'L' in quotation_id else '資越'
 
         # 格式化金額
         formatted_details_subtotal = f"{details_subtotal_amount:,.0f}"
@@ -1784,8 +1846,8 @@ def save_request_payment():
                 request_payment_id, request_payment_date, quotation_id, contact_email,
                 contact_phone, contact_fax, contact_person, company_name,
                 company_contact_person, details_subtotal_amount, details_tax_amount,
-                details_total_amount, fees_total_amount, final_total_amount, user_name
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                details_total_amount, fees_total_amount, final_total_amount, user_name, department
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON DUPLICATE KEY UPDATE
                 request_payment_date = VALUES(request_payment_date),
                 quotation_id = VALUES(quotation_id),
@@ -1801,7 +1863,8 @@ def save_request_payment():
                 fees_total_amount = VALUES(fees_total_amount),
                 final_total_amount = VALUES(final_total_amount),
                 user_name = VALUES(user_name),
-                updated_time = NOW()
+                updated_time = NOW(),
+                department = VALUES(department)
         """
         cursor.execute(insert_request_payment_query, (
             request_payment_id,
@@ -1818,7 +1881,8 @@ def save_request_payment():
             details_total_amount,
             fees_total_amount,
             final_total_amount,
-            user_name
+            user_name,
+            department
         ))
 
         # 插入第一個表格的細項數據 (request_payment_item1)
@@ -2100,4 +2164,4 @@ if __name__ == '__main__':
     logging.info("Starting the application")
     # app.run(debug=True)設置會讓 Flask 應用進入調試模式，有助於開發過程中的即時反饋。開發階段時，通常會啟用 debug 模式，部署到生產環境，應該禁用 debug 模式。
     # app.run(debug=False)
-    app.run(host='0.0.0.0', port=5002, debug=False)
+    app.run(host='0.0.0.0', port=5000, debug=False)

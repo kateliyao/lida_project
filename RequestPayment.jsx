@@ -11,10 +11,10 @@ const RequestPayment = ({ user }) => {
 
 	const formRef = useRef();
 	const [formId, setFormId] = useState('無');  // 表單編號，默認為無
-	const [email, setEmail] = useState('andy770320@gmail.com');
-	const [phone, setPhone] = useState('04-7239718 #109');
-	const [fax, setFax] = useState('04-7232863');
-	const [contactPerson, setContactPerson] = useState('賴先生');
+	const [email, setEmail] = useState('');
+	const [phone, setPhone] = useState('');
+	const [fax, setFax] = useState('');
+	const [contactPerson, setContactPerson] = useState('');
 	const [companyName, setCompanyName] = useState('');
 	const [otherContactPerson, setOtherContactPerson] = useState('');
 	const [errorMessage, setErrorMessage] = useState('');
@@ -194,32 +194,47 @@ const RequestPayment = ({ user }) => {
     useEffect(() => {
         const fetchServiceItems = async () => {
             try {
-                const response = await fetch(`${apiUrl}/api/getServiceItemsDetails`);
+                const apiEndpoint = quotationId.includes('L')
+                    ? 'getServiceItemsDetailsLd'
+                    : 'getServiceItemsDetails';
+
+                const response = await fetch(`${apiUrl}/api/${apiEndpoint}`);
                 const data = await response.json();
                 if (data.success && data.service_items) {
-                setServiceItems(data.service_items);
+                    setServiceItems(data.service_items);
                 }
             } catch (error) {
                 console.error('載入 service_items 失敗:', error);
             }
         };
-        fetchServiceItems();
-    }, [apiUrl]);
+
+        if (quotationId) {
+            fetchServiceItems();
+        }
+    }, [apiUrl, quotationId]);  // 添加 quotationId 為依賴項
 
     useEffect(() => {
         const fetchServiceItemsFees = async () => {
             try {
-                const response = await fetch(`${apiUrl}/api/getServiceItemsFees`);
+                const apiEndpoint = quotationId.includes('L')
+                    ? 'getServiceItemsFeesLd'
+                    : 'getServiceItemsFees';
+
+                const response = await fetch(`${apiUrl}/api/${apiEndpoint}`);
                 const data = await response.json();
                 if (data.success && data.service_items) {
-                setServiceItemsFees(data.service_items);
+                    setServiceItemsFees(data.service_items);
                 }
             } catch (error) {
                 console.error('載入 service_items 失敗:', error);
             }
         };
-        fetchServiceItemsFees();
-    }, [apiUrl]);
+
+        // 只有在有 quotationId 時才執行
+        if (quotationId) {
+            fetchServiceItemsFees();
+        }
+    }, [apiUrl, quotationId]);  // 添加 quotationId 為依賴項
 
     const isNumericFee = (fee) => {
         return fee === "客製化" || /^-?\$?[\d,]+$/.test(fee);
@@ -540,7 +555,7 @@ const handleKeyDown = (e) => {
 
     return (
         <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
-            <div ref={formRef} className="RequestPayment">
+            <div ref={formRef} className="RequestPayment" >
 
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <input
@@ -565,69 +580,58 @@ const handleKeyDown = (e) => {
 
 
                         {isModalVisible && (
-                            <div className="quotation-modal" >
-                                {/* 添加提示框 */}
-                                {showCopyToast && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                                        color: 'white',
-                                        padding: '10px 20px',
-                                        borderRadius: '5px',
-                                        zIndex: 1000,
-                                        animation: 'fadeInOut 2s ease-in-out'
-                                    }}>
-                                        已複製
-                                    </div>
-                                )}
+                            <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000 }}>
+                                <div className="quotation-modal" >
+                                    {/* 添加提示框 */}
+                                    {showCopyToast && (
+                                        <div className="copy-toast">
+                                            已複製
+                                        </div>
+                                    )}
 
-                                <table className="quotation-table" style={{ width: '100%' }}>
-                                    <thead>
-                                        <tr>
-                                            <th>複製</th>
-                                            <th>報價單編號</th>
-                                            <th>報價日期</th>
-                                            <th>公司名稱</th>
-                                            <th>聯絡人</th>
-                                            {user.startsWith('lda') && (
-                                                <th>建立者</th>
-                                            )}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {quotationList.length > 0 ? (
-                                            quotationList.map((quotation, index) => (
-                                                <tr key={index} className={index % 2 === 0 ? 'even-row' : 'odd-row'}>
-                                                    <td>
-                                                        <img
-                                                            src={CopyIcon}
-                                                            alt="Copy"
-                                                            style={{  cursor: 'pointer' }}
-                                                            onClick={() => handleCopy(quotation.quotation_id)}
-                                                            title="複製報價單編號"
-                                                            />
-                                                    </td>
-                                                    <td>{quotation.quotation_id}</td>
-                                                    <td>{quotation.quotation_date}</td>
-                                                    <td style={{ wordBreak: 'break-all', maxWidth: '200px', whiteSpace: 'normal' }}>{quotation.company_name}</td>
-                                                    <td>{quotation.company_contact_person}</td>
-                                                    {user.startsWith('lda') && (
-                                                         <td>{quotation.user_name}</td>
-                                                    )}
-                                                </tr>
-                                            ))
-                                        ) : (
+                                    <table className="quotation-table" style={{ width: '100%' }}>
+                                        <thead>
                                             <tr>
-                                                <td colSpan="4">{errorMessage || '無報價單資料'}</td>
+                                                <th>複製</th>
+                                                <th>報價單編號</th>
+                                                <th>報價日期</th>
+                                                <th>公司名稱</th>
+                                                <th>聯絡人</th>
+                                                {user.startsWith('lda') && (
+                                                    <th>建立者</th>
+                                                )}
                                             </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-
-
+                                        </thead>
+                                        <tbody>
+                                            {quotationList.length > 0 ? (
+                                                quotationList.map((quotation, index) => (
+                                                    <tr key={index} className={index % 2 === 0 ? 'even-row' : 'odd-row'}>
+                                                        <td>
+                                                            <img
+                                                                src={CopyIcon}
+                                                                alt="Copy"
+                                                                style={{  cursor: 'pointer' }}
+                                                                onClick={() => handleCopy(quotation.quotation_id)}
+                                                                title="複製報價單編號"
+                                                                />
+                                                        </td>
+                                                        <td>{quotation.quotation_id}</td>
+                                                        <td>{quotation.quotation_date}</td>
+                                                        <td style={{ wordBreak: 'break-all', maxWidth: '200px', whiteSpace: 'normal' }}>{quotation.company_name}</td>
+                                                        <td>{quotation.company_contact_person}</td>
+                                                        {user.startsWith('lda') && (
+                                                             <td>{quotation.user_name}</td>
+                                                        )}
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan="4">{errorMessage || '無報價單資料'}</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -999,19 +1003,19 @@ const handleKeyDown = (e) => {
 
 
                 <div style={{ textAlign: 'left' }}>
-  ◎匯款帳號：
-  <span style={{ color: 'white', fontWeight: 'bold' }}>
-    彰化一信(158)　曉陽分社
-    <span style={{
-      border: '1px solid white',
-      padding: '2px 4px',
-      marginLeft: '4px',
-      display: 'inline-block',
-    }}>
-      0037-11-17922-8-0
-    </span>
-  </span>
-</div>
+                    ◎匯款帳號：
+                    <span style={{ color: 'white', fontWeight: 'bold' }}>
+                        彰化一信(158)　曉陽分社
+                        <span style={{
+                            border: '1px solid white',
+                            padding: '2px 4px',
+                            marginLeft: '4px',
+                            display: 'inline-block',
+                            }}>
+                            {quotationId.includes('L') ? '0037-11-16306-5-0' : '0037-11-17922-8-0'}
+                        </span>
+                    </span>
+                </div>
 
                 {quotationId.includes('L') ? (
                     <>

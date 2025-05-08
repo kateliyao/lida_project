@@ -43,6 +43,9 @@ const StagingArea = ({ onLogout, user }) => {
     const [formType, setFormType] = useState(null); // 新增狀態儲存 formType
     const [mailtitle, setMailTitle] = useState('');  // 儲存郵件主旨
     const [isSubmitting, setIsSubmitting] = useState(false);  // 控制是否正在提交信件
+    const [departmentFilter, setDepartmentFilter] = useState('全部');
+    const [availableDepartments, setAvailableDepartments] = useState([]);
+
 
 
     // 確保登入後，如果 activeForm 為 null 或 undefined，則設置為 'STAGE'
@@ -88,6 +91,13 @@ const StagingArea = ({ onLogout, user }) => {
 
                     // 確保包含「全部」選項
                     setAvailableFormTypes(['全部', ...uniqueTypes]);
+
+                    // 取得所有 department，去重後儲存
+                    const allDepartments = data.forms.map(f => f.department).filter(Boolean);
+                    const uniqueDepartments = [...new Set(allDepartments)];
+
+                    // 確保包含「全部」選項
+                    setAvailableDepartments(['全部', ...uniqueDepartments]);
 
                 } else {
                     console.error('獲取表單失敗', data.message);
@@ -461,6 +471,30 @@ const StagingArea = ({ onLogout, user }) => {
             <div style={{marginLeft: '30px',marginRight: '30px'}}>
                 <div className="title">檔案暫存區</div>
 
+                {/* 部門篩選下拉式選單 */}
+                <div style={{ margin: '10px 0', display: 'flex', alignItems: 'center' }}>
+                    <label htmlFor="departmentFilter" style={{ marginRight: '10px', color: 'white' }}>請篩選公司別：</label>
+                    <select
+                        id="departmentFilter"
+                        value={departmentFilter}
+                        onChange={(e) => setDepartmentFilter(e.target.value)}
+                        style={{
+                            padding: '8px 8px',
+                            borderRadius: '5px',
+                            backgroundColor: '#455664',
+                            border: '1px solid #71777F',
+                            fontSize: '20px',
+                            minWidth: '150px',
+                            cursor:'pointer',
+                            color: 'white',
+                        }}
+                    >
+                        {availableDepartments.map((dept) => (
+                            <option key={dept} value={dept}>{dept}</option>
+                        ))}
+                    </select>
+                </div>
+
                 {/* 分類按鈕區 */}
                 {forms.length > 0 && (
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap',marginTop:'10px' }}>
@@ -492,7 +526,10 @@ const StagingArea = ({ onLogout, user }) => {
                     <li>正在加載資料...</li>
                 ) : forms.length > 0 ? (
                     forms
-                    .filter(form => formTypeFilter === '全部' || form.form_type === formTypeFilter)
+                    .filter(form =>
+                        (formTypeFilter === '全部' || form.form_type === formTypeFilter) &&
+                        (departmentFilter === '全部' || form.department === departmentFilter)
+                    )
                     .map((form, formIndex) => (
                         <li
                             key={form.form_id}
@@ -524,7 +561,7 @@ const StagingArea = ({ onLogout, user }) => {
                                         padding: '15px'
                                     }}
                                 />
-                                <span style={{ color: selectedForms.includes(form.pdf_name) ? '#EBC857' : 'inherit' ,wordBreak: 'break-word', maxWidth: '550px', whiteSpace: 'normal', textAlign:'left'}}>
+                                <span className = "staging-pdfname" style={{ color: selectedForms.includes(form.pdf_name) ? '#EBC857' : 'inherit'}}>
                                     {form.pdf_name}
                                 </span>
                             </div>
