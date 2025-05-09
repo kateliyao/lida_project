@@ -25,7 +25,7 @@ app = Flask(__name__, static_folder='../react/build')
 # 設置一個密鑰來保護 session 資料
 app.secret_key = os.urandom(24)  # 或者設定固定的密鑰
 # CORS(app, origins=["http://localhost:5173"])
-CORS(app, origins=["http://192.168.1.185:3000"])
+CORS(app, origins=["http://192.168.20.65:3000"])
 
 # 配置 MySQL 資料庫連線
 app.config['MYSQL_HOST'] = 'localhost'
@@ -769,11 +769,8 @@ def update_mail_pdf_name():
 
 # 發送郵件的函數
 def send_email(file_path, recipient_email, mail_content, file_name_first_part, form_type, file_name, mail_title):
-    # sender_email = "lida7239718@gmail.com"  # 發送人郵件地址
-    # sender_password = "tjzcodkjmftmvjeh"  # 發送人應用密碼
-
-    sender_email = "kate1sync@gmail.com"  # 发件人电子邮件地址
-    sender_password = "nyprqzhhdvjtmcyl"  # 发件人应用密码
+    sender_email = "lida7239718@gmail.com"  # 發送人郵件地址
+    sender_password = "tjzcodkjmftmvjeh"  # 發送人應用密碼
 
     if "合併檔案" in file_name:
         second_subject = form_type
@@ -1178,7 +1175,7 @@ def get_chart():
 
         n = 10
         colors = ['#E9E1D4', '#F5DDAD', '#F1BCAE', '#C9DECF', '#CFDD8E', '#FEF5D4',
-                  '#C9CBE0', '#A3B6C5', '#EACACB', '#D5E1DF']
+                  '#C9CBE0', '#A3B6C5', '#EACACB', '#D5E1DF','#E9E1D4', '#F5DDAD', '#F1BCAE']
 
         # C7D6DB
         # 用戶顏色對應字典，根據 user 數量為每個 user 配置顏色
@@ -1194,7 +1191,7 @@ def get_chart():
 
         # 為當日和當月的用戶分配顏色
         # all_users = list(set(users_today_sorted + users_month_sorted))  # 確保包含所有唯一的用戶
-        all_users = ['ld1', 'ld2', 'ld3', 'ld4', 'ld5', 'ld6', 'ld7', 'ld8', 'lda1', 'lda2']
+        all_users = ['ld1', 'ld2', 'ld3', 'ld4', 'ld5', 'ld6', 'ld7', 'ld8', 'lda1', 'lda2', 'ld9', 'ld10', 'zu1']
         user_color_mapping = create_user_color_mapping(all_users, colors)
 
         # 當日圓餅圖
