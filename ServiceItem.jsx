@@ -137,7 +137,7 @@ const ServiceItem = ({ user }) => {
                     <tr>
                     <th></th>
                     <th>項次</th>
-                    <th>單位</th>
+                    <th>公司別</th>
                     <th>主項目</th>
                     <th>明細項</th>
                     <th>價格</th>
