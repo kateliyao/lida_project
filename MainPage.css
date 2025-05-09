@@ -333,7 +333,6 @@ background-color: transparent; /* 移除背景顏色 */
   max-width: 1550px;
   white-space: normal;
   text-align: left;
-  color: inherit;
 }
 
 
@@ -343,6 +342,22 @@ background-color: transparent; /* 移除背景顏色 */
   max-width: 550px;
   white-space: normal;
   text-align: left;
-  color: inherit;
+}
+}
+
+.history-pdfname {
+  word-break: break-word;
+  max-width: 1550px;
+  white-space: normal;
+  text-align: left;
+}
+
+
+@media (max-width: 2000px) {
+  .history-pdfname {
+  word-break: break-word;
+  max-width: 700;
+  white-space: normal;
+  text-align: left;
 }
 }
