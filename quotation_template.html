@@ -2,7 +2,7 @@
     <meta charset="UTF-8">  <!-- 加入這一行來設置字符集為 UTF-8 -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<base href="{{app_dir}}/"> 
-    <title>力達報價單</title>
+    <title>資越報價單</title>
 	<style>
 		@font-face {
 		  font-family: 'chinese-sans-serif';
@@ -143,7 +143,7 @@
 					</td>
 					<td style="border: 1px solid #ccc; padding: 8px; width: 40%; text-align: left;">{{ item.subtitle }}</td>
 					<td style="border: 1px solid #ccc; padding: 8px; width: 20%; text-align: right;">
-						<span class="english-number-column">$ {{ item.formatted_fee }}</span>					
+						<span class="english-number-column {% if item.fee < 0 %}negative{% endif %}">$ {{ item.formatted_fee }}</span>					
 					</td>
 					<td style="border: 1px solid #ccc; padding: 8px; width: 30%; text-align: left;">{{ item.note }}</td>
 				</tr>

@@ -23,17 +23,18 @@ const ServiceItem = ({ user }) => {
                     title: item.title || '',
                     subtitle: item.subtitle || '',
                     fee: item.fee !== undefined ? item.fee.toString() : '0',
-                    note: item.note || ''
+                    note: item.note || '',
+                    department: item.department || ''
                 }));
                 console.log('格式化後資料:', formatted); // 除錯用
-                setRows(formatted.length > 0 ? formatted : [{ title: '', subtitle: '', fee: '', note: '' }]);
+                setRows(formatted.length > 0 ? formatted : [{ title: '', subtitle: '', fee: '', note: '', department: '' }]);
             } else {
                 console.warn('後端返回成功但無資料');
-                setRows([{ title: '', subtitle: '', fee: '', note: '' }]);
+                setRows([{ title: '', subtitle: '', fee: '', note: '', department:''}]);
             }
         } catch (error) {
             console.error('載入資料失敗:', error);
-            setRows([{ title: '', subtitle: '', fee: '', note: '' }]);
+            setRows([{ title: '', subtitle: '', fee: '', note: '', department:'' }]);
         }
     };
 
@@ -48,7 +49,7 @@ const ServiceItem = ({ user }) => {
     };
 
     const addRow = () => {
-        setRows([...rows, { title: '', subtitle: '', fee: '', note: '' }]);
+        setRows([...rows, { title: '', subtitle: '', fee: '', note: '', department:'' }]);
     };
 
     const deleteRow = (index) => {
@@ -64,7 +65,7 @@ const ServiceItem = ({ user }) => {
     const submitServiceItems = async () => {
         // 過濾掉完全為空的列（可選）
         const nonEmptyRows = rows.filter(row =>
-            row.title.trim() || row.subtitle.trim() || row.fee.trim() || row.note.trim()
+            row.title.trim() || row.subtitle.trim() || row.fee.trim() || row.note.trim() || row.department.trim()
         );
 
         const payload = (nonEmptyRows.length > 0 ? nonEmptyRows : rows).map(row => ({
@@ -72,7 +73,8 @@ const ServiceItem = ({ user }) => {
             subtitle: row.subtitle,
             fee: row.fee.replace(/[$,]/g, ''),
             note: row.note,
-            user_name: user
+            user_name: user,
+            department: row.department
         }));
 
         try {
@@ -135,6 +137,7 @@ const ServiceItem = ({ user }) => {
                     <tr>
                     <th></th>
                     <th>項次</th>
+                    <th>單位</th>
                     <th>主項目</th>
                     <th>明細項</th>
                     <th>價格</th>
@@ -157,6 +160,15 @@ const ServiceItem = ({ user }) => {
                             )}
                         </td>
                         <td>{index + 1}</td>
+
+                        <td>
+                            <input
+                                type="text"
+                                className="serviceitem-input"
+                                value={row.department}
+                                onChange={(e) => handleChange(index, 'department', e.target.value)}
+                            />
+                        </td>
                         <td>
                             <input
                                 type="text"
@@ -178,6 +190,7 @@ const ServiceItem = ({ user }) => {
                                     type="text"
                                     className="serviceitem-input"
                                     value={formatCurrency(row.fee)}
+                                    inputMode="decimal" // 引導輸入為數字或小數點
                                     onChange={(e) => {
                                         let value = e.target.value;
                                         // 如果是數字或貨幣格式，則處理格式化
@@ -224,8 +237,8 @@ const ServiceItem = ({ user }) => {
             )}
 
             {isEditing && (
-                <div style={{ position: 'fixed', bottom: '20px', left: '60%', transform: 'translateX(-50%)', zIndex: 1000 }}>
-                    <button className="submit-button-fixed" onClick={submitServiceItems}>
+                <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                    <button className="submit-button-relative" onClick={submitServiceItems}>
                         提交
                     </button>
                 </div>

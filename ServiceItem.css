@@ -46,22 +46,27 @@
 
 .ServiceItem-table-wrapper th:nth-child(3),
 .ServiceItem-table-wrapper td:nth-child(3) {
-  width: 15%;  /* 第三列寬度 */
+  width: 10%;  /* 第三列寬度 */
 }
 
 .ServiceItem-table-wrapper th:nth-child(4),
 .ServiceItem-table-wrapper td:nth-child(4) {
-  width: 35%;  /* 第四列寬度 */
+  width: 15%;  /* 第四列寬度 */
 }
 
 .ServiceItem-table-wrapper th:nth-child(5),
 .ServiceItem-table-wrapper td:nth-child(5) {
-  width: 15%;  /* 第五列寬度 */
+  width: 35%;  /* 第五列寬度 */
 }
 
 .ServiceItem-table-wrapper th:nth-child(6),
 .ServiceItem-table-wrapper td:nth-child(6) {
-  width: 25%;  /* 第六列寬度 */
+  width: 15%;  /* 第六列寬度 */
+}
+
+.ServiceItem-table-wrapper th:nth-child(7),
+.ServiceItem-table-wrapper td:nth-child(7) {
+  width: 15%;  /* 第七列寬度 */
 }
 
 .ServiceItem-table-wrapper th,
@@ -85,12 +90,7 @@
   border-bottom: 1px solid transparent;
 }
 
-.ServiceItem .submit-button-fixed {
-  position: fixed;
-  bottom: 20px;
-  left: 60%;
-  transform: translateX(-50%);
-  z-index: 1000;
+.ServiceItem .submit-button-relative {
   padding: 10px 30px;
   border-radius: 8px;
   background-color: #71777F;
@@ -104,7 +104,7 @@
   white-space: nowrap;
 }
 
-.ServiceItem .submit-button-fixed:hover {
+.ServiceItem .submit-button-relative:hover {
   background-color: #EBC857;
   color: black; /* 可選：hover 時改字色更明顯 */
 }

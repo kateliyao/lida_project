@@ -10,10 +10,10 @@ const QuotationLd = ({ user }) => {
 
 	const formRef = useRef();
 	const [formId, setFormId] = useState('無');  // 表單編號，默認為無
-	const [email, setEmail] = useState('andy770320@gmail.com');
-	const [phone, setPhone] = useState('04-7239718 #109');
+	const [email, setEmail] = useState('lida7239718@gmail.com');
+	const [phone, setPhone] = useState('04-7239718 #103');
 	const [fax, setFax] = useState('04-7232863');
-	const [contactPerson, setContactPerson] = useState('賴先生');
+	const [contactPerson, setContactPerson] = useState('楊小姐');
 	const [companyId, setCompanyId] = useState('');
 	const [companyName, setCompanyName] = useState('');
 	const [otherContactPerson, setOtherContactPerson] = useState('');
@@ -101,7 +101,7 @@ const QuotationLd = ({ user }) => {
     useEffect(() => {
         const fetchServiceItems = async () => {
         try {
-        const response = await fetch(`${apiUrl}/api/getServiceItemsDetails`);
+        const response = await fetch(`${apiUrl}/api/getServiceItemsDetailsLd`);
         const data = await response.json();
         if (data.success && data.service_items) {
         setServiceItems(data.service_items);

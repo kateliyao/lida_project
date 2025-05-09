@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './MainPage.css';
+import searchIcon from './assets/search_icon.png';
 
 const HistoryForm = ({ user }) => {
     const [forms, setForms] = useState([]);
@@ -9,8 +10,10 @@ const HistoryForm = ({ user }) => {
     const apiUrl = import.meta.env.VITE_API_URL;
     const [formTypeFilter, setFormTypeFilter] = useState('全部'); // 當前選中的分類
     const [availableFormTypes, setAvailableFormTypes] = useState([]); // 可用的分類選項
+    const [searchTerm, setSearchTerm] = useState('');
+    const [departmentFilter, setDepartmentFilter] = useState('全部');
+    const [availableDepartments, setAvailableDepartments] = useState([]);
 
-    //獲取表單資料
     const fetchForms = async () => {
         if (activeForm === 'STAGE') {
             setIsLoading(true);  // 開始加載數據
@@ -30,6 +33,13 @@ const HistoryForm = ({ user }) => {
                     // 按照 preferredOrder 進行排序
                     const sortedTypes = preferredOrder.filter(type => uniqueTypes.includes(type));
                     setAvailableFormTypes(['全部', ...sortedTypes]);
+
+                    // 取得所有 department，去重後儲存
+                    const allDepartments = data.forms.map(f => f.department).filter(Boolean);
+                    const uniqueDepartments = [...new Set(allDepartments)];
+
+                    // 確保包含「全部」選項
+                    setAvailableDepartments(['全部', ...uniqueDepartments]);
                 }
                 else {
                     console.error('獲取表單資料失敗', data.message);
@@ -69,35 +79,99 @@ const HistoryForm = ({ user }) => {
     return (
         <div>
             <h2 style={{ textAlign: 'left' }}>歷史資料</h2>
-            {/* 分類按鈕區 */}
-            {forms.length > 0 && (
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                    {availableFormTypes.map((type) => (
-                        <button
-                            key={type}
-                            onClick={() => setFormTypeFilter(type)}
-                            style={{
-                                padding: '10px 20px',
-                                backgroundColor: formTypeFilter === type ? '#EBC857' : '#71777F',
-                                color: formTypeFilter === type ? '#122331' : 'white',
-                                border: '1px solid #ccc',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                fontSize: '20px'
-                            }}
-                        >
-                            {type}
-                        </button>
-                    ))}
+            <div style={{ margin: '10px 0', display: 'flex', alignItems: 'center' }}>
+                    <label htmlFor="departmentFilter" style={{ marginRight: '10px', color: 'white' }}>請篩選公司別：</label>
+                    <select
+                        id="departmentFilter"
+                        value={departmentFilter}
+                        onChange={(e) => setDepartmentFilter(e.target.value)}
+                        style={{
+                            padding: '8px 8px',
+                            borderRadius: '5px',
+                            backgroundColor: '#455664',
+                            border: '1px solid #71777F',
+                            fontSize: '20px',
+                            minWidth: '150px',
+                            cursor:'pointer',
+                            color: 'white',
+                        }}
+                    >
+                        {availableDepartments.map((dept) => (
+                            <option key={dept} value={dept}>{dept}</option>
+                        ))}
+                    </select>
                 </div>
-            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                {/* 分類按鈕區 */}
+                {forms.length > 0 && (
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '5px' }}>
+                        {availableFormTypes.map((type) => (
+                            <button
+                                key={type}
+                                onClick={() => setFormTypeFilter(type)}
+                                style={{
+                                    padding: '10px 20px',
+                                    backgroundColor: formTypeFilter === type ? '#EBC857' : '#71777F',
+                                    color: formTypeFilter === type ? '#122331' : 'white',
+                                    border: '1px solid #ccc',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer',
+                                    fontSize: '20px'
+                                }}
+                            >
+                                {type}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <img src={searchIcon} alt="Search" style={{ width: '30px', height: '30px' }} />
+                    <input
+                        type="text"
+                        placeholder="搜尋 PDF 名稱"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{
+                            border: 'none',
+                            borderBottom: '2px solid #71777F',
+                            outline: 'none',
+                            fontSize: '18px',
+                            padding: '5px',
+                            backgroundColor: 'transparent',
+                            color: 'white'
+                        }}
+                    />
+                    {searchTerm && (
+                        <button
+                            onClick={() => setSearchTerm('')}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '20px',
+                                color: '#ccc',
+                                padding: '0 5px'
+                            }}
+                            title="清除搜尋"
+                        >
+                            ❌
+                        </button>
+                    )}
+                </div>
+            </div>
 
             <ul>
                 {isLoading ? (
                     <li>正在加載資料...</li>
                     ) : forms.length > 0 ? (
                     forms
-                        .filter(form => formTypeFilter === '全部' || form.form_type === formTypeFilter)
+                        .filter(form =>
+                            (formTypeFilter === '全部' || form.form_type === formTypeFilter) &&
+                            (departmentFilter === '全部' || form.department === departmentFilter) &&
+                            form.pdf_name.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
                         .map((form, formIndex) => (
                     <li
                         key={form.form_id}
@@ -109,7 +183,7 @@ const HistoryForm = ({ user }) => {
                         padding: '10px',
                     }}
                     >
-                        <div style={{ display: 'flex', alignItems: 'center' ,wordBreak: 'break-word', maxWidth: '700px', whiteSpace: 'normal',textAlign:'left' }}>
+                        <div className = "history-pdfname" style={{ display: 'flex', alignItems: 'center'}}>
                             <span>{form.pdf_name}</span>
                         </div>
 
