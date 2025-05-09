@@ -190,6 +190,7 @@ const ServiceItem = ({ user }) => {
                                     type="text"
                                     className="serviceitem-input"
                                     value={formatCurrency(row.fee)}
+                                    inputMode="decimal" // 引導輸入為數字或小數點
                                     onChange={(e) => {
                                         let value = e.target.value;
                                         // 如果是數字或貨幣格式，則處理格式化
