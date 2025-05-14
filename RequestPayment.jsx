@@ -165,7 +165,7 @@ const RequestPayment = ({ user }) => {
 
     // 新增第二個表格的行
     const addRow2 = () => {
-        setRows2([...rows2, { item: '', fee: '$0', note: '', isEditing: false }]);
+        setRows2([...rows2, { item: '', fee: '', note: '', isEditing: false }]);
     };
 
     // 刪除第一個表格的行
