@@ -210,7 +210,7 @@ ADD COLUMN `department` VARCHAR(10) DEFAULT NULL;
 
 truncate table dw.`service_items`
 
-INSERT INTO `service_items` (`id`, `title`, `subtitle`, `fee`, `note`, `user_name`, `updated_time`, `department`) 
+INSERT INTO dw.`service_items` (`id`, `title`, `subtitle`, `fee`, `note`, `user_name`, `updated_time`, `department`) 
 VALUES (1,'代辦費','公司設立預查代辦費','600','','lda2','2025-05-05 10:31:00','力達'),
 (2,'代辦費','公司設立登記代辦費','7000','','lda2','2025-05-05 10:31:00','力達'),
 (3,'代辦費','公司變更登記代辦費','7000','','lda2','2025-05-05 10:31:00','力達'),

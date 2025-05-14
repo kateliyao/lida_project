@@ -193,7 +193,14 @@
 						<td style="border: 1px solid #ccc; padding: 8px;">{{ item.subtitle }}</td>
 						<td style="border: 1px solid #ccc; padding: 8px; text-align: right;">
 							<span class="english-number-column {% if item.fee < 0 %}negative{% endif %}">
-								{% if item.formatted_fee %}$ {{ item.formatted_fee }}{% endif %}
+								{% if item.formatted_fee is not none %}
+    {% if item.formatted_fee %}
+        $ {{ item.formatted_fee }}
+    {% else %}
+        $ 0
+    {% endif %}
+{% endif %}
+
 							</span>
 						</td>
 						<td style="border: 1px solid #ccc; padding: 8px;">{{ item.note }}</td>

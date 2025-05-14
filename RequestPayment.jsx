@@ -165,7 +165,7 @@ const RequestPayment = ({ user }) => {
 
     // 新增第二個表格的行
     const addRow2 = () => {
-        setRows2([...rows2, { item: '', fee: '', note: '', isEditing: false }]);
+        setRows2([...rows2, { item: '', fee: '$0', note: '', isEditing: false }]);
     };
 
     // 刪除第一個表格的行
@@ -338,6 +338,18 @@ const RequestPayment = ({ user }) => {
             setIsSubmitting(false);  // 重置為 false，讓用戶可以重新提交
             return;
         }
+
+        // 新增檢查：subtotal2 > 0 且項目是空值
+    const hasEmptyItemWithSubtotal2 = rows2.some(row => {
+        return (row.item === '' || !row.item) &&
+               parseInt(row.fee.replace(/[$,]/g, ''), 10) > 0;
+    });
+
+    if (hasEmptyItemWithSubtotal2) {
+        alert('代墊規費中有金額大於0但項目為空的項目，請填寫項目名稱或將金額設為0');
+        setIsSubmitting(false);
+        return;
+    }
 
     const hasInvalidDiscountTable1 = rows.some(row => {
             const isDiscountItem = row.item.includes("折扣");
@@ -890,37 +902,52 @@ const handleKeyDown = (e) => {
                                     </td>
                                     <td>{index + 1}</td>
                                     <td className="table-seamless-cell">
-            <select
-              className="select_items"
-              value={row.item}
-              onChange={(e) => {
-                const selectedSubtitle = e.target.value;
-                const matchedItem = serviceItemsFees.find(item => item.subtitle === selectedSubtitle);
-                const updatedRows = [...rows2];
-                updatedRows[index].item = selectedSubtitle;
-                if (matchedItem) {
-                  const feeValue = matchedItem.fee;
-                  if (!isNaN(feeValue)) {
-                    updatedRows[index].fee = `$${parseInt(feeValue).toLocaleString()}`;
-                  } else {
-                    updatedRows[index].fee = feeValue;
-                  }
-                } else {
-                  updatedRows[index].fee = '';
-                }
-                setRows2(updatedRows);
-              }}
-            >
-              <option value="">-- 請選擇項目 --</option>
-              {serviceItemsFees.map((item, i) => (
-                <option key={i} value={item.subtitle}>
-                  {item.subtitle}
-                </option>
-              ))}
-            </select>
-          </td>
+  {quotationId.includes('L') ? (
+    <select
+      className="select_items"
+      value={row.item}
+      onChange={(e) => {
+        const selectedSubtitle = e.target.value;
+        const matchedItem = serviceItemsFees.find(item => item.subtitle === selectedSubtitle);
+        const updatedRows = [...rows2];
+        updatedRows[index].item = selectedSubtitle;
 
-                                    <td className="table-seamless-cell">
+        // 只有當尚未填寫金額時才自動帶入
+        if (matchedItem && matchedItem.fee && !updatedRows[index].fee) {
+          updatedRows[index].fee = formatCurrencyForDisplay(matchedItem.fee);
+        }
+
+        setRows2(updatedRows);
+      }}
+    >
+      <option value="">-- 請選擇項目 --</option>
+      {serviceItemsFees.map((item, i) => (
+        <option key={i} value={item.subtitle}>
+          {item.subtitle}
+        </option>
+      ))}
+    </select>
+  ) : (
+    <input
+      type="text"
+      className="table-seamless-input"
+      value={row.item}
+      onChange={(e) => {
+        const updatedRows = [...rows2];
+        updatedRows[index].item = e.target.value;
+
+        // 當使用者手動輸入項目時，若金額還沒填就預設為 $0
+    if (!updatedRows[index].fee || updatedRows[index].fee.trim() === '') {
+      updatedRows[index].fee = '$0';
+    }
+
+        setRows2(updatedRows);
+      }}
+    />
+  )}
+</td>
+
+<td className="table-seamless-cell">
   {row.isEditing ? (
     <input
       type="text"
@@ -933,14 +960,13 @@ const handleKeyDown = (e) => {
       }}
       onBlur={(e) => {
         let value = e.target.value.trim();
-
         if (value === '') {
-  const updatedRows = [...rows2];
-  updatedRows[index].fee = '$非數值';  // 設為默認值
-  updatedRows[index].isEditing = false;
-  setRows2(updatedRows);
-  return;
-}
+          const updatedRows = [...rows2];
+          updatedRows[index].fee = '$非數值';
+          updatedRows[index].isEditing = false;
+          setRows2(updatedRows);
+          return;
+        }
 
         const isNegative = value.startsWith('-');
         const numValue = value.replace(/[^\d]/g, '');
@@ -970,6 +996,7 @@ const handleKeyDown = (e) => {
     </div>
   )}
 </td>
+
 
                                     <td className="table-seamless-cell">
                                         <input
