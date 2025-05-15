@@ -1039,7 +1039,7 @@ const handleKeyDown = (e) => {
                             marginLeft: '4px',
                             display: 'inline-block',
                             }}>
-                            {quotationId.includes('L') ? '0037-11-16306-5-0' : '0037-11-17922-8-0'}
+                            {quotationId.includes('L') ? '0-0037-11-16306-5-0' : '0-0037-11-17930-3-0'}
                         </span>
                     </span>
                 </div>
