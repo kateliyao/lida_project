@@ -361,3 +361,14 @@ background-color: transparent; /* 移除背景顏色 */
   text-align: left;
 }
 }
+
+.mailsender{
+background-color: transparent; /* 移除背景顏色 */
+  border: 1px solid white;        /* 邊框顏色為白色 */
+  color: white;                   /* 文字顏色為白色 */
+  padding: 20px;                  /* 內邊距增加 */
+  width: 50%;                    /* 讓輸入框寬度自適應 */
+  border-radius: 10px;             /* 邊框圓角效果 */
+  margin-bottom:30px;
+  font-size: 28px;
+  }

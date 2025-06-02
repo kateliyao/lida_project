@@ -46,6 +46,8 @@ const StagingArea = ({ onLogout, user }) => {
     const [departmentFilter, setDepartmentFilter] = useState('全部');
     const [availableDepartments, setAvailableDepartments] = useState([]);
 
+    const [sender, setSender] = useState('');  // 儲存寄件者
+
 
 
     // 確保登入後，如果 activeForm 為 null 或 undefined，則設置為 'STAGE'
@@ -429,6 +431,10 @@ const StagingArea = ({ onLogout, user }) => {
         setIsSuggestionSelected(false); // 用戶輸入時，設置為未選擇建議
     };
 
+    const handleChangeSender = (e) => {
+        setSender(e.target.value);  // 更新 sender 狀態
+    };
+
     useEffect(() => {
         // 如果正在選擇建議，就不發送請求
         if (isSuggestionSelected) {
@@ -465,6 +471,12 @@ const StagingArea = ({ onLogout, user }) => {
 
     // 檢查用戶是否有權限查看 "統計圖表" 項目
     const canViewChart = user && user.startsWith('lda');
+
+    const [isZiyueChecked, setIsZiyueChecked] = useState(false);
+
+    const handleZiyueChange = (e) => {
+        setIsZiyueChecked(e.target.checked);
+    };
 
     return (
         <div className="form-area">
@@ -806,6 +818,47 @@ const StagingArea = ({ onLogout, user }) => {
                 </div>
 
                 <div className="title">撰寫郵件</div>
+                <div style={{ display: 'flex', alignItems: 'center', marginRight: '30px' }}>
+    <input
+        type="email"
+        className="mailsender"
+        value={sender}
+        onChange={handleChangeSender}
+        placeholder="請輸入寄件者信箱"
+        style={{ marginRight: '10px' }}
+    />
+
+    <label style={{ display: 'flex', alignItems: 'center', marginRight: '10px' }}>
+            <input
+                type="checkbox"
+                name="ziyue"
+                checked={isZiyueChecked}
+                onChange={handleZiyueChange}
+                style={{
+                    width: '30px',
+                    height: '30px',
+                    marginRight: '10px',
+                    appearance: 'none',
+                    backgroundImage: isZiyueChecked ? `url(${TickYellow})` : 'none',
+                    backgroundSize: 'cover',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundColor: 'transparent',
+                    border: '1px solid #ccc',
+                    cursor: 'pointer',
+                }}
+            />
+            資越
+        </label>
+
+    <label style={{ display: 'flex', alignItems: 'center' }}>
+        <input type="checkbox" name="lida" style={{ marginRight: '5px',width: '30px',
+                    height: '30px', }} />
+        力達
+    </label>
+</div>
+
+
+
                 <div style={{ position: 'relative',marginRight: '30px'}}>
                     <input
                     type="email"
