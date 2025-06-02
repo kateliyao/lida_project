@@ -25,7 +25,7 @@ app = Flask(__name__, static_folder='../react/build')
 # 設置一個密鑰來保護 session 資料
 app.secret_key = os.urandom(24)  # 或者設定固定的密鑰
 # CORS(app, origins=["http://localhost:5173"])
-CORS(app, origins=["http://192.168.1.185:3000"])
+CORS(app, origins=["http://192.168.1.184:3000"])
 
 # 配置 MySQL 資料庫連線
 app.config['MYSQL_HOST'] = 'localhost'
@@ -771,12 +771,9 @@ def update_mail_pdf_name():
 def send_email(file_path, recipient_email, mail_content, file_name_first_part, form_type, file_name, mail_title):
     sender_email = "lida7239718@gmail.com"  # 發送人郵件地址
     sender_password = "tjzcodkjmftmvjeh"  # 發送人應用密碼
-<<<<<<< HEAD
-=======
 
     #sender_email = "kate1sync@gmail.com"
     #sender_password = "nyprqzhhdvjtmcyl"
->>>>>>> dev
 
     if "合併檔案" in file_name:
         second_subject = form_type
