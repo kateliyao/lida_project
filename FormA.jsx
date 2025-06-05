@@ -126,29 +126,31 @@ const FormA = ({ user }) => {
     const handleSearch = async (e) => {
         e.preventDefault();
         if (companyId) {
-          try {
-            const response = await fetch(`${apiUrl}/api/getCompanyName?companyId=${companyId}`);
-            const data = await response.json();
+            try {
+                //const response = await fetch(`${apiUrl}/api/getCompanyName?companyId=${companyId}`);
+                const response = await fetch(`/api/getCompanyName?companyId=${companyId}`);
+                const data = await response.json();
 
-            if (response.ok && data.companyName) {
-                setCompanyName(data.companyName); // 成功返回公司名稱
+                if (response.ok && data.companyName) {
+                    setCompanyName(data.companyName); // 成功返回公司名稱
 
-                const sequenceResponse = await fetch(`${apiUrl}/api/getSequence?companyId=${companyId}`);
-                const sequenceData = await sequenceResponse.json();
+                    //const sequenceResponse = await fetch(`${apiUrl}/api/getSequence?companyId=${companyId}`);
+                    const sequenceResponse = await fetch(`/api/getSequence?companyId=${companyId}`);
+                    const sequenceData = await sequenceResponse.json();
 
-                if (sequenceData.success) {
-                    const formId = `${sequenceData.formId}`;
-                    setFormId(formId); // 生成新的編號，格式：公司編碼_A_系統日期_序號
-                    setErrorMessage(''); // 清空錯誤訊息
+                    if (sequenceData.success) {
+                        const formId = `${sequenceData.formId}`;
+                        setFormId(formId); // 生成新的編號，格式：公司編碼_A_系統日期_序號
+                        setErrorMessage(''); // 清空錯誤訊息
+                    } else {
+                        setErrorMessage('獲取序號失敗');
+                        setFormId('無');
+                    }
                 } else {
-                    setErrorMessage('獲取序號失敗');
+                    setCompanyName('');
+                    setErrorMessage('找不到對應的公司名稱');
                     setFormId('無');
                 }
-            } else {
-                setCompanyName('');
-                setErrorMessage('找不到對應的公司名稱');
-                setFormId('無');
-            }
             } catch (err) {
                 setErrorMessage('查詢失敗，請稍後重試');
                 setFormId('無');
@@ -164,7 +166,8 @@ const FormA = ({ user }) => {
     useEffect(() => {
         const fetchStaffData = async () => {
             try {
-                const response = await fetch(`${apiUrl}/api/getStaffInfo?user=${user}`);
+                //const response = await fetch(`${apiUrl}/api/getStaffInfo?user=${user}`);
+                const response = await fetch(`/api/getStaffInfo?user=${user}`);
                 if (!response.ok) {
                     throw new Error('網路無回應，請檢查服務器是否確實已啟動');
                 }
@@ -319,7 +322,8 @@ const FormA = ({ user }) => {
         console.log('提交的表單數據:', formData); // 確認提交的數據
 
         try {
-            const response = await fetch(`${apiUrl}/api/submitForm`, {
+            //const response = await fetch(`${apiUrl}/api/submitForm`, {
+            const response = await fetch(`/api/submitForm`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

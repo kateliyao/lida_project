@@ -18,7 +18,8 @@ const HistoryForm = ({ user }) => {
         if (activeForm === 'STAGE') {
             setIsLoading(true);  // 開始加載數據
             try {
-                const response = await fetch(`${apiUrl}/api/historyData?user=${user}`);
+                //const response = await fetch(`${apiUrl}/api/historyData?user=${user}`);
+                const response = await fetch(`/api/historyData?user=${user}`);
                 if (!response.ok) {
                     throw new Error('網路回應失敗');
                 }
@@ -59,7 +60,8 @@ const HistoryForm = ({ user }) => {
 
     // 新增：預覽函數
     const handlePreview = async (pdfName) => {
-        const pdfUrl = `${apiUrl}/pdfs/${pdfName}`;
+        //const pdfUrl = `${apiUrl}/pdfs/${pdfName}`;
+        const pdfUrl = `/pdfs/${pdfName}`;
 
         try {
             // 檢查文件是否存在

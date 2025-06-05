@@ -12,7 +12,8 @@ const ChartComponent = ({ user }) => {
     useEffect(() => {
         const fetchChartData = async () => {
             try {
-                const chartResponse = await fetch(`${apiUrl}/api/getChart`);
+                //const chartResponse = await fetch(`${apiUrl}/api/getChart`);
+                const chartResponse = await fetch(`/api/getChart`);
                 const chartData = await chartResponse.json();
 
                 if (chartResponse.ok) {

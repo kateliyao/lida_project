@@ -47,7 +47,8 @@ const QuotationLd = ({ user }) => {
         e.preventDefault();
         if (companyId) {
             try {
-                const response = await fetch(`${apiUrl}/api/getCompanyName?companyId=${companyId}`);
+                //const response = await fetch(`${apiUrl}/api/getCompanyName?companyId=${companyId}`);
+                const response = await fetch(`/api/getCompanyName?companyId=${companyId}`);
                 const data = await response.json();
 
                 if (response.ok && data.companyName) {
@@ -70,10 +71,9 @@ const QuotationLd = ({ user }) => {
     const today = new Date();
     const formattedDate = today.toISOString().split('T')[0].replace(/-/g, '/'); // 轉換成 YYYY/MM/DD 格式
 
-
     const [rows, setRows] = useState([
-    { item: '', fee: '', note: '', isEditing: false }
-        ]);
+        { item: '', fee: '', note: '', isEditing: false }
+    ]);
 
     const handleChange = (index, field, value) => {
         const updatedRows = [...rows];
@@ -88,11 +88,11 @@ const QuotationLd = ({ user }) => {
     // 新增刪除行的函數
     const deleteRow = (index) => {
         if (rows.length > 1) { // 至少保留一行
-        const updatedRows = [...rows];
-        updatedRows.splice(index, 1);
-        setRows(updatedRows);
+            const updatedRows = [...rows];
+            updatedRows.splice(index, 1);
+            setRows(updatedRows);
         } else {
-        alert("至少需要保留一行");
+            alert("至少需要保留一行");
         }
     };
 
@@ -100,95 +100,91 @@ const QuotationLd = ({ user }) => {
 
     useEffect(() => {
         const fetchServiceItems = async () => {
-        try {
-        const response = await fetch(`${apiUrl}/api/getServiceItemsDetailsLd`);
-        const data = await response.json();
-        if (data.success && data.service_items) {
-        setServiceItems(data.service_items);
-        }
-        } catch (error) {
-        console.error('載入 service_items 失敗:', error);
-        }
+            try {
+                //const response = await fetch(`${apiUrl}/api/getServiceItemsDetailsLd`);
+                const response = await fetch(`/api/getServiceItemsDetailsLd`);
+                const data = await response.json();
+                if (data.success && data.service_items) {
+                    setServiceItems(data.service_items);
+                }
+            } catch (error) {
+                console.error('載入 service_items 失敗:', error);
+            }
         };
-
         fetchServiceItems();
-    }, [apiUrl]);
+    }, []);
 
-   const isNumericFee = (fee) => {
-  return fee === "客製化" || /^-?\$?[\d,]+$/.test(fee);
-};
+    const isNumericFee = (fee) => {
+        return fee === "客製化" || /^-?\$?[\d,]+$/.test(fee);
+    };
 
 
     const calculateTotals = () => {
-  let subtotal = 0;
+        let subtotal = 0;
 
-  rows.forEach(row => {
-    if (row.fee === "客製化") return; // 跳過客製化項目
+        rows.forEach(row => {
+            if (row.fee === "客製化") return; // 跳過客製化項目
 
-    if (isNumericFee(row.fee)) {
-      const isNegative = row.fee.trim().startsWith('-');
-      const numValue = row.fee.replace(/[^\d]/g, '');
-      const amount = parseInt(numValue, 10);
+            if (isNumericFee(row.fee)) {
+                const isNegative = row.fee.trim().startsWith('-');
+                const numValue = row.fee.replace(/[^\d]/g, '');
+                const amount = parseInt(numValue, 10);
 
-      if (!isNaN(amount)) {
-        subtotal += isNegative ? -amount : amount;
-      }
-    }
-  });
-
-  const tax = Math.round(subtotal * 0.05);
-  const total = subtotal + tax;
-
-  return { subtotal, tax, total };
-};
-
-  const { subtotal, tax, total } = calculateTotals();
-
-  const formatCurrency = (amount) => {
-    return `$${amount.toLocaleString()}`;
-  };
-
-
-const formatCurrencyForDisplay = (value) => {
-  if (!value) return '';
-  if (value === "客製化") return value; // 直接返回客製化文字
-
-  const isNegative = value.startsWith('-');
-  const numValue = value.replace(/[^\d]/g, '');
-  const formatted = `$${parseInt(numValue, 10).toLocaleString()}`;
-  return isNegative ? `(${formatted})` : formatted;
-};
-
-
-
-
-  const generateQuotationNumber = async (componentName = 'Unknown') => {
-    try {
-        const response = await fetch(`${apiUrl}/api/generateQuotationNumber`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ componentName }),
+                if (!isNaN(amount)) {
+                    subtotal += isNegative ? -amount : amount;
+                }
+            }
         });
-        const data = await response.json();
+        const tax = Math.round(subtotal * 0.05);
+        const total = subtotal + tax;
 
-        if (data.success) {
-            setFormId(data.quotationNumber);
-        } else {
+        return { subtotal, tax, total };
+    };
+
+    const { subtotal, tax, total } = calculateTotals();
+
+    const formatCurrency = (amount) => {
+        return `$${amount.toLocaleString()}`;
+    };
+
+    const formatCurrencyForDisplay = (value) => {
+        if (!value) return '';
+        if (value === "客製化") return value; // 直接返回客製化文字
+
+        const isNegative = value.startsWith('-');
+        const numValue = value.replace(/[^\d]/g, '');
+        const formatted = `$${parseInt(numValue, 10).toLocaleString()}`;
+        return isNegative ? `(${formatted})` : formatted;
+    };
+
+    const generateQuotationNumber = async (componentName = 'Unknown') => {
+        try {
+            //const response = await fetch(`${apiUrl}/api/generateQuotationNumber`, {
+            const response = await fetch(`/api/generateQuotationNumber`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ componentName }),
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                setFormId(data.quotationNumber);
+            } else {
+                setFormId('無');
+                setErrorMessage('生成報價單編號失敗');
+            }
+        } catch (err) {
             setFormId('無');
-            setErrorMessage('生成報價單編號失敗');
+            setErrorMessage('生成報價單編號時發生錯誤');
         }
-    } catch (err) {
-        setFormId('無');
-        setErrorMessage('生成報價單編號時發生錯誤');
-    }
-};
+    };
 
-// 在組件掛載時或適當的時候調用此函數
-useEffect(() => {
-    generateQuotationNumber('QuotationLd');
-}, []);
+    // 在組件掛載時或適當的時候調用此函數
+    useEffect(() => {
+        generateQuotationNumber('QuotationLd');
+    }, []);
 
-    // 在 Quotation 組件中添加提交處理函數
+
     const handleSubmit = async (e, componentName) => {
         setErrorMessage('');
         e.preventDefault();
@@ -237,14 +233,6 @@ useEffect(() => {
             return;
         }
 
-
-
-        // 驗證必填欄位
-    //     if (!companyId || !companyName) {
-    //         setErrorMessage('公司編碼和公司名稱為必填欄位');
-    //         return;
-    //     }
-
         try {
             // 準備主表數據
             const quotationData = {
@@ -264,42 +252,41 @@ useEffect(() => {
 
             // 準備細項數據
             const itemsData = rows.map((row, index) => {
-  // 處理正數和負數
-  const isNegative = row.fee.includes('(') || row.fee.startsWith('-');
+                // 處理正數和負數
+                const isNegative = row.fee.includes('(') || row.fee.startsWith('-');
 
-  // 移除所有非數字字符（保留負號）
-  let numValue = row.fee.replace(/[^\d-]/g, '');
+                // 移除所有非數字字符（保留負號）
+                let numValue = row.fee.replace(/[^\d-]/g, '');
 
-  // 確保負數格式正確
-  if (isNegative && !numValue.startsWith('-')) {
-    numValue = '-' + numValue;
-  }
+                // 確保負數格式正確
+                if (isNegative && !numValue.startsWith('-')) {
+                    numValue = '-' + numValue;
+                }
 
-  return {
-    quotation_id: formId,
-    subtitle_no: index + 1,
-    subtitle: row.item,
-    fee: numValue, // 直接存數字格式 (如 3000 或 -3000)
-    note: row.note,
-    user_name: user
-  };
-});
+                return {
+                    quotation_id: formId,
+                    subtitle_no: index + 1,
+                    subtitle: row.item,
+                    fee: numValue, // 直接存數字格式 (如 3000 或 -3000)
+                    note: row.note,
+                    user_name: user
+                };
+            });
 
+            //const response = await fetch(`${apiUrl}/api/saveQuotation`, {
+            const response = await fetch(`/api/saveQuotation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    quotation: quotationData,
+                    items: itemsData,
+                    componentName: componentName,
+                }),
+            });
 
-        // 發送請求到後端
-        const response = await fetch(`${apiUrl}/api/saveQuotation`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                quotation: quotationData,
-                items: itemsData,
-                componentName: componentName,
-            }),
-        });
-
-        if (response.ok) {
+            if (response.ok) {
                 // 判斷回應的類型是否為 PDF
                 const contentType = response.headers.get('Content-Type');
                 if (contentType && contentType.includes('application/pdf')) {
@@ -327,17 +314,17 @@ useEffect(() => {
                     console.error('提交表單失敗:', result.message);
                     alert('提交表單失敗: ' + result.message);
                 }
-        } else {
-            const result = await response.json();
-            setErrorMessage(result.message || '暫存失敗');
+            } else {
+                const result = await response.json();
+                setErrorMessage(result.message || '暫存失敗');
+            }
+        } catch (error) {
+            console.error('暫存報價單時發生錯誤:', error);
+            setErrorMessage('暫存報價單時發生錯誤');
+        } finally {
+            setIsSubmitting(false);  // 無論如何，提交完成後重置狀態
         }
-    } catch (error) {
-        console.error('暫存報價單時發生錯誤:', error);
-        setErrorMessage('暫存報價單時發生錯誤');
-    } finally {
-        setIsSubmitting(false);  // 無論如何，提交完成後重置狀態
-    }
-};
+    };
 
     return (
         <form onSubmit={(e) => handleSubmit(e, 'QuotationLd')}>
@@ -346,7 +333,6 @@ useEffect(() => {
                     <div style={{ flex: 1.5, textAlign: 'left',fontSize:'30px' }}>報價單LD</div>
                     <div style={{ flex: 1, textAlign: 'left' }}>
                         <div>報價單編號:{formId}</div>
-
                         <div>報價日期:{formattedDate}</div>
                     </div>
                 </div>
@@ -454,83 +440,75 @@ useEffect(() => {
                                     <td>{index + 1}</td>
                                     <td className="table-seamless-cell">
                                         <select
-                                        className="select_items"
-                                        value={row.item}
-                                        onChange={(e) => {
-                                        const selectedSubtitle = e.target.value;
-                                        const matchedItem = serviceItems.find(item => item.subtitle === selectedSubtitle);
-                                        const updatedRows = [...rows];
-                                        updatedRows[index].item = selectedSubtitle;
-                                        if (matchedItem) {
-  const feeValue = matchedItem.fee;
-  if (/^-?\d+(\.\d+)?$/.test(feeValue)) {
-  updatedRows[index].fee = `$${parseInt(feeValue, 10).toLocaleString()}`;
-} else {
-  updatedRows[index].fee = feeValue;  // 保留 "客製化"
-}
-
-} else {
-  updatedRows[index].fee = '';
-}
-
-
-                                        setRows(updatedRows);
-                                        }}
+                                            className="select_items"
+                                            value={row.item}
+                                            onChange={(e) => {
+                                                const selectedSubtitle = e.target.value;
+                                                const matchedItem = serviceItems.find(item => item.subtitle === selectedSubtitle);
+                                                const updatedRows = [...rows];
+                                                updatedRows[index].item = selectedSubtitle;
+                                                if (matchedItem) {
+                                                    const feeValue = matchedItem.fee;
+                                                    if (/^-?\d+(\.\d+)?$/.test(feeValue)) {
+                                                    updatedRows[index].fee = `$${parseInt(feeValue, 10).toLocaleString()}`;
+                                                } else {
+                                                    updatedRows[index].fee = feeValue;  // 保留 "客製化"
+                                                }
+                                                } else {
+                                                    updatedRows[index].fee = '';
+                                                }
+                                                setRows(updatedRows);
+                                            }}
                                         >
                                         <option value="">-- 請選擇項目 --</option>
                                         {serviceItems.map((item, i) => (
-                                        <option key={i} value={item.subtitle}>
-                                        {item.subtitle}
-                                        </option>
+                                            <option key={i} value={item.subtitle}>
+                                                {item.subtitle}
+                                            </option>
                                         ))}
                                         </select>
                                     </td>
 
                                     <td className="table-seamless-cell">
-  {row.isEditing ? (
-    <input
-      type="text"
-      className="table-seamless-input"
-      value={row.fee}
-      onChange={(e) => {
-        const updatedRows = [...rows];
-        updatedRows[index].fee = e.target.value;
-        setRows(updatedRows);
-      }}
-      onBlur={(e) => {
-        let value = e.target.value.trim();
-        const isNegative = value.startsWith('-');
-        const numValue = value.replace(/[^\d]/g, '');
-        if (/^-?\d[\d,]*$/.test(value.replace(/,/g, ''))) {
-          value = `${isNegative ? '-' : ''}$${parseInt(numValue, 10).toLocaleString()}`;
-        }
-
-        const updatedRows = [...rows];
-        updatedRows[index].fee = value;
-        updatedRows[index].isEditing = false; // 離開編輯模式
-        setRows(updatedRows);
-      }}
-      style={{ textAlign: 'right' }}
-      autoFocus
-    />
-  ) : (
-    <div
-      className={row.fee.startsWith('-') ? 'red-text' : ''}
-      style={{ textAlign: 'right', cursor: 'pointer' }}
-      onClick={() => {
-        const updatedRows = [...rows];
-        updatedRows[index].isEditing = true;
-        setRows(updatedRows);
-      }}
-    >
-      {formatCurrencyForDisplay(row.fee)}
-    </div>
-  )}
-</td>
-
-
-
-
+                                        {row.isEditing ? (
+                                            <input
+                                                type="text"
+                                                className="table-seamless-input"
+                                                value={row.fee}
+                                                onChange={(e) => {
+                                                    const updatedRows = [...rows];
+                                                    updatedRows[index].fee = e.target.value;
+                                                    setRows(updatedRows);
+                                                }}
+                                                onBlur={(e) => {
+                                                    let value = e.target.value.trim();
+                                                    const isNegative = value.startsWith('-');
+                                                    const numValue = value.replace(/[^\d]/g, '');
+                                                    if (/^-?\d[\d,]*$/.test(value.replace(/,/g, ''))) {
+                                                        value = `${isNegative ? '-' : ''}$${parseInt(numValue, 10).toLocaleString()}`;
+                                                    }
+                                                    const updatedRows = [...rows];
+                                                    updatedRows[index].fee = value;
+                                                    updatedRows[index].isEditing = false; // 離開編輯模式
+                                                    setRows(updatedRows);
+                                                }}
+                                                style={{ textAlign: 'right' }}
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            <div
+                                                className={row.fee.startsWith('-') ? 'red-text' : ''}
+                                                style={{ textAlign: 'right', cursor: 'pointer' }}
+                                                onClick={() => {
+                                                    const updatedRows = [...rows];
+                                                    updatedRows[index].isEditing = true;
+                                                    setRows(updatedRows);
+                                                }}
+                                            >
+                                            {formatCurrencyForDisplay(row.fee)}
+                                            </div>
+                                        )}
+                                    </td>
 
                                     <td className="table-seamless-cell">
                                         <input
@@ -546,7 +524,7 @@ useEffect(() => {
                     </table>
 
                     <button type="button" onClick={addRow} style={{ marginTop: '10px', background: 'none', border: 'none', cursor: 'pointer' }}>
-                    <img src={increaseQuantity} alt="新增列" style={{ width: '40px', height: '40px' }} />
+                        <img src={increaseQuantity} alt="新增列" style={{ width: '40px', height: '40px' }} />
                     </button>
                 </div>
 
@@ -555,45 +533,42 @@ useEffect(() => {
 
                 <div className="Quotation-table-totalprice">
                     <div className="Quotation-row">
-                    <div className="Quotation-cell-left">小計</div>
-                    <div className="Quotation-cell-right">{formatCurrency(subtotal)}</div>
+                        <div className="Quotation-cell-left">小計</div>
+                        <div className="Quotation-cell-right">{formatCurrency(subtotal)}</div>
                     </div>
                     <div className="Quotation-row">
-                    <div className="Quotation-cell-left">營業稅</div>
-                    <div className="Quotation-cell-right">{formatCurrency(tax)}</div>
+                        <div className="Quotation-cell-left">營業稅</div>
+                        <div className="Quotation-cell-right">{formatCurrency(tax)}</div>
                     </div>
                     <div className="Quotation-row">
-                    <div className="Quotation-cell-left">合計</div>
-                    <div className="Quotation-cell-right">{formatCurrency(total)}</div>
+                        <div className="Quotation-cell-left">合計</div>
+                        <div className="Quotation-cell-right">{formatCurrency(total)}</div>
                     </div>
                 </div>
 
+                <div style={{ textAlign: 'left' }}>◎申請案件草稿經出具後取消申請者，仍需酌收工本作業費。</div>
+                <div style={{ textAlign: 'left' }}>
+                    ◎以上報價
+                    <span style={{ fontWeight: 'bold', borderBottom: '1px solid white' }}>
+                        不含政府規費
+                    </span>
+                    及
+                    <span style={{ fontWeight: 'bold', borderBottom: '1px solid white' }}>
+                        其他實際支出費用
+                    </span>。
+                </div>
 
-<div style={{ textAlign: 'left' }}>◎申請案件草稿經出具後取消申請者，仍需酌收工本作業費。</div>
-<div style={{ textAlign: 'left' }}>
-  ◎以上報價
-  <span style={{ fontWeight: 'bold', borderBottom: '1px solid white' }}>
-    不含政府規費
-  </span>
-  及
-  <span style={{ fontWeight: 'bold', borderBottom: '1px solid white' }}>
-    其他實際支出費用
-  </span>。
-</div>
+                <div style={{ textAlign: 'left', marginTop: '80px'}}>
+                    若要接受此報價，請在此簽名後回傳：
+                    <span style={{ display: 'inline-block', borderBottom: '1px solid white', width: '600px', verticalAlign: 'bottom', marginLeft: '8px' }}> </span>
+                </div>
 
-<div style={{ textAlign: 'left', marginTop: '80px'}}>
-    若要接受此報價，請在此簽名後回傳：
-    <span style={{ display: 'inline-block', borderBottom: '1px solid white', width: '600px', verticalAlign: 'bottom', marginLeft: '8px' }}></span>
-</div>
-
-<div style={{ textAlign: 'center', marginTop: '80px' }}>敬祝 商祺☺</div>
-
-
+                <div style={{ textAlign: 'center', marginTop: '80px' }}>敬祝 商祺☺</div>
             </div>
-                    <button ref={buttonRef} type="submit" disabled={isSubmitting} className="submit_button">
-                        {isSubmitting ? '提交中...' : '提交'}
-                    </button>
-                    {errorMessage && <p style={{ color: 'red', marginLeft: '10px' }}>{errorMessage}</p>}
+            <button ref={buttonRef} type="submit" disabled={isSubmitting} className="submit_button">
+                {isSubmitting ? '提交中...' : '提交'}
+            </button>
+            {errorMessage && <p style={{ color: 'red', marginLeft: '10px' }}>{errorMessage}</p>}
         </form>
     );
 };

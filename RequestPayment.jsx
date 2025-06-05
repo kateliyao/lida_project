@@ -55,7 +55,8 @@ const RequestPayment = ({ user }) => {
         e.preventDefault();
         if (quotationId) {
             try {
-                const response = await fetch(`${apiUrl}/api/getQuotation?quotationId=${quotationId}`);
+                //const response = await fetch(`${apiUrl}/api/getQuotation?quotationId=${quotationId}`);
+                const response = await fetch(`/api/getQuotation?quotationId=${quotationId}`);
                 const data = await response.json();
 
                 if (response.ok && data.quotation) {
@@ -95,7 +96,8 @@ const RequestPayment = ({ user }) => {
 
                     // 只有在成功取得報價單資料後，才產生請款單編號
                     try {
-                        const paymentResponse = await fetch(`${apiUrl}/api/generateRequestPaymentNumber`, {
+                        //const paymentResponse = await fetch(`${apiUrl}/api/generateRequestPaymentNumber`, {
+                        const paymentResponse = await fetch(`/api/generateRequestPaymentNumber`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                         });
@@ -129,8 +131,6 @@ const RequestPayment = ({ user }) => {
             setErrorMessage('請輸入報價單編號');
         }
     };
-
-// 可以移除原本的 generateRequestPaymentNumber 函數，因為我們已經將它整合到 handleSearch 中
 
     const buttonRef = useRef();
 
@@ -198,7 +198,8 @@ const RequestPayment = ({ user }) => {
                     ? 'getServiceItemsDetailsLd'
                     : 'getServiceItemsDetails';
 
-                const response = await fetch(`${apiUrl}/api/${apiEndpoint}`);
+                //const response = await fetch(`${apiUrl}/api/${apiEndpoint}`);
+                const response = await fetch(`/api/${apiEndpoint}`);
                 const data = await response.json();
                 if (data.success && data.service_items) {
                     setServiceItems(data.service_items);
@@ -211,7 +212,7 @@ const RequestPayment = ({ user }) => {
         if (quotationId) {
             fetchServiceItems();
         }
-    }, [apiUrl, quotationId]);  // 添加 quotationId 為依賴項
+    }, [quotationId]);  // 添加 quotationId 為依賴項
 
     useEffect(() => {
         const fetchServiceItemsFees = async () => {
@@ -220,7 +221,8 @@ const RequestPayment = ({ user }) => {
                     ? 'getServiceItemsFeesLd'
                     : 'getServiceItemsFees';
 
-                const response = await fetch(`${apiUrl}/api/${apiEndpoint}`);
+                //const response = await fetch(`${apiUrl}/api/${apiEndpoint}`);
+                const response = await fetch(`/api/${apiEndpoint}`);
                 const data = await response.json();
                 if (data.success && data.service_items) {
                     setServiceItemsFees(data.service_items);
@@ -234,20 +236,20 @@ const RequestPayment = ({ user }) => {
         if (quotationId) {
             fetchServiceItemsFees();
         }
-    }, [apiUrl, quotationId]);  // 添加 quotationId 為依賴項
+    }, [quotationId]);  // 添加 quotationId 為依賴項
 
     const isNumericFee = (fee) => {
         return fee === "客製化" || /^-?\$?[\d,]+$/.test(fee);
     };
 
     const formatCurrencyForDisplay = (value) => {
-    if (!value) return '';
-    if (value === "客製化") return value; // 直接返回客製化文字
+        if (!value) return '';
+        if (value === "客製化") return value; // 直接返回客製化文字
 
-    const isNegative = value.startsWith('-');
-    const numValue = value.replace(/[^\d]/g, '');
-    const formatted = `$${parseInt(numValue, 10).toLocaleString()}`;
-    return isNegative ? `(${formatted})` : formatted;
+        const isNegative = value.startsWith('-');
+        const numValue = value.replace(/[^\d]/g, '');
+        const formatted = `$${parseInt(numValue, 10).toLocaleString()}`;
+        return isNegative ? `(${formatted})` : formatted;
     };
 
     // 計算總額（包含兩個表格的數據）
@@ -256,35 +258,34 @@ const RequestPayment = ({ user }) => {
         let subtotal2 = 0;
 
         // 計算第一個表格的小計
-  rows.forEach(row => {
-    if (row.fee === "客製化") return;
+        rows.forEach(row => {
+            if (row.fee === "客製化") return;
 
-    if (isNumericFee(row.fee)) {
-      const isNegative = row.fee.trim().startsWith('-');
-      const numValue = row.fee.replace(/[^\d]/g, '');
-      const amount = parseInt(numValue, 10);
+            if (isNumericFee(row.fee)) {
+                const isNegative = row.fee.trim().startsWith('-');
+                const numValue = row.fee.replace(/[^\d]/g, '');
+                const amount = parseInt(numValue, 10);
 
-      if (!isNaN(amount)) {
-        subtotal1 += isNegative ? -amount : amount;
-      }
-    }
-  });
+                if (!isNaN(amount)) {
+                    subtotal1 += isNegative ? -amount : amount;
+                }
+            }
+        });
 
         // 計算第二個表格的小計
         rows2.forEach(row => {
-    if (row.fee === "客製化") return;
+            if (row.fee === "客製化") return;
 
-    if (isNumericFee(row.fee)) {
-      const isNegative = row.fee.trim().startsWith('-');
-      const numValue = row.fee.replace(/[^\d]/g, '');
-      const amount = parseInt(numValue, 10);
+            if (isNumericFee(row.fee)) {
+                const isNegative = row.fee.trim().startsWith('-');
+                const numValue = row.fee.replace(/[^\d]/g, '');
+                const amount = parseInt(numValue, 10);
 
-      if (!isNaN(amount)) {
-        subtotal2 += isNegative ? -amount : amount;
-      }
-    }
-  });
-
+                if (!isNaN(amount)) {
+                    subtotal2 += isNegative ? -amount : amount;
+                }
+            }
+        });
         const tax = Math.round(subtotal1 * 0.05);
         const total = subtotal1 + tax;
         const finaltotal = total + subtotal2;
@@ -294,13 +295,11 @@ const RequestPayment = ({ user }) => {
 
     const { subtotal1, subtotal2, tax, total, finaltotal } = calculateTotals();
 
-    // Format currency with commas
     const formatCurrency = (amount) => {
-    return `$${amount.toLocaleString()}`;
+        return `$${amount.toLocaleString()}`;
     };
 
 
-    // 在 Quotation 組件中添加提交處理函數
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -340,18 +339,18 @@ const RequestPayment = ({ user }) => {
         }
 
         // 新增檢查：subtotal2 > 0 且項目是空值
-    const hasEmptyItemWithSubtotal2 = rows2.some(row => {
-        return (row.item === '' || !row.item) &&
-               parseInt(row.fee.replace(/[$,]/g, ''), 10) > 0;
-    });
+        const hasEmptyItemWithSubtotal2 = rows2.some(row => {
+            return (row.item === '' || !row.item) &&
+                parseInt(row.fee.replace(/[$,]/g, ''), 10) > 0;
+        });
 
-    if (hasEmptyItemWithSubtotal2) {
-        alert('代墊規費中有金額大於0但項目為空的項目，請填寫項目名稱或將金額設為0');
-        setIsSubmitting(false);
-        return;
-    }
+        if (hasEmptyItemWithSubtotal2) {
+            alert('代墊規費中有金額大於0但項目為空的項目，請填寫項目名稱或將金額設為0');
+            setIsSubmitting(false);
+            return;
+        }
 
-    const hasInvalidDiscountTable1 = rows.some(row => {
+        const hasInvalidDiscountTable1 = rows.some(row => {
             const isDiscountItem = row.item.includes("折扣");
             if (isDiscountItem) {
                 const isNegative = row.fee.includes('(') || row.fee.startsWith('-');
@@ -366,7 +365,7 @@ const RequestPayment = ({ user }) => {
             return;
         }
 
-    const hasInvalidDiscountTable2 = rows2.some(row => {
+        const hasInvalidDiscountTable2 = rows2.some(row => {
             const isDiscountItem = row.item.includes("折扣");
             if (isDiscountItem) {
                 const isNegative = row.fee.includes('(') || row.fee.startsWith('-');
@@ -403,49 +402,49 @@ const RequestPayment = ({ user }) => {
 
             // 準備第一個表格的細項數據 (request_payment_item1)
             const items1Data = rows.map((row, index) => {
-              // 處理正數和負數
-              const isNegative = row.fee.includes('(') || row.fee.startsWith('-');
+                // 處理正數和負數
+                const isNegative = row.fee.includes('(') || row.fee.startsWith('-');
 
-              // 移除所有非數字字符（保留負號）
-              let numValue = row.fee.replace(/[^\d-]/g, '');
+                // 移除所有非數字字符（保留負號）
+                let numValue = row.fee.replace(/[^\d-]/g, '');
 
-              // 確保負數格式正確
-              if (isNegative && !numValue.startsWith('-')) {
+                // 確保負數格式正確
+                if (isNegative && !numValue.startsWith('-')) {
                 numValue = '-' + numValue;
-              }
+                }
 
-              return {
+                return {
                 request_payment_id: formId,
                 subtitle_no: index + 1,
                 subtitle: row.item,
                 fee: numValue, // 直接存數字格式 (如 3000 或 -3000)
                 note: row.note,
                 user_name: user
-              };
+                };
             });
 
             // 準備第二個表格的細項數據 (request_payment_item2)
             const items2Data = rows2.map((row, index) => {
-  const isNegative = row.fee.includes('(') || row.fee.startsWith('-');
-  let numValue = row.fee.replace(/[^\d-]/g, '');
+                const isNegative = row.fee.includes('(') || row.fee.startsWith('-');
+                let numValue = row.fee.replace(/[^\d-]/g, '');
 
-  if (isNegative && !numValue.startsWith('-')) {
-    numValue = '-' + numValue;
-  }
+                if (isNegative && !numValue.startsWith('-')) {
+                numValue = '-' + numValue;
+                }
 
-  return {
-    request_payment_id: formId,
-    subtitle_no: index + 1,
-    subtitle: row.item,
-    fee: numValue,
-    note: row.note,
-    user_name: user
-  };
-});
+                return {
+                    request_payment_id: formId,
+                    subtitle_no: index + 1,
+                    subtitle: row.item,
+                    fee: numValue,
+                    note: row.note,
+                    user_name: user
+                };
+            });
 
 
-            // 發送請求到後端
-            const response = await fetch(`${apiUrl}/api/saveRequestPayment`, {
+            //const response = await fetch(`${apiUrl}/api/saveRequestPayment`, {
+            const response = await fetch(`/api/saveRequestPayment`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -458,31 +457,31 @@ const RequestPayment = ({ user }) => {
             });
 
             if (response.ok) {
-                    // 判斷回應的類型是否為 PDF
-                    const contentType = response.headers.get('Content-Type');
-                    if (contentType && contentType.includes('application/pdf')) {
-                        // 如果是 PDF，獲取 PDF 文件的 blob 資料
-                        const blob = await response.blob();
-                        // 創建一個臨時連結來觸發文件下載
-                        const link = document.createElement('a');
-                        link.href = URL.createObjectURL(blob); // 創建 blob 物件 URL
-                        link.download = '請款單.pdf'; // 設定下載檔案的名稱
-                        //link.click(); // 自動觸發下載
-                        alert('表單提交成功！');
-                        setHasQuotationData(false);
-                        setCompanyName('');
-                        setOtherContactPerson('');
-                        setQuotationId('');
-                        setRows([{ item: '', fee: '', note: '' }]);
-                        setRows2([{ item: '', fee: '', note: '' }]);
-                        setErrorMessage('');
+                // 判斷回應的類型是否為 PDF
+                const contentType = response.headers.get('Content-Type');
+                if (contentType && contentType.includes('application/pdf')) {
+                    // 如果是 PDF，獲取 PDF 文件的 blob 資料
+                    const blob = await response.blob();
+                    // 創建一個臨時連結來觸發文件下載
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob); // 創建 blob 物件 URL
+                    link.download = '請款單.pdf'; // 設定下載檔案的名稱
+                    //link.click(); // 自動觸發下載
+                    alert('表單提交成功！');
+                    setHasQuotationData(false);
+                    setCompanyName('');
+                    setOtherContactPerson('');
+                    setQuotationId('');
+                    setRows([{ item: '', fee: '', note: '' }]);
+                    setRows2([{ item: '', fee: '', note: '' }]);
+                    setErrorMessage('');
 
-                    } else {
-                        // 如果不是 PDF，嘗試讀取 JSON 錯誤訊息
-                        const result = await response.json();
-                        console.error('提交表單失敗:', result.message);
-                        alert('提交表單失敗: ' + result.message);
-                    }
+                } else {
+                    // 如果不是 PDF，嘗試讀取 JSON 錯誤訊息
+                    const result = await response.json();
+                    console.error('提交表單失敗:', result.message);
+                    alert('提交表單失敗: ' + result.message);
+                }
             } else {
                 const result = await response.json();
                 setErrorMessage(result.message || '暫存失敗');
@@ -495,8 +494,8 @@ const RequestPayment = ({ user }) => {
         }
     };
 
-// 阻止點擊Enter提交表單
-const handleKeyDown = (e) => {
+    // 阻止點擊Enter提交表單
+    const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             console.log('Prevented Enter key submit');
@@ -505,7 +504,8 @@ const handleKeyDown = (e) => {
 
     const handleShowAllQuotations = async () => {
         try {
-            const response = await fetch(`${apiUrl}/api/getAllQuotations?user=${user}`);
+            //const response = await fetch(`${apiUrl}/api/getAllQuotations?user=${user}`);
+            const response = await fetch(`/api/getAllQuotations?user=${user}`);
             const data = await response.json();
 
             if (response.ok && data.quotations) {
@@ -564,11 +564,9 @@ const handleKeyDown = (e) => {
         }
     };
 
-
     return (
         <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
             <div ref={formRef} className="RequestPayment" >
-
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <input
                     className="input-large"
@@ -589,7 +587,6 @@ const handleKeyDown = (e) => {
                         >
                             {isModalVisible ? '關閉報價單列表' : '查詢所有報價單'}
                         </button>
-
 
                         {isModalVisible && (
                             <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000 }}>
@@ -758,86 +755,86 @@ const handleKeyDown = (e) => {
                                     <td>{index + 1}</td>
                                     <td className="table-seamless-cell">
                                         <select
-                                        className="select_items"
-                                        value={row.item}
-                                        onChange={(e) => {
-                                        const selectedSubtitle = e.target.value;
-                                        const matchedItem = serviceItems.find(item => item.subtitle === selectedSubtitle);
-                                        const updatedRows = [...rows];
-                                        updatedRows[index].item = selectedSubtitle;
-                                        if (matchedItem) {
-                                          const feeValue = matchedItem.fee;
-                                          if (!isNaN(feeValue)) {
-                                            updatedRows[index].fee = `$${parseInt(feeValue).toLocaleString()}`;
-                                          } else {
-                                            updatedRows[index].fee = feeValue;  // 非數字，保留原樣
-                                          }
-                                        } else {
-                                          updatedRows[index].fee = '';
-                                        }
-                                        setRows(updatedRows);
-                                        }}
+                                            className="select_items"
+                                            value={row.item}
+                                            onChange={(e) => {
+                                                const selectedSubtitle = e.target.value;
+                                                const matchedItem = serviceItems.find(item => item.subtitle === selectedSubtitle);
+                                                const updatedRows = [...rows];
+                                                updatedRows[index].item = selectedSubtitle;
+                                                if (matchedItem) {
+                                                  const feeValue = matchedItem.fee;
+                                                  if (!isNaN(feeValue)) {
+                                                    updatedRows[index].fee = `$${parseInt(feeValue).toLocaleString()}`;
+                                                  } else {
+                                                    updatedRows[index].fee = feeValue;  // 非數字，保留原樣
+                                                  }
+                                                } else {
+                                                  updatedRows[index].fee = '';
+                                                }
+                                                setRows(updatedRows);
+                                            }}
                                         >
                                         <option value="">-- 請選擇項目 --</option>
                                         {serviceItems.map((item, i) => (
-                                        <option key={i} value={item.subtitle}>
-                                        {item.subtitle}
-                                        </option>
+                                            <option key={i} value={item.subtitle}>
+                                            {item.subtitle}
+                                            </option>
                                         ))}
                                         </select>
                                     </td>
 
                                     <td className="table-seamless-cell">
-  {row.isEditing ? (
-    <input
-      type="text"
-      className="table-seamless-input"
-      value={row.fee}
-      onChange={(e) => {
-        const updatedRows = [...rows];
-        updatedRows[index].fee = e.target.value;
-        setRows(updatedRows);
-      }}
-      onBlur={(e) => {
-        let value = e.target.value.trim();
+                                        {row.isEditing ? (
+                                            <input
+                                                type="text"
+                                                className="table-seamless-input"
+                                                value={row.fee}
+                                                onChange={(e) => {
+                                                    const updatedRows = [...rows];
+                                                    updatedRows[index].fee = e.target.value;
+                                                    setRows(updatedRows);
+                                                    }}
+                                                    onBlur={(e) => {
+                                                    let value = e.target.value.trim();
 
-        // 特別處理空值情況
-        if (value === '') {
-          const updatedRows = [...rows];
-          updatedRows[index].fee = '$非數值';  // 設為默認值 $非數值
-          updatedRows[index].isEditing = false;
-          setRows(updatedRows);
-          return;
-        }
+                                                    // 特別處理空值情況
+                                                    if (value === '') {
+                                                    const updatedRows = [...rows];
+                                                    updatedRows[index].fee = '$非數值';  // 設為默認值 $非數值
+                                                    updatedRows[index].isEditing = false;
+                                                    setRows(updatedRows);
+                                                    return;
+                                                    }
 
-        const isNegative = value.startsWith('-');
-        const numValue = value.replace(/[^\d]/g, '');
-        if (/^-?\d[\d,]*$/.test(value.replace(/,/g, ''))) {
-          value = `${isNegative ? '-' : ''}$${parseInt(numValue, 10).toLocaleString()}`;
-        }
+                                                    const isNegative = value.startsWith('-');
+                                                    const numValue = value.replace(/[^\d]/g, '');
+                                                    if (/^-?\d[\d,]*$/.test(value.replace(/,/g, ''))) {
+                                                    value = `${isNegative ? '-' : ''}$${parseInt(numValue, 10).toLocaleString()}`;
+                                                    }
 
-        const updatedRows = [...rows];
-        updatedRows[index].fee = value;
-        updatedRows[index].isEditing = false;
-        setRows(updatedRows);
-      }}
-      style={{ textAlign: 'right' }}
-      autoFocus
-    />
-  ) : (
-    <div
-      className={row.fee.startsWith('-') ? 'red-text' : ''}
-      style={{ textAlign: 'right', cursor: 'pointer' }}
-      onClick={() => {
-        const updatedRows = [...rows];
-        updatedRows[index].isEditing = true;
-        setRows(updatedRows);
-      }}
-    >
-      {formatCurrencyForDisplay(row.fee)}
-    </div>
-  )}
-</td>
+                                                    const updatedRows = [...rows];
+                                                    updatedRows[index].fee = value;
+                                                    updatedRows[index].isEditing = false;
+                                                    setRows(updatedRows);
+                                                }}
+                                                style={{ textAlign: 'right' }}
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            <div
+                                                className={row.fee.startsWith('-') ? 'red-text' : ''}
+                                                style={{ textAlign: 'right', cursor: 'pointer' }}
+                                                onClick={() => {
+                                                    const updatedRows = [...rows];
+                                                    updatedRows[index].isEditing = true;
+                                                    setRows(updatedRows);
+                                                }}
+                                            >
+                                                {formatCurrencyForDisplay(row.fee)}
+                                            </div>
+                                        )}
+                                    </td>
 
                                     <td className="table-seamless-cell">
                                         <input
@@ -853,12 +850,12 @@ const handleKeyDown = (e) => {
                     </table>
 
                     <button type="button" onClick={addRow} style={{ marginTop: '10px', background: 'none', border: 'none', cursor: 'pointer' }}>
-                    <img src={increaseQuantity} alt="新增列" style={{ width: '40px', height: '40px' }} />
+                        <img src={increaseQuantity} alt="新增列" style={{ width: '40px', height: '40px' }} />
                     </button>
                 </div>
 
                 {/* 長直線 */}
-{/*                 <div className="divider-line" /> */}
+                {/* <div className="divider-line" /> */}
 
                 <div className="RequestPayment-table-totalprice">
                     <div className="RequestPayment-row">
@@ -902,101 +899,99 @@ const handleKeyDown = (e) => {
                                     </td>
                                     <td>{index + 1}</td>
                                     <td className="table-seamless-cell">
-  {quotationId.includes('L') ? (
-    <select
-      className="select_items"
-      value={row.item}
-      onChange={(e) => {
-        const selectedSubtitle = e.target.value;
-        const matchedItem = serviceItemsFees.find(item => item.subtitle === selectedSubtitle);
-        const updatedRows = [...rows2];
-        updatedRows[index].item = selectedSubtitle;
+                                        {quotationId.includes('L') ? (
+                                            <select
+                                                className="select_items"
+                                                value={row.item}
+                                                onChange={(e) => {
+                                                const selectedSubtitle = e.target.value;
+                                                const matchedItem = serviceItemsFees.find(item => item.subtitle === selectedSubtitle);
+                                                const updatedRows = [...rows2];
+                                                updatedRows[index].item = selectedSubtitle;
 
-        // 只有當尚未填寫金額時才自動帶入
-        if (matchedItem && matchedItem.fee && !updatedRows[index].fee) {
-          updatedRows[index].fee = formatCurrencyForDisplay(matchedItem.fee);
-        }
+                                                // 只有當尚未填寫金額時才自動帶入
+                                                if (matchedItem && matchedItem.fee && !updatedRows[index].fee) {
+                                                    updatedRows[index].fee = formatCurrencyForDisplay(matchedItem.fee);
+                                                }
 
-        setRows2(updatedRows);
-      }}
-    >
-      <option value="">-- 請選擇項目 --</option>
-      {serviceItemsFees.map((item, i) => (
-        <option key={i} value={item.subtitle}>
-          {item.subtitle}
-        </option>
-      ))}
-    </select>
-  ) : (
-    <input
-      type="text"
-      className="table-seamless-input"
-      value={row.item}
-      onChange={(e) => {
-        const updatedRows = [...rows2];
-        updatedRows[index].item = e.target.value;
+                                                setRows2(updatedRows);
+                                                }}
+                                            >
+                                                <option value="">-- 請選擇項目 --</option>
+                                                {serviceItemsFees.map((item, i) => (
+                                                    <option key={i} value={item.subtitle}>
+                                                        {item.subtitle}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                className="table-seamless-input"
+                                                value={row.item}
+                                                onChange={(e) => {
+                                                    const updatedRows = [...rows2];
+                                                    updatedRows[index].item = e.target.value;
 
-        // 當使用者手動輸入項目時，若金額還沒填就預設為 $0
-    if (!updatedRows[index].fee || updatedRows[index].fee.trim() === '') {
-      updatedRows[index].fee = '$0';
-    }
+                                                    // 當使用者手動輸入項目時，若金額還沒填就預設為 $0
+                                                    if (!updatedRows[index].fee || updatedRows[index].fee.trim() === '') {
+                                                    updatedRows[index].fee = '$0';
+                                                    }
+                                                    setRows2(updatedRows);
+                                                }}
+                                            />
+                                        )}
+                                    </td>
 
-        setRows2(updatedRows);
-      }}
-    />
-  )}
-</td>
+                                    <td className="table-seamless-cell">
+                                        {row.isEditing ? (
+                                            <input
+                                            type="text"
+                                            className="table-seamless-input"
+                                            value={row.fee}
+                                            onChange={(e) => {
+                                            const updatedRows = [...rows2];
+                                            updatedRows[index].fee = e.target.value;
+                                            setRows2(updatedRows);
+                                            }}
+                                            onBlur={(e) => {
+                                            let value = e.target.value.trim();
+                                            if (value === '') {
+                                            const updatedRows = [...rows2];
+                                            updatedRows[index].fee = '$非數值';
+                                            updatedRows[index].isEditing = false;
+                                            setRows2(updatedRows);
+                                            return;
+                                            }
 
-<td className="table-seamless-cell">
-  {row.isEditing ? (
-    <input
-      type="text"
-      className="table-seamless-input"
-      value={row.fee}
-      onChange={(e) => {
-        const updatedRows = [...rows2];
-        updatedRows[index].fee = e.target.value;
-        setRows2(updatedRows);
-      }}
-      onBlur={(e) => {
-        let value = e.target.value.trim();
-        if (value === '') {
-          const updatedRows = [...rows2];
-          updatedRows[index].fee = '$非數值';
-          updatedRows[index].isEditing = false;
-          setRows2(updatedRows);
-          return;
-        }
+                                            const isNegative = value.startsWith('-');
+                                            const numValue = value.replace(/[^\d]/g, '');
+                                            if (/^-?\d[\d,]*$/.test(value.replace(/,/g, ''))) {
+                                            value = `${isNegative ? '-' : ''}$${parseInt(numValue, 10).toLocaleString()}`;
+                                            }
 
-        const isNegative = value.startsWith('-');
-        const numValue = value.replace(/[^\d]/g, '');
-        if (/^-?\d[\d,]*$/.test(value.replace(/,/g, ''))) {
-          value = `${isNegative ? '-' : ''}$${parseInt(numValue, 10).toLocaleString()}`;
-        }
-
-        const updatedRows = [...rows2];
-        updatedRows[index].fee = value;
-        updatedRows[index].isEditing = false;
-        setRows2(updatedRows);
-      }}
-      style={{ textAlign: 'right' }}
-      autoFocus
-    />
-  ) : (
-    <div
-      className={row.fee.startsWith('-') ? 'red-text' : ''}
-      style={{ textAlign: 'right', cursor: 'pointer' }}
-      onClick={() => {
-        const updatedRows = [...rows2];
-        updatedRows[index].isEditing = true;
-        setRows2(updatedRows);
-      }}
-    >
-      {formatCurrencyForDisplay(row.fee)}
-    </div>
-  )}
-</td>
-
+                                            const updatedRows = [...rows2];
+                                            updatedRows[index].fee = value;
+                                            updatedRows[index].isEditing = false;
+                                            setRows2(updatedRows);
+                                            }}
+                                            style={{ textAlign: 'right' }}
+                                            autoFocus
+                                            />
+                                            ) : (
+                                            <div
+                                            className={row.fee.startsWith('-') ? 'red-text' : ''}
+                                            style={{ textAlign: 'right', cursor: 'pointer' }}
+                                            onClick={() => {
+                                            const updatedRows = [...rows2];
+                                            updatedRows[index].isEditing = true;
+                                            setRows2(updatedRows);
+                                            }}
+                                            >
+                                            {formatCurrencyForDisplay(row.fee)}
+                                            </div>
+                                        )}
+                                    </td>
 
                                     <td className="table-seamless-cell">
                                         <input
@@ -1012,11 +1007,11 @@ const handleKeyDown = (e) => {
                     </table>
 
                     <button type="button" onClick={addRow2} style={{ marginTop: '10px', background: 'none', border: 'none', cursor: 'pointer' }}>
-                    <img src={increaseQuantity} alt="新增列" style={{ width: '40px', height: '40px' }} />
+                        <img src={increaseQuantity} alt="新增列" style={{ width: '40px', height: '40px' }} />
                     </button>
                 </div>
 
-{/*                 <div className="divider-line" /> */}
+                {/*<div className="divider-line" /> */}
 
                 <div className="RequestPayment-table-totalprice">
                     <div className="RequestPayment-row">
@@ -1081,15 +1076,9 @@ const handleKeyDown = (e) => {
                 <button ref={buttonRef} type="submit" disabled={isSubmitting} className="submit_button">
                     {isSubmitting ? '提交中...' : '提交'}
                 </button>
-
-
-
             )}
 
             {errorMessage && <p style={{ color: 'red', marginLeft: '10px' }}>{errorMessage}</p>}
-
-
-
         </form>
     );
 };

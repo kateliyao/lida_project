@@ -78,7 +78,8 @@ const StagingArea = ({ onLogout, user }) => {
         if (activeForm === 'STAGE') {
             setIsLoading(true);  // 開始加載數據
             try {
-                const response = await fetch(`${apiUrl}/api/stagingArea?user=${user}`);
+                //const response = await fetch(`${apiUrl}/api/stagingArea?user=${user}`);
+                const response = await fetch(`/api/stagingArea?user=${user}`);
                 if (!response.ok) {
                 throw new Error('網路回應失敗');
             }
@@ -120,19 +121,22 @@ const StagingArea = ({ onLogout, user }) => {
 
     // 預覽單一PDF
     const handlePreview = (pdfName) => {
-        const pdfUrl = `${apiUrl}/pdfs/${pdfName}`;  // 使用絕對路徑
+        //const pdfUrl = `${apiUrl}/pdfs/${pdfName}`;  // 使用絕對路徑
+        const pdfUrl = `/pdfs/${pdfName}`;  // 使用絕對路徑
         window.open(pdfUrl, '_blank');
     };
 
     // 預覽合併PDF
     const handlePreviewMerge = (pdfName) => {
-        const pdfUrl = `${apiUrl}/pdfs/merge/${pdfName}`;  // 使用絕對路徑
+        //const pdfUrl = `${apiUrl}/pdfs/merge/${pdfName}`;  // 使用絕對路徑
+        const pdfUrl = `/pdfs/merge/${pdfName}`;  // 使用絕對路徑
         window.open(pdfUrl, '_blank');
     };
 
     // 删除表單
     const handleDelete = (formId,pdfName,formType) => {
-        fetch(`${apiUrl}/api/deleteForm`, {
+        //fetch(`${apiUrl}/api/deleteForm`, {
+        fetch(`/api/deleteForm`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -179,7 +183,8 @@ const StagingArea = ({ onLogout, user }) => {
 
             try {
                 //更新資料庫中的 send_mail_pdf_name 欄位
-                const response = await fetch(`${apiUrl}/api/updateMailPdfName`, {
+                //const response = await fetch(`${apiUrl}/api/updateMailPdfName`, {
+                const response = await fetch(`/api/updateMailPdfName`, {
                     method: 'POST',
                     headers: {
                     'Content-Type': 'application/json',
@@ -200,7 +205,8 @@ const StagingArea = ({ onLogout, user }) => {
 
             // 預覽單個 PDF
             handlePreview(sendMailPdfName);
-            setPdfInfo([{ name: sendMailPdfName, path: `${apiUrl}/pdfs/${sendMailPdfName}` }]);
+            //setPdfInfo([{ name: sendMailPdfName, path: `${apiUrl}/pdfs/${sendMailPdfName}` }]);
+            setPdfInfo([{ name: sendMailPdfName, path: `/pdfs/${sendMailPdfName}` }]);
 
             // 觸發清空，讓使用者不會重複點擊預覽(序號會追加)
             handleClear();
@@ -208,7 +214,8 @@ const StagingArea = ({ onLogout, user }) => {
         //當選中超過一個PDF，必須先合併，才能更新後端寄件PDF名稱
         } else if (selectedForms.length > 1) {
             try {
-                const response = await fetch(`${apiUrl}/api/mergePdf`, {
+                //const response = await fetch(`${apiUrl}/api/mergePdf`, {
+                const response = await fetch(`/api/mergePdf`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -231,7 +238,8 @@ const StagingArea = ({ onLogout, user }) => {
                     setFormType(returnedFormType); // 儲存起來，之後寄信時使用
 
                     // 更新資料庫中的 send_mail_pdf_name 欄位
-                    const updateResponse = await fetch(`${apiUrl}/api/updateMailPdfName`, {
+                    //const updateResponse = await fetch(`${apiUrl}/api/updateMailPdfName`, {
+                    const updateResponse = await fetch(`/api/updateMailPdfName`, {
                         method: 'POST',
                         headers: {
                         'Content-Type': 'application/json',
@@ -250,7 +258,8 @@ const StagingArea = ({ onLogout, user }) => {
 
                     // 合併後的預覽
                     handlePreviewMerge(mergedPdf);
-                    setPdfInfo([{ name: mergedPdf, path: `${apiUrl}/pdfs/merge/${mergedPdf}` }]);
+                    //setPdfInfo([{ name: mergedPdf, path: `${apiUrl}/pdfs/merge/${mergedPdf}` }]);
+                    setPdfInfo([{ name: mergedPdf, path: `/pdfs/merge/${mergedPdf}` }]);
 
                     // 觸發清空，讓使用者不會重複點擊預覽(序號會追加)
                     handleClear();
@@ -302,7 +311,8 @@ const StagingArea = ({ onLogout, user }) => {
                 formData.append('files', file);  // 將文件添加到 FormData 清單
             });
 
-            const response = await fetch(`${apiUrl}/api/uploadPdf`, {
+            //const response = await fetch(`${apiUrl}/api/uploadPdf`, {
+            const response = await fetch(`/api/uploadPdf`, {
                 method: 'POST',
                 body: formData,
             });
@@ -367,7 +377,8 @@ const StagingArea = ({ onLogout, user }) => {
 
         try {
             // 發送郵件請求
-            const response = await fetch(`${apiUrl}/api/sendEmail`, {
+            //const response = await fetch(`${apiUrl}/api/sendEmail`, {
+            const response = await fetch(`/api/sendEmail`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -384,7 +395,8 @@ const StagingArea = ({ onLogout, user }) => {
             if (response.ok) {
                 //await  checkInsertEmail(recipient);   // 成功發送郵件後，檢查電子郵件是否存在資料庫中
                 // 成功發送郵件後，直接發送檢查電子郵件是否存在資料庫中的請求
-                const checkInsertResponse = await fetch(`${apiUrl}/api/checkInsert`, {
+                //const checkInsertResponse = await fetch(`${apiUrl}/api/checkInsert`, {
+                const checkInsertResponse = await fetch(`/api/checkInsert`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -444,7 +456,8 @@ const StagingArea = ({ onLogout, user }) => {
             if (recipient && recipient.trim().length > 0) { // 確保輸入非空
                 const fetchSuggestions = async () => {
                     try {
-                        const response = await fetch(`${apiUrl}/api/recipientSuggest?recipient=${recipient}`);
+                        //const response = await fetch(`${apiUrl}/api/recipientSuggest?recipient=${recipient}`);
+                        const response = await fetch(`/api/recipientSuggest?recipient=${recipient}`);
                         if (!response.ok) {
                         throw new Error('網路回應失敗');
                         }
@@ -818,44 +831,44 @@ const StagingArea = ({ onLogout, user }) => {
                 </div>
 
                 <div className="title">撰寫郵件</div>
-                <div style={{ display: 'flex', alignItems: 'center', marginRight: '30px' }}>
-    <input
-        type="email"
-        className="mailsender"
-        value={sender}
-        onChange={handleChangeSender}
-        placeholder="請輸入寄件者信箱"
-        style={{ marginRight: '10px' }}
-    />
+{/*                 <div style={{ display: 'flex', alignItems: 'center', marginRight: '30px' }}> */}
+{/*     <input */}
+{/*         type="email" */}
+{/*         className="mailsender" */}
+{/*         value={sender} */}
+{/*         onChange={handleChangeSender} */}
+{/*         placeholder="請輸入寄件者信箱" */}
+{/*         style={{ marginRight: '10px' }} */}
+{/*     /> */}
 
-    <label style={{ display: 'flex', alignItems: 'center', marginRight: '10px' }}>
-            <input
-                type="checkbox"
-                name="ziyue"
-                checked={isZiyueChecked}
-                onChange={handleZiyueChange}
-                style={{
-                    width: '30px',
-                    height: '30px',
-                    marginRight: '10px',
-                    appearance: 'none',
-                    backgroundImage: isZiyueChecked ? `url(${TickYellow})` : 'none',
-                    backgroundSize: 'cover',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundColor: 'transparent',
-                    border: '1px solid #ccc',
-                    cursor: 'pointer',
-                }}
-            />
-            資越
-        </label>
+{/*     <label style={{ display: 'flex', alignItems: 'center', marginRight: '10px' }}> */}
+{/*             <input */}
+{/*                 type="checkbox" */}
+{/*                 name="ziyue" */}
+{/*                 checked={isZiyueChecked} */}
+{/*                 onChange={handleZiyueChange} */}
+{/*                 style={{ */}
+{/*                     width: '30px', */}
+{/*                     height: '30px', */}
+{/*                     marginRight: '10px', */}
+{/*                     appearance: 'none', */}
+{/*                     backgroundImage: isZiyueChecked ? `url(${TickYellow})` : 'none', */}
+{/*                     backgroundSize: 'cover', */}
+{/*                     backgroundRepeat: 'no-repeat', */}
+{/*                     backgroundColor: 'transparent', */}
+{/*                     border: '1px solid #ccc', */}
+{/*                     cursor: 'pointer', */}
+{/*                 }} */}
+{/*             /> */}
+{/*             資越 */}
+{/*         </label> */}
 
-    <label style={{ display: 'flex', alignItems: 'center' }}>
-        <input type="checkbox" name="lida" style={{ marginRight: '5px',width: '30px',
-                    height: '30px', }} />
-        力達
-    </label>
-</div>
+{/*     <label style={{ display: 'flex', alignItems: 'center' }}> */}
+{/*         <input type="checkbox" name="lida" style={{ marginRight: '5px',width: '30px', */}
+{/*                     height: '30px', }} /> */}
+{/*         力達 */}
+{/*     </label> */}
+{/* </div> */}
 
 
 

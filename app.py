@@ -20,12 +20,29 @@ from flask_cors import CORS
 import pdfkit
 from PyPDF2 import PdfMerger
 matplotlib.use('Agg')  # 設置Matplotlib使用Agg後端，這樣不會開啟GUI
+from flask import send_from_directory
 
-app = Flask(__name__, static_folder='../react/build')
+# 使用pyinstall打包版本app.exe
+if getattr(sys, 'frozen', False):
+    # 打包成exe時會用sys._MEIPASS
+    base_path = sys._MEIPASS
+else:
+    # 一般用python執行時用當前目錄
+    base_path = os.path.abspath(".")
+
+static_folder_path = os.path.join(base_path, 'react', 'build')
+
+app = Flask(__name__, static_folder=static_folder_path, static_url_path='')
+
+# 使用python app.py執行版本
+#app = Flask(__name__, static_folder='../react/build')
+
 # 設置一個密鑰來保護 session 資料
 app.secret_key = os.urandom(24)  # 或者設定固定的密鑰
 # CORS(app, origins=["http://localhost:5173"])
-CORS(app, origins=["http://192.168.1.185:3000"])
+#CORS(app, origins=["http://192.168.1.184:3000"])
+# 開發階段簡單測試用
+#CORS(app, origins="*")
 
 # 配置 MySQL 資料庫連線
 app.config['MYSQL_HOST'] = 'localhost'
@@ -2159,6 +2176,14 @@ def get_all_quotations():
         if cursor:
             cursor.close()
 
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
     logging.info("Starting the application")

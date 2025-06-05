@@ -10,7 +10,8 @@ const ServiceItem = ({ user }) => {
 
     const fetchServiceItems = async () => {
         try {
-            const response = await fetch(`${apiUrl}/api/getServiceItems`);
+            //const response = await fetch(`${apiUrl}/api/getServiceItems`);
+            const response = await fetch(`/api/getServiceItems`);
             // 先確認回應狀態
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -40,7 +41,7 @@ const ServiceItem = ({ user }) => {
 
     useEffect(() => {
         fetchServiceItems();
-    }, [apiUrl]);
+    }, []);
 
     const handleChange = (index, field, value) => {
         const updatedRows = [...rows];
@@ -78,7 +79,8 @@ const ServiceItem = ({ user }) => {
         }));
 
         try {
-            const response = await fetch(`${apiUrl}/api/submitServiceItem`, {
+            //const response = await fetch(`${apiUrl}/api/submitServiceItem`, {
+            const response = await fetch(`/api/submitServiceItem`, {
                 method: 'POST',
                 headers: {
                 'Content-Type': 'application/json'
